@@ -1,50 +1,130 @@
-# Welcome to your Expo app 👋
+# Food Ranking App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
 
-## Get started
+The **Food Ranking App** is a mobile application designed to help users discover the best food items in their area. Built with **React Native** and powered by **Supabase**, the app enables users to search for food items, leave reviews, manage favorites, and receive location-based recommendations.
 
-1. Install dependencies
+---
+
+## Features
+
+- **User Authentication**: Sign up, log in, and log out securely.
+- **Food Item Search**: Search food items with advanced filters like price, dietary preferences, and location.
+- **Review and Rating System**: Leave reviews with star ratings and photos.
+- **Favorites Management**: Save your favorite food items for quick access.
+- **Location-Based Recommendations**: Get notified about top-rated food items nearby.
+- **Real-Time Updates**: See live changes for reviews and favorites.
+
+---
+
+## Tech Stack
+
+### Frontend
+
+- **Framework**: React Native (with Expo)
+- **UI Components**: React Native Elements and custom components
+- **Navigation**: React Navigation
+
+### Backend
+
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Real-Time Updates**: Supabase Real-Time API
+
+### Additional Tools
+
+- **State Management**: Context API or Redux
+- **Notifications**: Expo Notifications
+- **Location Services**: Expo Location API
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed:
+
+- **Node.js** (v14 or higher) and npm (v6 or higher)
+- **Expo CLI** (can be installed using `npm install -g expo-cli`)
+
+### Setup
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/yourusername/food-ranking-app.git
+   cd food-ranking-app
+
+   ```
+
+2. **Install Dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Set Environment Variables**
+
+   Create a .env file in the root directory and add:
 
    ```bash
-    npx expo start
+   SUPABASE_URL=https://your-supabase-url.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
    ```
 
-In the output, you'll find options to open the app in a
+4. **Start the Development Server**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npx expo start
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+5. **Run the App**
 
-## Get a fresh project
+   Open the app on a physical device using the Expo Go app (scan the QR code).
+   Alternatively, use an emulator or simulator.
 
-When you're ready, run:
+### Development Workflow
 
-```bash
-npm run reset-project
-```
+1. **Branching:** Use Git branching to manage features and fixes
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-## Learn more
+2. **Committing Changes**
 
-To learn more about developing your project with Expo, look at the following resources:
+   ```bash
+   git add .
+   git commit -m "Your commit message"
+   ```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+3. **Pushing to Remote**
 
-## Join the community
+   ```bash
+   git push origin feature/your-feature-name
+   ```
 
-Join our community of developers creating universal apps.
+4. **Creating a Pull Request:** Open a PR on GitHub and request a review from a team member.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Troubleshooting
+
+**Expo CLI Warning**
+
+Ensure you're using the new Expo CLI with npx expo start.
+
+**Environment Variables Not Working**
+
+Verify .env file is properly configured and loaded.
+
+**Dependency Errors**
+
+Run npm install to ensure all dependencies are installed.
+
+**Cannot Access Supabase Backend**
+
+Check your SUPABASE_URL and SUPABASE_ANON_KEY values in the .env file.
+
+### License
+
+This project is licensed under the Apache 2.0 License. See the LICENSE file for details.
