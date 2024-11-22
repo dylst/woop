@@ -1,7 +1,15 @@
-// UsersScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  Button,
+} from 'react-native';
 import { useFetchUsers } from '@/hooks/useFetchUsers';
+import { useCreateUser } from '@/hooks/useCreateUser';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
@@ -16,41 +24,85 @@ interface User {
 const UsersScreen = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showButton, setShowButton] = useState(true); // Add state for button visibility
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleGetUsers = async () => {
     setIsLoading(true);
     const usersData = await useFetchUsers();
     setUsers(usersData);
     setIsLoading(false);
-    setShowButton(false); // Hide button after fetching users
+  };
+
+  const handleCreateUser = async () => {
+    const newUser = await useCreateUser(name, email, city, state);
+    if (newUser) {
+      setUsers([...users, ...newUser]);
+      setShowForm(false);
+      setName('');
+      setEmail('');
+      setCity('');
+      setState('');
+    }
+    setShowForm(false);
+    setIsSubmitted(true);
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type='title'>Users List</ThemedText>
-      {showButton && ( // Conditionally render button
-        <Pressable style={styles.button} onPress={handleGetUsers}>
-          <ThemedText style={styles.buttonText}>
-            {isLoading ? 'Loading...' : 'Get Users'}
-          </ThemedText>
-        </Pressable>
+      <ThemedText style={styles.title}>Users List</ThemedText>
+      <Pressable style={styles.button} onPress={handleGetUsers}>
+        <ThemedText style={styles.buttonText}>Get Users</ThemedText>
+      </Pressable>
+      <Pressable style={styles.button} onPress={() => setShowForm(!showForm)}>
+        <ThemedText style={styles.buttonText}>Create User</ThemedText>
+      </Pressable>
+      {showForm && (
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder='Name'
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder='Email'
+            value={email}
+            onChangeText={setEmail}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder='City'
+            value={city}
+            onChangeText={setCity}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder='State'
+            value={state}
+            onChangeText={setState}
+          />
+          <Button title='Submit' onPress={handleCreateUser} />
+          {isSubmitted && <Text style={styles.text}>User Created!</Text>}
+        </View>
       )}
-      {users.length > 0 && (
-        <FlatList
-          data={users}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <ThemedView style={styles.userItem}>
-              <ThemedText>{item.name}</ThemedText>
-              <ThemedText>{item.email}</ThemedText>
-              <ThemedText>
-                {item.city}, {item.state}
-              </ThemedText>
-            </ThemedView>
-          )}
-        />
-      )}
+      <FlatList
+        data={users}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.userItem}>
+            <Text style={styles.text}>{item.name}</Text>
+            <Text style={styles.text}>{item.email}</Text>
+            <Text style={styles.text}>{item.city}</Text>
+            <Text style={styles.text}>{item.state}</Text>
+          </View>
+        )}
+      />
     </ThemedView>
   );
 };
@@ -59,34 +111,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#000', // Set background color to black
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#fff', // Set text color to white
+  },
+  button: {
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: '#FFF',
+    textAlign: 'center',
+  },
+  form: {
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#CCC',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+    color: 'white',
   },
   userItem: {
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#CCC',
+    color: 'white',
   },
-  userText: {
-    color: '#fff', // Set text color to white
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 20,
-    width: 150,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  text: {
+    color: 'white',
   },
 });
 
