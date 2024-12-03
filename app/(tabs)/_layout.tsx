@@ -50,8 +50,8 @@ export default function TabLayout() {
         name='users'
         options={{
           title: 'Users',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name='person.fill' color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name='people' size={size} color={color} />
           ),
         }}
       />
@@ -60,7 +60,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name='person-outline' size={size} color={color} />
+            <Ionicons name='person' size={size} color={color} />
           ),
         }}
       />
