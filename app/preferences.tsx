@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Pressable,
   Switch,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -14,6 +15,13 @@ import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 // import supabase in a future implementation
+
+// Add this interface for food items
+interface FoodItem {
+  id: string;
+  name: string;
+  image: any; // You'll need to import these images
+}
 
 const PreferencesScreen = () => {
   // Initial state will eventually be populated from Supabase
@@ -103,6 +111,25 @@ const PreferencesScreen = () => {
     */
   };
 
+  // Example food items array
+  const foodItems: FoodItem[] = [
+    {
+      id: '1',
+      name: 'American',
+      image: require('@/assets/images/food/american.jpg'),
+    },
+    {
+      id: '2',
+      name: 'Bakeries',
+      image: require('@/assets/images/food/bakeries.jpg'),
+    },
+    {
+      id: '3',
+      name: 'Barbecue',
+      image: require('@/assets/images/food/barbecue.jpg'),
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -145,25 +172,35 @@ const PreferencesScreen = () => {
 
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Food & Drink</ThemedText>
-          <View style={styles.optionsContainer}>
-            {['American', 'Bakeries', 'Barbecue'].map((item) => (
-              <Pressable
-                key={item}
-                style={[
-                  styles.optionButton,
-                  preferences.food.includes(item) && styles.activeItem,
-                ]}
-                onPress={() => toggleFood(item)}
-              >
-                <ThemedText
-                  style={[
-                    styles.optionText,
-                    preferences.food.includes(item) && styles.activeText,
-                  ]}
+          <View style={styles.foodGrid}>
+            {foodItems.map((item) => (
+              <View key={item.id} style={styles.foodItem}>
+                <Pressable
+                  onPress={() => toggleFood(item.name)}
+                  style={styles.foodImageContainer}
                 >
-                  {item}
-                </ThemedText>
-              </Pressable>
+                  <Image
+                    source={item.image}
+                    style={[
+                      styles.foodImage,
+                      !preferences.food.includes(item.name) &&
+                        styles.inactiveImage,
+                    ]}
+                  />
+                  <View style={styles.heartIconContainer}>
+                    <Ionicons
+                      name={
+                        preferences.food.includes(item.name)
+                          ? 'heart'
+                          : 'heart-outline'
+                      }
+                      size={24}
+                      color='#FFF'
+                    />
+                  </View>
+                </Pressable>
+                <ThemedText style={styles.foodLabel}>{item.name}</ThemedText>
+              </View>
             ))}
           </View>
           <TouchableOpacity style={styles.seeMore}>
@@ -387,6 +424,46 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
+  },
+  foodGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 16,
+    paddingHorizontal: 10,
+  },
+  foodItem: {
+    width: '30%',
+    alignItems: 'center',
+    gap: 8,
+  },
+  foodImageContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  foodImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  inactiveImage: {
+    opacity: 0.7,
+  },
+  heartIconContainer: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  foodLabel: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#000',
   },
 });
 
