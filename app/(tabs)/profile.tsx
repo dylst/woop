@@ -135,9 +135,19 @@ const ProfileScreen = () => {
         <View style={styles.mainContent}>
           <ThemedText style={styles.auraTitle}>Aura (10,000)</ThemedText>
 
+          {/* Tabs Section */}
           <View style={styles.tabContainer}>
-            <ThemedText style={styles.activeTab}>Reviews</ThemedText>
-            <ThemedText style={styles.tab}>Photos</ThemedText>
+            <View style={styles.tabWrapper}>
+              <Pressable style={styles.tabButton}>
+                <ThemedText style={[styles.tab, styles.activeTab]}>
+                  Reviews
+                </ThemedText>
+                <View style={styles.activeTabIndicator} />
+              </Pressable>
+              <Pressable style={styles.tabButton}>
+                <ThemedText style={styles.tab}>Photos</ThemedText>
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.statsGrid}>
@@ -253,6 +263,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     marginTop: 8,
     fontSize: 12,
+    fontWeight: '500',
     color: '#000',
   },
   mainContent: {
@@ -265,23 +276,38 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   tabContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  tabWrapper: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    width: '80%',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    marginBottom: 20,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    position: 'relative',
   },
   tab: {
-    paddingVertical: 10,
-    marginRight: 20,
-    opacity: 0.6,
-    color: '#000',
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    width: '100%',
   },
   activeTab: {
-    paddingVertical: 10,
-    marginRight: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.primary.darkteal,
-    color: '#000',
+    color: Colors.primary.darkteal,
+    fontWeight: '600',
+  },
+  activeTabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: 2,
+    backgroundColor: Colors.primary.darkteal,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -355,6 +381,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 14,
     opacity: 0.6,
+    color: '#000',
   },
   heartIcon: {
     padding: 8,
