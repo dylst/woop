@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Pressable,
+  Switch,
 } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -67,6 +68,17 @@ const PreferencesScreen = () => {
       dietary: prev.dietary.includes(item)
         ? prev.dietary.filter((i) => i !== item)
         : [...prev.dietary, item],
+    }));
+    setHasChanges(true);
+  };
+
+  const toggleNotification = (type: 'push' | 'email') => {
+    setPreferences((prev) => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [type]: !prev.notifications[type],
+      },
     }));
     setHasChanges(true);
   };
@@ -198,13 +210,31 @@ const PreferencesScreen = () => {
               <ThemedText style={styles.notificationText}>
                 Push Notifications
               </ThemedText>
-              {/* Add a switch component here */}
+              <Switch
+                trackColor={{
+                  false: '#e2e2e2',
+                  true: Colors.primary.darkteal,
+                }}
+                thumbColor={'#fff'}
+                ios_backgroundColor='#e2e2e2'
+                onValueChange={() => toggleNotification('push')}
+                value={preferences.notifications.push}
+              />
             </View>
             <View style={styles.notificationItem}>
               <ThemedText style={styles.notificationText}>
                 Email Notifications
               </ThemedText>
-              {/* Add a switch component here */}
+              <Switch
+                trackColor={{
+                  false: '#e2e2e2',
+                  true: Colors.primary.darkteal,
+                }}
+                thumbColor={'#fff'}
+                ios_backgroundColor='#e2e2e2'
+                onValueChange={() => toggleNotification('email')}
+                value={preferences.notifications.email}
+              />
             </View>
           </View>
         </View>
@@ -315,13 +345,16 @@ const styles = StyleSheet.create({
   },
   notificationContainer: {
     gap: 15,
+    paddingHorizontal: 20,
   },
   notificationItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 8,
   },
   notificationText: {
+    fontSize: 16,
     color: '#000',
   },
   saveButton: {
