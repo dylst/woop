@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
+import { router } from 'expo-router';
 
 interface ReviewItemProps {
   image: string;
@@ -115,7 +116,10 @@ const ProfileScreen = () => {
                   Add Photo
                 </ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/preferences')}
+              >
                 <View style={styles.actionIconContainer}>
                   <Ionicons
                     name='options-outline'
