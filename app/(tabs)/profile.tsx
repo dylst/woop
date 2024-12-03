@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Pressable,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -50,112 +51,130 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
   </View>
 );
 
+interface StatItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  count: number;
+}
+
+const StatItem: React.FC<StatItemProps> = ({ icon, count }) => (
+  <View style={styles.statItem}>
+    <Ionicons name={icon} size={16} color={Colors.primary.darkteal} />
+    <ThemedText style={styles.statText}>{count}</ThemedText>
+  </View>
+);
+
 const ProfileScreen = () => {
   return (
-    <ScrollView style={styles.container}>
-      {/* Header with curved background */}
-      <View style={styles.headerBackground}>
-        <View style={styles.headerContent}>
-          <Image
-            source={{ uri: 'https://placeholder.com/150' }}
-            style={styles.profileImage}
-          />
-          <ThemedText style={styles.userName}>Kyle Kiwikaka</ThemedText>
-          <View style={styles.statsContainer}>
-            <ThemedText style={styles.statText}>🧑 10</ThemedText>
-            <ThemedText style={styles.statText}>⭐ 8</ThemedText>
-            <ThemedText style={styles.statText}>📷 6</ThemedText>
+    <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header with curved background */}
+        <View style={styles.headerBackground}>
+          <View style={styles.headerContent}>
+            <Image
+              source={{ uri: 'https://placeholder.com/150' }}
+              style={styles.profileImage}
+            />
+            <ThemedText style={styles.userName}>Kyle Kiwikaka</ThemedText>
+            <View style={styles.statsContainer}>
+              <StatItem icon='people-outline' count={10} />
+              <StatItem icon='star-outline' count={8} />
+              <StatItem icon='camera-outline' count={6} />
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIconContainer}>
-            <Ionicons
-              name='create-outline'
-              size={24}
-              color={Colors.primary.darkteal}
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.actionButton}>
+            <View style={styles.actionIconContainer}>
+              <Ionicons
+                name='create-outline'
+                size={24}
+                color={Colors.primary.darkteal}
+              />
+            </View>
+            <ThemedText style={styles.actionButtonText}>Add Review</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <View style={styles.actionIconContainer}>
+              <Ionicons
+                name='camera-outline'
+                size={24}
+                color={Colors.primary.darkteal}
+              />
+            </View>
+            <ThemedText style={styles.actionButtonText}>Add Photo</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <View style={styles.actionIconContainer}>
+              <Ionicons
+                name='options-outline'
+                size={24}
+                color={Colors.primary.darkteal}
+              />
+            </View>
+            <ThemedText style={styles.actionButtonText}>Preferences</ThemedText>
+          </TouchableOpacity>
+        </View>
+
+        {/* Aura Section */}
+        <View style={styles.mainContent}>
+          <ThemedText style={styles.auraTitle}>Aura (10,000)</ThemedText>
+
+          <View style={styles.tabContainer}>
+            <ThemedText style={styles.activeTab}>Reviews</ThemedText>
+            <ThemedText style={styles.tab}>Photos</ThemedText>
+          </View>
+
+          <View style={styles.statsGrid}>
+            <View style={styles.statBox}>
+              <ThemedText style={styles.statNumber}>20</ThemedText>
+              <ThemedText style={styles.statLabel}>
+                reactions all time
+              </ThemedText>
+            </View>
+            <View style={styles.statBox}>
+              <ThemedText style={styles.statNumber}>44</ThemedText>
+              <ThemedText style={styles.statLabel}>
+                views last 90 days
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Currently Trending Section */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>
+              Currently Trending
+            </ThemedText>
+            <ReviewItem
+              image='https://example.com/crab-shack.jpg'
+              title="Dom's Crab Shack"
+              description="Dom's Crabs are AMAZING!"
+              rating={5}
             />
           </View>
-          <ThemedText style={styles.actionButtonText}>Add Review</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIconContainer}>
-            <Ionicons
-              name='camera-outline'
-              size={24}
-              color={Colors.primary.darkteal}
+
+          {/* Recently Viewed Section */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Recently Viewed</ThemedText>
+            <ReviewItem
+              image='https://example.com/boba.jpg'
+              title="Melody's Boba Noodles"
+              description='A good helping of buckshots and boba'
+              rating={4}
+              reviewCount={35}
+            />
+            <ReviewItem
+              image='https://example.com/ramen.jpg'
+              title="Jay's Instant Ramen"
+              description='Ramen you can buy in stores but with a twist'
+              rating={4}
+              reviewCount={35}
             />
           </View>
-          <ThemedText style={styles.actionButtonText}>Add Photo</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIconContainer}>
-            <Ionicons
-              name='options-outline'
-              size={24}
-              color={Colors.primary.darkteal}
-            />
-          </View>
-          <ThemedText style={styles.actionButtonText}>Preferences</ThemedText>
-        </TouchableOpacity>
-      </View>
-
-      {/* Aura Section */}
-      <View style={styles.mainContent}>
-        <ThemedText style={styles.auraTitle}>Aura (10,000)</ThemedText>
-
-        <View style={styles.tabContainer}>
-          <ThemedText style={styles.activeTab}>Reviews</ThemedText>
-          <ThemedText style={styles.tab}>Photos</ThemedText>
         </View>
-
-        <View style={styles.statsGrid}>
-          <View style={styles.statBox}>
-            <ThemedText style={styles.statNumber}>20</ThemedText>
-            <ThemedText style={styles.statLabel}>reactions all time</ThemedText>
-          </View>
-          <View style={styles.statBox}>
-            <ThemedText style={styles.statNumber}>44</ThemedText>
-            <ThemedText style={styles.statLabel}>views last 90 days</ThemedText>
-          </View>
-        </View>
-
-        {/* Currently Trending Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>
-            Currently Trending
-          </ThemedText>
-          <ReviewItem
-            image='https://example.com/crab-shack.jpg'
-            title="Dom's Crab Shack"
-            description="Dom's Crabs are AMAZING!"
-            rating={5}
-          />
-        </View>
-
-        {/* Recently Viewed Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Recently Viewed</ThemedText>
-          <ReviewItem
-            image='https://example.com/boba.jpg'
-            title="Melody's Boba Noodles"
-            description='A good helping of buckshots and boba'
-            rating={4}
-            reviewCount={35}
-          />
-          <ReviewItem
-            image='https://example.com/ramen.jpg'
-            title="Jay's Instant Ramen"
-            description='Ramen you can buy in stores but with a twist'
-            rating={4}
-            reviewCount={35}
-          />
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -322,6 +341,11 @@ const styles = StyleSheet.create({
   },
   heartIcon: {
     padding: 8,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });
 
