@@ -208,6 +208,8 @@ const PreferencesScreen = () => {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.separator} />
+
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Dietary</ThemedText>
           <View style={styles.optionsContainer}>
@@ -239,6 +241,8 @@ const PreferencesScreen = () => {
             ))}
           </View>
         </View>
+
+        <View style={styles.separator} />
 
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Notifications</ThemedText>
@@ -464,6 +468,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     color: '#000',
+  },
+  separator: {
+    height: 10,
+    width: '100%',
+    backgroundColor: Colors.primary.lightteal,
   },
 });
 
