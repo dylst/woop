@@ -25,7 +25,7 @@ export const Colors = {
   },
   primary: {
     text: '#000',
-    lightteal: '#89D5ED',
+    lightteal: '#CCF1FC',
     teal: '#50BBDD',
     darkteal: '#2897BA',
   },

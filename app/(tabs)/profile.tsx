@@ -7,6 +7,7 @@ import {
   ScrollView,
   Pressable,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -65,56 +66,69 @@ const StatItem: React.FC<StatItemProps> = ({ icon, count }) => (
 
 const ProfileScreen = () => {
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar
+        barStyle='dark-content'
+        backgroundColor={Colors.primary.lightteal}
+      />
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header with curved background */}
-        <View style={styles.headerBackground}>
-          <View style={styles.headerContent}>
-            <Image
-              source={{ uri: 'https://placeholder.com/150' }}
-              style={styles.profileImage}
-            />
-            <ThemedText style={styles.userName}>Kyle Kiwikaka</ThemedText>
+        {/* Header section */}
+        <View style={styles.headerContent}>
+          <Image
+            source={{ uri: 'https://placeholder.com/150' }}
+            style={styles.profileImage}
+          />
+          <ThemedText style={styles.userName}>Kyle Kiwikaka</ThemedText>
+          {/* Stats section */}
+          <View style={styles.statsSection}>
             <View style={styles.statsContainer}>
-              <StatItem icon='people-outline' count={10} />
-              <StatItem icon='star-outline' count={8} />
-              <StatItem icon='camera-outline' count={6} />
+              <StatItem icon='people' count={10} />
+              <StatItem icon='star' count={8} />
+              <StatItem icon='image' count={6} />
             </View>
           </View>
-        </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={styles.actionIconContainer}>
-              <Ionicons
-                name='create-outline'
-                size={24}
-                color={Colors.primary.darkteal}
-              />
+          {/* Action Buttons section */}
+          <View style={styles.actionButtonsSection}>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.actionButton}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons
+                    name='create-outline'
+                    size={24}
+                    color={Colors.primary.darkteal}
+                  />
+                </View>
+                <ThemedText style={styles.actionButtonText}>
+                  Add Review
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons
+                    name='camera-outline'
+                    size={24}
+                    color={Colors.primary.darkteal}
+                  />
+                </View>
+                <ThemedText style={styles.actionButtonText}>
+                  Add Photo
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons
+                    name='options-outline'
+                    size={24}
+                    color={Colors.primary.darkteal}
+                  />
+                </View>
+                <ThemedText style={styles.actionButtonText}>
+                  Preferences
+                </ThemedText>
+              </TouchableOpacity>
             </View>
-            <ThemedText style={styles.actionButtonText}>Add Review</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={styles.actionIconContainer}>
-              <Ionicons
-                name='camera-outline'
-                size={24}
-                color={Colors.primary.darkteal}
-              />
-            </View>
-            <ThemedText style={styles.actionButtonText}>Add Photo</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={styles.actionIconContainer}>
-              <Ionicons
-                name='options-outline'
-                size={24}
-                color={Colors.primary.darkteal}
-              />
-            </View>
-            <ThemedText style={styles.actionButtonText}>Preferences</ThemedText>
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* Aura Section */}
@@ -179,15 +193,9 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  headerBackground: {
-    backgroundColor: Colors.primary.lightteal,
-    height: 200,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
   },
   headerContent: {
     alignItems: 'center',
@@ -202,35 +210,45 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginTop: 10,
     color: '#000',
+  },
+  statsSection: {
+    backgroundColor: '#fff',
+    marginTop: 10,
   },
   statsContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: 20,
+    alignItems: 'center',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   statText: {
     fontSize: 16,
-    color: '#000',
+    color: Colors.primary.darkteal,
+  },
+  actionButtonsSection: {
+    backgroundColor: '#fff',
+    padding: 5,
+    marginTop: 0,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 20,
-    marginTop: -40,
   },
   actionButton: {
     alignItems: 'center',
+    padding: 10,
   },
   actionIconContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.primary.lightteal,
     padding: 12,
     borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   actionButtonText: {
     marginTop: 8,
@@ -241,7 +259,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   auraTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#000',
@@ -262,7 +280,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginRight: 20,
     borderBottomWidth: 2,
-    borderBottomColor: '#007AFF',
+    borderBottomColor: Colors.primary.darkteal,
     color: '#000',
   },
   statsGrid: {
@@ -277,9 +295,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
     color: '#000',
   },
   statLabel: {
@@ -341,11 +358,6 @@ const styles = StyleSheet.create({
   },
   heartIcon: {
     padding: 8,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
 });
 
