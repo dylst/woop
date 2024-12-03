@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Pressable,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -50,94 +52,140 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
   </View>
 );
 
+interface StatItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  count: number;
+}
+
+const StatItem: React.FC<StatItemProps> = ({ icon, count }) => (
+  <View style={styles.statItem}>
+    <Ionicons name={icon} size={16} color={Colors.primary.darkteal} />
+    <ThemedText style={styles.statText}>{count}</ThemedText>
+  </View>
+);
+
 const ProfileScreen = () => {
   return (
-    <ScrollView style={styles.container}>
-      {/* Header with curved background */}
-      <View style={styles.headerBackground}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar
+        barStyle='dark-content'
+        backgroundColor={Colors.primary.lightteal}
+      />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header section */}
         <View style={styles.headerContent}>
           <Image
             source={{ uri: 'https://placeholder.com/150' }}
             style={styles.profileImage}
           />
           <ThemedText style={styles.userName}>Kyle Kiwikaka</ThemedText>
-          <View style={styles.statsContainer}>
-            <ThemedText style={styles.statText}>🧑 10</ThemedText>
-            <ThemedText style={styles.statText}>⭐ 8</ThemedText>
-            <ThemedText style={styles.statText}>📷 6</ThemedText>
+          {/* Stats section */}
+          <View style={styles.statsSection}>
+            <View style={styles.statsContainer}>
+              <StatItem icon='people-outline' count={10} />
+              <StatItem icon='star-outline' count={8} />
+              <StatItem icon='camera-outline' count={6} />
+            </View>
+          </View>
+
+          {/* Action Buttons section */}
+          <View style={styles.actionButtonsSection}>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.actionButton}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons
+                    name='create-outline'
+                    size={24}
+                    color={Colors.primary.darkteal}
+                  />
+                </View>
+                <ThemedText style={styles.actionButtonText}>
+                  Add Review
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons
+                    name='camera-outline'
+                    size={24}
+                    color={Colors.primary.darkteal}
+                  />
+                </View>
+                <ThemedText style={styles.actionButtonText}>
+                  Add Photo
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <View style={styles.actionIconContainer}>
+                  <Ionicons
+                    name='options-outline'
+                    size={24}
+                    color={Colors.primary.darkteal}
+                  />
+                </View>
+                <ThemedText style={styles.actionButtonText}>
+                  Preferences
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIconContainer}>
-            <Ionicons
-              name='create-outline'
-              size={24}
-              color={Colors.primary.darkteal}
+        {/* Separator */}
+        <View style={styles.separator} />
+
+        {/* Aura Section */}
+        <View style={styles.mainContent}>
+          <ThemedText style={styles.auraTitle}>Aura (10,000)</ThemedText>
+
+          {/* Tabs Section */}
+          <View style={styles.tabContainer}>
+            <View style={styles.tabWrapper}>
+              <Pressable style={styles.tabButton}>
+                <ThemedText style={[styles.tab, styles.activeTab]}>
+                  Reviews
+                </ThemedText>
+                <View style={styles.activeTabIndicator} />
+              </Pressable>
+              <Pressable style={styles.tabButton}>
+                <ThemedText style={styles.tab}>Photos</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.statsGrid}>
+            <View style={styles.statBox}>
+              <ThemedText style={styles.statNumber}>20</ThemedText>
+              <ThemedText style={styles.statLabel}>
+                reactions all time
+              </ThemedText>
+            </View>
+            <View style={styles.statBox}>
+              <ThemedText style={styles.statNumber}>44</ThemedText>
+              <ThemedText style={styles.statLabel}>
+                views last 90 days
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Currently Trending Section */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>
+              Currently Trending
+            </ThemedText>
+            <ReviewItem
+              image='https://example.com/crab-shack.jpg'
+              title="Dom's Crab Shack"
+              description="Dom's Crabs are AMAZING!"
+              rating={5}
             />
           </View>
-          <ThemedText style={styles.actionButtonText}>Add Review</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIconContainer}>
-            <Ionicons
-              name='camera-outline'
-              size={24}
-              color={Colors.primary.darkteal}
-            />
-          </View>
-          <ThemedText style={styles.actionButtonText}>Add Photo</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <View style={styles.actionIconContainer}>
-            <Ionicons
-              name='options-outline'
-              size={24}
-              color={Colors.primary.darkteal}
-            />
-          </View>
-          <ThemedText style={styles.actionButtonText}>Preferences</ThemedText>
-        </TouchableOpacity>
-      </View>
-
-      {/* Aura Section */}
-      <View style={styles.mainContent}>
-        <ThemedText style={styles.auraTitle}>Aura (10,000)</ThemedText>
-
-        <View style={styles.tabContainer}>
-          <ThemedText style={styles.activeTab}>Reviews</ThemedText>
-          <ThemedText style={styles.tab}>Photos</ThemedText>
         </View>
-
-        <View style={styles.statsGrid}>
-          <View style={styles.statBox}>
-            <ThemedText style={styles.statNumber}>20</ThemedText>
-            <ThemedText style={styles.statLabel}>reactions all time</ThemedText>
-          </View>
-          <View style={styles.statBox}>
-            <ThemedText style={styles.statNumber}>44</ThemedText>
-            <ThemedText style={styles.statLabel}>views last 90 days</ThemedText>
-          </View>
-        </View>
-
-        {/* Currently Trending Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>
-            Currently Trending
-          </ThemedText>
-          <ReviewItem
-            image='https://example.com/crab-shack.jpg'
-            title="Dom's Crab Shack"
-            description="Dom's Crabs are AMAZING!"
-            rating={5}
-          />
-        </View>
+        {/* Separator */}
+        <View style={styles.separator} />
 
         {/* Recently Viewed Section */}
-        <View style={styles.section}>
+        <View style={styles.recentlyViewedSection}>
           <ThemedText style={styles.sectionTitle}>Recently Viewed</ThemedText>
           <ReviewItem
             image='https://example.com/boba.jpg'
@@ -154,21 +202,15 @@ const ProfileScreen = () => {
             reviewCount={35}
           />
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  headerBackground: {
-    backgroundColor: Colors.primary.lightteal,
-    height: 200,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
   },
   headerContent: {
     alignItems: 'center',
@@ -183,68 +225,94 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginTop: 10,
     color: '#000',
+  },
+  statsSection: {
+    backgroundColor: '#fff',
+    marginTop: 10,
   },
   statsContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: 20,
+    alignItems: 'center',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   statText: {
     fontSize: 16,
-    color: '#000',
+    color: Colors.primary.darkteal,
+  },
+  actionButtonsSection: {
+    backgroundColor: '#fff',
+    padding: 5,
+    marginTop: 0,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 20,
-    marginTop: -40,
   },
   actionButton: {
     alignItems: 'center',
+    padding: 10,
   },
   actionIconContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.primary.lightteal,
     padding: 12,
     borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   actionButtonText: {
     marginTop: 8,
     fontSize: 12,
+    fontWeight: '500',
     color: '#000',
   },
   mainContent: {
     padding: 20,
   },
   auraTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 15,
     color: '#000',
   },
   tabContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  tabWrapper: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    width: '80%',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    marginBottom: 20,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    position: 'relative',
   },
   tab: {
-    paddingVertical: 10,
-    marginRight: 20,
-    opacity: 0.6,
-    color: '#000',
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    width: '100%',
   },
   activeTab: {
-    paddingVertical: 10,
-    marginRight: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#007AFF',
-    color: '#000',
+    color: Colors.primary.darkteal,
+    fontWeight: '600',
+  },
+  activeTabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: 2,
+    backgroundColor: Colors.primary.darkteal,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -258,16 +326,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
     color: '#000',
   },
   statLabel: {
     opacity: 0.6,
     color: '#000',
+    fontSize: 14,
   },
   section: {
+    marginBottom: 10,
+  },
+  recentlyViewedSection: {
+    padding: 20,
     marginBottom: 30,
   },
   sectionTitle: {
@@ -319,9 +391,14 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 14,
     opacity: 0.6,
+    color: '#000',
   },
   heartIcon: {
     padding: 8,
+  },
+  separator: {
+    height: 10,
+    backgroundColor: Colors.primary.lightteal,
   },
 });
 
