@@ -82,9 +82,9 @@ const ProfileScreen = () => {
           {/* Stats section */}
           <View style={styles.statsSection}>
             <View style={styles.statsContainer}>
-              <StatItem icon='people' count={10} />
-              <StatItem icon='star' count={8} />
-              <StatItem icon='image' count={6} />
+              <StatItem icon='people-outline' count={10} />
+              <StatItem icon='star-outline' count={8} />
+              <StatItem icon='camera-outline' count={6} />
             </View>
           </View>
 
@@ -130,6 +130,9 @@ const ProfileScreen = () => {
             </View>
           </View>
         </View>
+
+        {/* Separator */}
+        <View style={styles.separator} />
 
         {/* Aura Section */}
         <View style={styles.mainContent}>
@@ -177,25 +180,27 @@ const ProfileScreen = () => {
               rating={5}
             />
           </View>
+        </View>
+        {/* Separator */}
+        <View style={styles.separator} />
 
-          {/* Recently Viewed Section */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Recently Viewed</ThemedText>
-            <ReviewItem
-              image='https://example.com/boba.jpg'
-              title="Melody's Boba Noodles"
-              description='A good helping of buckshots and boba'
-              rating={4}
-              reviewCount={35}
-            />
-            <ReviewItem
-              image='https://example.com/ramen.jpg'
-              title="Jay's Instant Ramen"
-              description='Ramen you can buy in stores but with a twist'
-              rating={4}
-              reviewCount={35}
-            />
-          </View>
+        {/* Recently Viewed Section */}
+        <View style={styles.recentlyViewedSection}>
+          <ThemedText style={styles.sectionTitle}>Recently Viewed</ThemedText>
+          <ReviewItem
+            image='https://example.com/boba.jpg'
+            title="Melody's Boba Noodles"
+            description='A good helping of buckshots and boba'
+            rating={4}
+            reviewCount={35}
+          />
+          <ReviewItem
+            image='https://example.com/ramen.jpg'
+            title="Jay's Instant Ramen"
+            description='Ramen you can buy in stores but with a twist'
+            rating={4}
+            reviewCount={35}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -272,7 +277,7 @@ const styles = StyleSheet.create({
   auraTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 15,
     color: '#000',
   },
   tabContainer: {
@@ -328,8 +333,13 @@ const styles = StyleSheet.create({
   statLabel: {
     opacity: 0.6,
     color: '#000',
+    fontSize: 14,
   },
   section: {
+    marginBottom: 10,
+  },
+  recentlyViewedSection: {
+    padding: 20,
     marginBottom: 30,
   },
   sectionTitle: {
@@ -385,6 +395,10 @@ const styles = StyleSheet.create({
   },
   heartIcon: {
     padding: 8,
+  },
+  separator: {
+    height: 10,
+    backgroundColor: Colors.primary.lightteal,
   },
 });
 
