@@ -87,6 +87,38 @@ const HomePage = () => {
               </View> */}
             </View>
           </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
+            <Image
+              source={require('@/assets/images/try_something_new_cuisine.png')}
+              style={styles.cardImage}
+            />
+            <View style={styles.cardDescription}>
+              <Text style={styles.cardTitle}>Orange Chicken</Text>
+              <Text style={styles.cardAddress}>Kin Long Beach</Text>
+              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
+              {/* <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={16} color="gold" />
+                <Text style={styles.cardRating}>4.6</Text>
+              </View> */}
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
+            <Image
+              source={require('@/assets/images/try_something_new_cuisine.png')}
+              style={styles.cardImage}
+            />
+            <View style={styles.cardDescription}>
+              <Text style={styles.cardTitle}>Orange Chicken</Text>
+              <Text style={styles.cardAddress}>Kin Long Beach</Text>
+              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
+              {/* <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={16} color="gold" />
+                <Text style={styles.cardRating}>4.6</Text>
+              </View> */}
+            </View>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
@@ -167,7 +199,7 @@ const styles = StyleSheet.create({
     width: 250,
     backgroundColor: '#fff',
     borderRadius: 20,
-    marginRight: 10,
+    marginRight: 16,
     elevation: 2,
   },
   cardDescription: {
