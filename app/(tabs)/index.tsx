@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// import Carousel from 'react-native-snap-carousel';
 
 const featuredItems = [
   {
@@ -29,21 +28,12 @@ const featuredItems = [
   },
 ]
 
-// Carousel Card Component
-// const CarouselCard = ({ item }) => {
-//   return (
-//     <View style={styles.card}>
-      
-//     </View>
-//   )
-// }
-
 const HomePage = () => {
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <Text style={styles.greeting}>Hey there, Kyle!</Text>
+        <Text style={styles.greeting}>Hey there,<br/>Kyle!</Text>
         <View style={styles.topBarIcons}>
           <Ionicons name="notifications" size={24} color="#000" />
           <Image
@@ -65,21 +55,39 @@ const HomePage = () => {
       {/* Best in Town Section */}
       <Text style={styles.sectionTitle}>Best in Town!</Text>
       <View style={styles.newSection}>
-        <TouchableOpacity style={[styles.card, styles.shadowProp]}>
-          <Image
-            source={require('@/assets/images/try_something_new_cuisine.png')}
-            style={styles.cardImage}
-          />
-          <View style={styles.cardDescription}>
-            <Text style={styles.cardTitle}>Orange Chicken</Text>
-            <Text style={styles.cardAddress}>Kin Long Beach</Text>
-            <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="gold" />
-              <Text style={styles.cardRating}>4.6</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollViewPadding}>
+          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
+            <Image
+              source={require('@/assets/images/try_something_new_cuisine.png')}
+              style={styles.cardImage}
+            />
+            <View style={styles.cardDescription}>
+              <Text style={styles.cardTitle}>Orange Chicken</Text>
+              <Text style={styles.cardAddress}>Kin Long Beach</Text>
+              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
+              {/* <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={16} color="gold" />
+                <Text style={styles.cardRating}>4.6</Text>
+              </View> */}
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
+            <Image
+              source={require('@/assets/images/try_something_new_cuisine.png')}
+              style={styles.cardImage}
+            />
+            <View style={styles.cardDescription}>
+              <Text style={styles.cardTitle}>Orange Chicken</Text>
+              <Text style={styles.cardAddress}>Kin Long Beach</Text>
+              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
+              {/* <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={16} color="gold" />
+                <Text style={styles.cardRating}>4.6</Text>
+              </View> */}
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       {/* Try Something New Section */}
@@ -108,6 +116,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7f7f7',
+    paddingTop: 50,
     padding: 16,
   },
   topBar: {
@@ -117,7 +126,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   greeting: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   topBarIcons: {
@@ -130,6 +139,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginLeft: 12,
   },
+  scrollViewPadding: {
+    paddingBottom: 16,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -139,7 +151,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(194,239,253,0.2)',
     padding: 10,
     borderRadius: 50,
-    marginBottom: 16,
     elevation: 2,
   },
   searchInput: {
@@ -148,23 +159,24 @@ const styles = StyleSheet.create({
     color: '#2897ba',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginVertical: 16,
+    marginVertical: 20,
   },
   card: {
-    width: 300,
+    width: 250,
     backgroundColor: '#fff',
     borderRadius: 20,
     marginRight: 10,
     elevation: 2,
   },
   cardDescription: {
+    marginTop: 10,
     margin: 16,
   },
   cardImage: {
     width: '100%',
-    height: 180,
+    height: 140,
     borderTopLeftRadius: 19,
     borderTopRightRadius: 19,
   },
@@ -173,7 +185,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   cardAddress: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#666',
     marginTop: 4,
   },
@@ -193,6 +205,7 @@ const styles = StyleSheet.create({
   },
   newBox: {
     width: '48%',
+    height: 290,
     backgroundColor: '#fff',
     borderRadius: 20,
     elevation: 2,
@@ -200,21 +213,21 @@ const styles = StyleSheet.create({
   },
   newImage: {
     width: '100%',
-    height: 300,
+    height: '75%',
     borderTopLeftRadius: 19,
     borderTopRightRadius: 19,
   },
   newBoxText: {
     fontSize: 24,
     fontWeight: 'bold',
-    paddingTop: 16,
+    paddingTop: 20,
     paddingBottom: 16,
   },
   shadowProp: {
     shadowColor: '#000',
     shadowOffset: {width: 4, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
   }
 });
 
