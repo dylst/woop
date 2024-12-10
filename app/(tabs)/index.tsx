@@ -10,23 +10,44 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import FeaturedCard from '@/components/ui/FeaturedCard';
 
 const featuredItems = [
   {
     id: '1',
     title: 'Orange Chicken',
-    rating: '4.6',
-    image: require('@/assets/images/react-logo.png'),
-    address: 'Kin Long Beach, 740 E Broadway Long Beach, CA 90802',
+    imageSource: require('@/assets/images/food/american.jpg'),
+    restaurantName: 'Kin Long Beach',
+    addressLine: '740 E Broadway Long Beach, CA 90802',
+    rating: 4.6
   },
   {
     id: '2',
     title: 'Beef Pho',
-    rating: '4.5',
-    image: require('@/assets/images/react-logo.png'),
-    address: 'Kin Long Beach, 740 E Broadway Long Beach, CA 90802',  
+    imageSource: require('@/assets/images/food/bakeries.jpg'),
+    restaurantName: 'Kin Long Beach',
+    addressLine: '740 E Broadway Long Beach, CA 90802',
+    rating: 4.5,  
+  },
+  {
+    id: '3',
+    title: 'Beef Pho',
+    imageSource: require('@/assets/images/food/barbecue.jpg'),
+    restaurantName: 'Kin Long Beach',
+    addressLine: '740 E Broadway Long Beach, CA 90802',
+    rating: 4.5,  
+  },
+  {
+    id: '4',
+    title: 'Beef Pho',
+    imageSource: require('@/assets/images/food/barbecue.jpg'),
+    restaurantName: 'Kin Long Beach',
+    addressLine: '740 E Broadway Long Beach, CA 90802',
+    rating: 4.5,  
   },
 ]
+
+
 
 const HomePage = () => {
   return (
@@ -56,69 +77,16 @@ const HomePage = () => {
       <Text style={styles.sectionTitle}>Best in Town!</Text>
       <View style={styles.newSection}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollViewPadding}>
-          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
-            <Image
-              source={require('@/assets/images/try_something_new_cuisine.png')}
-              style={styles.cardImage}
+          {featuredItems.map((item) => (
+            <FeaturedCard
+              key={item.id}
+              imageSource={item.imageSource}
+              title={item.title}
+              restaurantName={item.restaurantName}
+              addressLine={item.addressLine}
+              style={styles.shadowProp}
             />
-            <View style={styles.cardDescription}>
-              <Text style={styles.cardTitle}>Orange Chicken</Text>
-              <Text style={styles.cardAddress}>Kin Long Beach</Text>
-              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
-              {/* <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="gold" />
-                <Text style={styles.cardRating}>4.6</Text>
-              </View> */}
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
-            <Image
-              source={require('@/assets/images/try_something_new_cuisine.png')}
-              style={styles.cardImage}
-            />
-            <View style={styles.cardDescription}>
-              <Text style={styles.cardTitle}>Orange Chicken</Text>
-              <Text style={styles.cardAddress}>Kin Long Beach</Text>
-              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
-              {/* <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="gold" />
-                <Text style={styles.cardRating}>4.6</Text>
-              </View> */}
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
-            <Image
-              source={require('@/assets/images/try_something_new_cuisine.png')}
-              style={styles.cardImage}
-            />
-            <View style={styles.cardDescription}>
-              <Text style={styles.cardTitle}>Orange Chicken</Text>
-              <Text style={styles.cardAddress}>Kin Long Beach</Text>
-              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
-              {/* <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="gold" />
-                <Text style={styles.cardRating}>4.6</Text>
-              </View> */}
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.card, styles.shadowProp]}>
-            <Image
-              source={require('@/assets/images/try_something_new_cuisine.png')}
-              style={styles.cardImage}
-            />
-            <View style={styles.cardDescription}>
-              <Text style={styles.cardTitle}>Orange Chicken</Text>
-              <Text style={styles.cardAddress}>Kin Long Beach</Text>
-              <Text style={styles.cardAddress}>740 E Broadway Long Beach, CA 90802</Text>
-              {/* <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="gold" />
-                <Text style={styles.cardRating}>4.6</Text>
-              </View> */}
-            </View>
-          </TouchableOpacity>
+          ))}
         </ScrollView>
       </View>
 
