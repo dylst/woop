@@ -73,6 +73,16 @@ const styles = StyleSheet.create({
         color: '#666',
         marginTop: 4,
       },
+      ratingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+      },
+      cardRating: {
+        marginLeft: 4,
+        fontSize: 14,
+        color: '#333',
+      },
 })
 
 export default FeaturedCard;
