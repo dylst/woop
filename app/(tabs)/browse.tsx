@@ -4,13 +4,34 @@ import { Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { View, Text, StyleSheet, SafeAreaView, TextInput } from "react-native";
+import RNPickerSelect from "react-native-picker-select";
+import { useRouter } from "expo-router";
+import { Pressable } from "react-native";
+
 // Teal color used in figma: 89D5ED
-interface CuisineCardProps {
-	cuisineName: string;
+interface BrowseCardProps {
+	browseCardName: string;
 }
 
 const Favorites = () => {
 	const [text, setText] = useState("");
+	const [selectedCategory, setSelectedCategory] =
+		useState<keyof typeof categoryTitles>("cuisine");
+
+	const handleMapPress = () => {
+		router.push("/map");
+	};
+	const router = useRouter();
+
+	const categoryTitles = {
+		cuisine: "Cuisines",
+		dietary: "Dietary Restrictions",
+	};
+
+	const categoryOptions = [
+		{ label: "Cuisines", value: "cuisine" },
+		{ label: "Dietary Restrictions", value: "dietary" },
+	];
 
 	const cusineTypes = {
 		american: "American",
@@ -23,15 +44,29 @@ const Favorites = () => {
 		mediterranean: "Mediterranean",
 	};
 
-	const cusineArray = Object.values(cusineTypes);
+	const dietaryTypes = {
+		vegetarian: "Vegetarian",
+		vegan: "Vegan",
+		glutenFree: "Gluten Free",
+		keto: "Keto",
+		paleo: "Paleo",
+		nutFree: "Nut Free",
+		lactoseFree: "Lactose Free",
+		pescatarian: "Pescatarian",
+	};
 
-	const CuisineCard = ({ cuisineName }: CuisineCardProps) => (
+	const displayItems =
+		selectedCategory === "cuisine"
+			? Object.values(cusineTypes)
+			: Object.values(dietaryTypes);
+
+	const BrowseCard = ({ browseCardName }: BrowseCardProps) => (
 		<View style={styles.card}>
 			<Image
 				source={require("@/assets/images/react-logo.png")} // Placeholder image
 				style={styles.cardImage}
 			/>
-			<Text style={styles.cardText}>{cuisineName}</Text>
+			<Text style={styles.cardText}>{browseCardName}</Text>
 		</View>
 	);
 
@@ -55,20 +90,61 @@ const Favorites = () => {
 						autoFocus={false}
 					/>
 				</View>
-				<View>
-					<Text style={styles.custineTitleText}>Favorite Cusines</Text>
-					
+				<View style={styles.headerContainer}>
+					<Text style={styles.custineTitleText}>
+						{categoryTitles[selectedCategory]}
+					</Text>
+					<View>
+						<RNPickerSelect
+							onValueChange={(value) => setSelectedCategory(value)}
+							items={categoryOptions}
+							value={selectedCategory}
+							style={{
+								inputIOS: {
+									fontSize: 16,
+									paddingVertical: 12,
+									paddingHorizontal: 10,
+									borderWidth: 1,
+									borderColor: "#89D5ED",
+									borderRadius: 8,
+									color: "black",
+									marginBottom: 10,
+								},
+								inputAndroid: {
+									fontSize: 16,
+									paddingHorizontal: 10,
+									paddingVertical: 8,
+									borderWidth: 1,
+									borderColor: "#89D5ED",
+									borderRadius: 8,
+									color: "black",
+								},
+							}}
+						/>
+					</View>
 				</View>
 				<View>
 					<View style={styles.gridContainer}>
-						{cusineArray.map((cuisine, index) => (
-							<CuisineCard
+						{displayItems.map((cardName, index) => (
+							<BrowseCard
 								key={index}
-								cuisineName={cuisine}
+								browseCardName={cardName}
 							/>
 						))}
 					</View>
 				</View>
+
+				<Pressable
+					style={styles.mapButton}
+					onPress={handleMapPress}
+				>
+					<Ionicons
+						name='map'
+						size={24}
+						color='#89D5ED'
+					/>
+					<Text style={styles.mapButtonText}>View Map</Text>
+				</Pressable>
 			</View>
 		</SafeAreaView>
 	);
@@ -152,6 +228,32 @@ const styles = StyleSheet.create({
 		fontSize: 24,
 		fontWeight: "bold",
 		marginBottom: 20,
+	},
+
+	titleAndDropDownContainer: {},
+
+	headerContainer: {
+		width: "90%",
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+	},
+	mapButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "white",
+		padding: 12,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: "#89D5ED",
+		alignSelf: "flex-end",
+		marginRight: 20,
+		marginBottom: 10,
+	},
+	mapButtonText: {
+		marginLeft: 8,
+		color: "#89D5ED",
+		fontWeight: "500",
 	},
 });
 
