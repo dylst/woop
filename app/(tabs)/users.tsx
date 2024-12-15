@@ -1,177 +1,310 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
   ScrollView,
-  Pressable,
-  SafeAreaView,
-  StatusBar,
+  View,
+  Text,
+  Image,
   TextInput,
+  TouchableOpacity,
+  StyleSheet
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
-import { router } from 'expo-router';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-interface UserItemProps {
-  image: string;
-  name: string;
-  stats: { icon: keyof typeof Ionicons.glyphMap; count: number }[];
-}
+function Users() {
+  const [activeTab, setActiveTab] = useState('login');
 
-const UserItem: React.FC<UserItemProps> = ({ image, name, stats }) => (
-  <View style={styles.headerContent}>
-    <Image source={{ uri: image }} style={styles.userImage} />
-    <ThemedText style={styles.userName}>{name}</ThemedText>
-    <View style={styles.statsContainer}>
-      {stats.map((stat, index) => (
-        <View key={index} style={styles.statItem}>
-          <Ionicons name={stat.icon} size={16} color={Colors.primary.darkteal} />
-          <ThemedText style={styles.statText}>{stat.count}</ThemedText>
-        </View>
-      ))}
+  // Login states
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Register states
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regPasswordRetype, setRegPasswordRetype] = useState('');
+
+  // Forgot states
+  const [forgotEmail, setForgotEmail] = useState('');
+
+  const handleLoginTab = () => {
+    setActiveTab('login');
+  };
+
+  const handleRegTab = () => {
+    setActiveTab('register');
+  };
+
+  const handleForgotTab = () => {
+    setActiveTab('forgot');
+  };
+
+  const loginUser = () => {
+    if (loginEmail === '' || loginPassword === '') {
+      alert('Please enter your email and password.');
+    } else {
+      alert(`Logging in as ${loginEmail}`);
+    }
+  };
+
+  const registerUser = () => {
+    if (!regEmail || !regPassword || !regPasswordRetype) {
+      alert('Please fill in all fields.');
+      return;
+    }
+    if (regPassword !== regPasswordRetype) {
+      alert('Passwords do not match.');
+      return;
+    }
+    // Registration logic here
+    alert(`Registered with email: ${regEmail}`);
+  };
+
+  const forgotPassword = () => {
+    if (!forgotEmail) {
+      alert('Please enter your registered email.');
+      return;
+    }
+    // Forgot password logic here
+    alert(`Password reset email sent to ${forgotEmail}`);
+  };
+
+  const renderSocialSignUp = () => (
+    <View style={styles.socialContainer}>
+      <Text style={styles.socialText}>Or sign up with</Text>
+      <View style={styles.socialIcons}>
+        <TouchableOpacity style={styles.socialIconWrapper}>
+          <Ionicons name="logo-google" size={24} color="#EA4335" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.socialIconWrapper}>
+          <Ionicons name="logo-apple" size={24} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.socialIconWrapper}>
+          <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+        </TouchableOpacity>
+      </View>
     </View>
-  </View>
-);
-
-interface UserScreenProps {
-  users: UserItemProps[];
-}
-
-const UserScreen: React.FC<UserScreenProps> = ({ users = [] }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={Colors.primary.lightteal}
-      />
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={20} color="#666" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search users..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        <Text style={styles.greeting}>Hey There!</Text>
+        <View style={styles.topBarIcons}>
+          <Ionicons name="notifications" size={24} color="#000" />
+          <Image
+            source={require('@/assets/images/react-logo.png')}
+            style={styles.avatar}
+          />
+        </View>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {filteredUsers.length > 0 ? (
-          filteredUsers.map((user, index) => (
-            <View key={index}>
-              <UserItem {...user} />
-              <View style={styles.actionButtons}>
-                <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="create-outline" size={24} color={Colors.primary.darkteal} />
-                  <ThemedText style={styles.actionButtonText}>Add Review</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton}>
-                  <Ionicons name="camera-outline" size={24} color={Colors.primary.darkteal} />
-                  <ThemedText style={styles.actionButtonText}>Add Photo</ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => router.push('/preferences')}
-                >
-                  <Ionicons name="options-outline" size={24} color={Colors.primary.darkteal} />
-                  <ThemedText style={styles.actionButtonText}>Preferences</ThemedText>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.separator} />
-            </View>
-          ))
-        ) : (
-          <ThemedText style={styles.noUsersText}>No users found.</ThemedText>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+
+      {/* WoopLogo */}
+      <View style={styles.WoopLogo}>
+          <Image
+            source={require('@/assets/images/Logo.png')}
+          />
+        </View>
+
+      {/* Tabs */}
+      <View style={styles.tabButtonsContainer}>
+        <TouchableOpacity onPress={handleLoginTab}>
+          <Text style={[styles.tabButton, activeTab === 'login' && styles.activeTab]}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleRegTab}>
+          <Text style={[styles.tabButton, activeTab === 'register' && styles.activeTab]}>Register</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleForgotTab}>
+          <Text style={[styles.tabButton, activeTab === 'forgot' && styles.activeTab]}>Forgot</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Login Form */}
+      {activeTab === 'login' && (
+        <View style={styles.formContainer}>
+          <View style={styles.inputWrapper}>
+            <Text>Email:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter your email"
+              value={loginEmail}
+              onChangeText={setLoginEmail}
+              keyboardType="email-address"
+            />
+          </View>
+          <View style={styles.inputWrapper}>
+            <Text>Password:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter your password"
+              value={loginPassword}
+              onChangeText={setLoginPassword}
+              secureTextEntry
+            />
+          </View>
+          <TouchableOpacity onPress={loginUser} style={styles.submitButton}>
+            <Text style={styles.submitButtonText}>Sign In</Text>
+          </TouchableOpacity>
+
+          {renderSocialSignUp()}
+        </View>
+      )}
+
+      {/* Register Form */}
+      {activeTab === 'register' && (
+        <View style={styles.formContainer}>
+          <View style={styles.inputWrapper}>
+            <Text>Email:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter your email"
+              value={regEmail}
+              onChangeText={setRegEmail}
+              keyboardType="email-address"
+            />
+          </View>
+          <View style={styles.inputWrapper}>
+            <Text>Password:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter your password"
+              value={regPassword}
+              onChangeText={setRegPassword}
+              secureTextEntry
+            />
+          </View>
+          <View style={styles.inputWrapper}>
+            <Text>Retype Password:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Retype your password"
+              value={regPasswordRetype}
+              onChangeText={setRegPasswordRetype}
+              secureTextEntry
+            />
+          </View>
+          <TouchableOpacity onPress={registerUser} style={styles.submitButton}>
+            <Text style={styles.submitButtonText}>Register</Text>
+          </TouchableOpacity>
+
+          {renderSocialSignUp()}
+        </View>
+      )}
+
+      {/* Forgot Form */}
+      {activeTab === 'forgot' && (
+        <View style={styles.formContainer}>
+          <View style={styles.inputWrapper}>
+            <Text>Enter your registered email:</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter your email"
+              value={forgotEmail}
+              onChangeText={setForgotEmail}
+              keyboardType="email-address"
+            />
+          </View>
+          <TouchableOpacity onPress={forgotPassword} style={styles.submitButton}>
+            <Text style={styles.submitButtonText}>Send Reset Email</Text>
+          </TouchableOpacity>
+
+          {renderSocialSignUp()}
+        </View>
+      )}
+    </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  searchContainer: {
+  topBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    margin: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    backgroundColor: '#f9f9f9',
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-  },
-  headerContent: {
+    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
   },
-  userImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
-  },
-  userName: {
+  greeting: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 10,
-    color: '#000',
   },
-  statsContainer: {
+  topBarIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginLeft: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginHorizontal: 20,
+    marginTop: 20,
+  },
+  tabButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 10,
+    marginVertical: 20,
   },
-  statItem: {
-    flexDirection: 'row',
+  WoopLogo: {
     alignItems: 'center',
+    marginVertical: 20,
+  },
+  tabButton: {
     marginHorizontal: 10,
-  },
-  statText: {
-    marginLeft: 4,
     fontSize: 16,
-    color: Colors.primary.darkteal,
+    color: '#999',
   },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 10,
-  },
-  actionButton: {
-    alignItems: 'center',
-    padding: 10,
-  },
-  actionButtonText: {
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: '500',
+  activeTab: {
     color: '#000',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
-  separator: {
-    height: 10,
-    backgroundColor: Colors.primary.lightteal,
-    marginVertical: 10,
+  formContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 40,
   },
-  noUsersText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
+  inputWrapper: {
+    marginBottom: 15,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    marginTop: 5,
+    paddingHorizontal: 10,
+    height: 40,
+  },
+  submitButton: {
+    backgroundColor: '#2897ba',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  socialContainer: {
+    alignItems: 'center',
+  },
+  socialText: {
+    fontSize: 14,
     color: '#666',
+    marginBottom: 10,
+  },
+  socialIcons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  socialIconWrapper: {
+    marginHorizontal: 10,
   },
 });
 
-export default UserScreen;
+export default Users;
