@@ -12,6 +12,7 @@ import { useFetchUsers } from '@/hooks/useFetchUsers';
 import { useCreateUser } from '@/hooks/useCreateUser';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface User {
   id: number;
@@ -53,7 +54,7 @@ const UsersScreen = () => {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ThemedText style={styles.title}>Users List</ThemedText>
       <Pressable style={styles.button} onPress={handleGetUsers}>
         <ThemedText style={styles.buttonText}>Get Users</ThemedText>
@@ -103,7 +104,7 @@ const UsersScreen = () => {
           </View>
         )}
       />
-    </ThemedView>
+    </SafeAreaView>
   );
 };
 
