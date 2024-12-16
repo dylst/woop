@@ -80,7 +80,7 @@ export default function TabLayout() {
 					tabBarLabel: "Browse",
 				}}
 			/>
-			<Tabs.Screen
+			{/* <Tabs.Screen
 				name='favorites'
 				options={{
 					title: "Favorites",
@@ -113,7 +113,7 @@ export default function TabLayout() {
 					),
 					tabBarLabel: "Reviews",
 				}}
-			/>
+			/> */}
 			<Tabs.Screen
 				name='profile'
 				options={{
