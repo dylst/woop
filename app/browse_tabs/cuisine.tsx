@@ -1,36 +1,25 @@
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import { Image } from "react-native";
-import { Platform } from "react-native";
+import {
+	View,
+	Text,
+	StyleSheet,
+	SafeAreaView,
+	TextInput,
+	Image,
+	Platform,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, TextInput } from "react-native";
-import RNPickerSelect from "react-native-picker-select";
 import { useRouter } from "expo-router";
-import { Pressable } from "react-native";
+import React, { useState } from "react";
 
-// Teal color used in figma: 89D5ED
 interface BrowseCardProps {
 	browseCardName: string;
 }
 
-const Cuisine = () => {
-	const [text, setText] = useState("");
-	const [selectedCategory, setSelectedCategory] =
-		useState<keyof typeof categoryTitles>("cuisine");
-
+export default function Cuisine() {
+	const [searchText, setSearchText] = useState("");
 	const router = useRouter();
 
-	const categoryTitles = {
-		cuisine: "Cuisines",
-		dietary: "Dietary Restrictions",
-	};
-
-	const categoryOptions = [
-		{ label: "Cuisines", value: "cuisine" },
-		{ label: "Dietary Restrictions", value: "dietary" },
-	];
-
-	const cusineTypes = {
+	const cuisineTypes = {
 		american: "American",
 		italian: "Italian",
 		mexican: "Mexican",
@@ -39,28 +28,16 @@ const Cuisine = () => {
 		indian: "Indian",
 		french: "French",
 		mediterranean: "Mediterranean",
+		thai: "Thai",
+		korean: "Korean",
+		vietnamese: "Vietnamese",
+		greek: "Greek",
 	};
-
-	const dietaryTypes = {
-		vegetarian: "Vegetarian",
-		vegan: "Vegan",
-		glutenFree: "Gluten Free",
-		keto: "Keto",
-		paleo: "Paleo",
-		nutFree: "Nut Free",
-		lactoseFree: "Lactose Free",
-		pescatarian: "Pescatarian",
-	};
-
-	const displayItems =
-		selectedCategory === "cuisine"
-			? Object.values(cusineTypes)
-			: Object.values(dietaryTypes);
 
 	const BrowseCard = ({ browseCardName }: BrowseCardProps) => (
 		<View style={styles.card}>
 			<Image
-				source={require("@/assets/images/react-logo.png")} // Placeholder image
+				source={require("@/assets/images/react-logo.png")}
 				style={styles.cardImage}
 			/>
 			<Text style={styles.cardText}>{browseCardName}</Text>
@@ -73,67 +50,30 @@ const Cuisine = () => {
 				<View style={styles.searchContainer}>
 					<Ionicons
 						name='search'
-						size={24}
-						color={"#89D5ED"}
+						size={20}
+						color='#89D5ED'
 					/>
 					<TextInput
-						style={styles.inputSearch}
-						placeholder='Search food item...'
-						value={text}
-						onChangeText={setText}
+						style={styles.searchInput}
+						placeholder='Search cuisines...'
+						value={searchText}
+						onChangeText={setSearchText}
 						placeholderTextColor='#999'
-						selectionColor='#89D5ED' // Changes text selection color
-						cursorColor='#89D5ED' // Changes cursor color
-						autoFocus={false}
 					/>
 				</View>
-				<View style={styles.headerContainer}>
-					<Text style={styles.custineTitleText}>
-						{categoryTitles[selectedCategory]}
-					</Text>
-					<View>
-						<RNPickerSelect
-							onValueChange={(value) => setSelectedCategory(value)}
-							items={categoryOptions}
-							value={selectedCategory}
-							style={{
-								inputIOS: {
-									fontSize: 16,
-									paddingVertical: 12,
-									paddingHorizontal: 10,
-									borderWidth: 1,
-									borderColor: "#89D5ED",
-									borderRadius: 8,
-									color: "black",
-									marginBottom: 10,
-								},
-								inputAndroid: {
-									fontSize: 16,
-									paddingHorizontal: 10,
-									paddingVertical: 8,
-									borderWidth: 1,
-									borderColor: "#89D5ED",
-									borderRadius: 8,
-									color: "black",
-								},
-							}}
+
+				<View style={styles.gridContainer}>
+					{Object.values(cuisineTypes).map((cuisine, index) => (
+						<BrowseCard
+							key={index}
+							browseCardName={cuisine}
 						/>
-					</View>
-				</View>
-				<View>
-					<View style={styles.gridContainer}>
-						{displayItems.map((cardName, index) => (
-							<BrowseCard
-								key={index}
-								browseCardName={cardName}
-							/>
-						))}
-					</View>
+					))}
 				</View>
 			</View>
 		</SafeAreaView>
 	);
-};
+}
 
 const styles = StyleSheet.create({
 	safeArea: {
@@ -154,9 +94,16 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		paddingHorizontal: 10,
 		marginTop: 10,
+		padding: 12,
 	},
 	searchIcon: {
 		marginRight: 10,
+	},
+	searchInput: {
+		marginLeft: 8,
+		flex: 1,
+		fontSize: 16,
+		color: "#333",
 	},
 	inputSearch: {
 		flex: 1,
@@ -242,4 +189,3 @@ const styles = StyleSheet.create({
 	},
 });
 
-export default Cuisine;

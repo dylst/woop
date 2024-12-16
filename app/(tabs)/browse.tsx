@@ -5,6 +5,7 @@ import {
 	SafeAreaView,
 	TextInput,
 	Pressable,
+	FlatList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -15,13 +16,31 @@ export default function Browse() {
 	const router = useRouter();
 
 	const historyItems = [
-		{ name: "Sushi Station", date: "2 days ago" },
-		{ name: "Pizza Palace", date: "Last week" },
-		{ name: "Taco Temple", date: "2 weeks ago" },
+		{ name: "Beef Pho with Meatballs" },
+		{ name: "Spicy Chicken Wings" },
+		{ name: "Quesabirria Tacos" },
+		{ name: "Sushi" },
 	];
 
 	return (
 		<SafeAreaView style={styles.container}>
+			{/* Top Navigation */}
+			<View style={styles.topNav}>
+				<Pressable onPress={() => router.back()}>
+					<Ionicons
+						name='chevron-back'
+						size={28}
+						color='#333'
+					/>
+				</Pressable>
+				<Text style={styles.pageTitle}>Search</Text>
+				<Ionicons
+					name='notifications-outline'
+					size={24}
+					color='#333'
+				/>
+			</View>
+
 			{/* Search Bar */}
 			<View style={styles.searchContainer}>
 				<Ionicons
@@ -31,7 +50,7 @@ export default function Browse() {
 				/>
 				<TextInput
 					style={styles.searchInput}
-					placeholder='Search foods...'
+					placeholder='Search food item...'
 					value={searchText}
 					onChangeText={setSearchText}
 				/>
@@ -43,36 +62,54 @@ export default function Browse() {
 					style={styles.button}
 					onPress={() => router.push("/browse_tabs/cuisine")}
 				>
+					<Ionicons
+						name='restaurant-outline'
+						size={24}
+						color='white'
+					/>
 					<Text style={styles.buttonText}>Cuisine</Text>
 				</Pressable>
 				<Pressable
 					style={styles.button}
 					onPress={() => router.push("/browse_tabs/dietary")}
 				>
+					<Ionicons
+						name='nutrition-outline'
+						size={24}
+						color='white'
+					/>
 					<Text style={styles.buttonText}>Dietary</Text>
 				</Pressable>
 				<Pressable
 					style={styles.button}
 					onPress={() => router.push("/browse_tabs/map")}
 				>
-					<Text style={styles.buttonText}>Map</Text>
+					<Ionicons
+						name='location-outline'
+						size={24}
+						color='white'
+					/>
+					<Text style={styles.buttonText}>Location</Text>
 				</Pressable>
 			</View>
 
-			{/* Divider */}
-			<View style={styles.titleDivider} />
 			{/* History Section */}
 			<View style={styles.historyContainer}>
-				<Text style={styles.historyTitle}>Recent Food History</Text>
-				{historyItems.map((item, index) => (
-					<View
-						key={index}
-						style={styles.historyItem}
-					>
-						<Text style={styles.historyName}>{item.name}</Text>
-						<Text style={styles.historyDate}>{item.date}</Text>
-					</View>
-				))}
+				<Text style={styles.historyTitle}>History</Text>
+				<FlatList
+					data={historyItems}
+					keyExtractor={(item, index) => index.toString()}
+					renderItem={({ item }) => (
+						<View style={styles.historyItem}>
+							<Text style={styles.historyName}>{item.name}</Text>
+							<Ionicons
+								name='close'
+								size={20}
+								color='#666'
+							/>
+						</View>
+					)}
+				/>
 			</View>
 		</SafeAreaView>
 	);
@@ -83,26 +120,29 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: "white",
 		padding: 16,
-		alignItems: "center", // Add this
+	},
+	topNav: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: 10,
+	},
+	pageTitle: {
+		padding: 24,
+		fontSize: 24,
+		fontWeight: "bold",
+		color: "#333",
 	},
 	searchContainer: {
-		width: "100%",
-		maxWidth: 800,
-		alignSelf: "center", // Add this
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "white",
+		backgroundColor: "#F1F1F1",
 		padding: 12,
-		borderRadius: 12,
+		borderRadius: 8,
 		marginBottom: 20,
-		borderWidth: 1,
-		borderColor: "#89D5ED",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
-		marginTop: 20,
+		width: "80%", // Reduced from 100%
+		maxWidth: 1200, // Add maximum width
+		alignSelf: "center", // Center the container
 	},
 	searchInput: {
 		marginLeft: 8,
@@ -112,72 +152,72 @@ const styles = StyleSheet.create({
 	},
 	buttonContainer: {
 		flexDirection: "row",
-		justifyContent: "space-between",
+		justifyContent: "center", 
+		gap: 50	,
 		marginBottom: 20,
+		alignSelf: "center",
+		maxWidth: 1000,
+		width: "100%",
 	},
 	button: {
-		backgroundColor: "#89D5ED",
-		padding: 14,
-		borderRadius: 12,
-		width: "30%",
+		backgroundColor: "#65C5E3",
+		paddingVertical: 10, 
+		paddingHorizontal: 15, 
+		borderRadius: 8,
 		alignItems: "center",
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 3,
-		elevation: 2,
+		justifyContent: "center",
+		width: "25%",	
 	},
 	buttonText: {
 		color: "white",
 		fontWeight: "600",
-		fontSize: 16,
-	},
-	divider: {
-		height: 2,
-		backgroundColor: "#89D5ED20",
-		marginVertical: 20,
+		marginTop: 4,
 	},
 	historyContainer: {
 		flex: 1,
-		backgroundColor: "white",
-		padding: 20,
-		width: "100%",
-		maxWidth: 800,
-		alignSelf: "center",
+		marginBottom: 10,
 	},
 	historyTitle: {
 		fontSize: 20,
 		fontWeight: "bold",
 		color: "#333",
-		marginBottom: 24, // Increased from 16
+		marginBottom: 12,
 	},
 	historyItem: {
 		flexDirection: "row",
 		justifyContent: "space-between",
-		paddingVertical: 16,
-		paddingHorizontal: 16, // Increased from 12
+		alignItems: "center",
+		padding: 12,
 		borderRadius: 8,
-		backgroundColor: "white",
-		marginBottom: 16, // Increased from 12
+		backgroundColor: "#F9F9F9",
+		marginBottom: 8,
+		borderColor: "#E0E0E0",
 		borderWidth: 1,
-		borderColor: "#89D5ED20",
-		maxWidth: 800,
-		width: "100%",
 	},
 	historyName: {
 		fontSize: 16,
 		color: "#333",
-		fontWeight: "500",
 	},
-	historyDate: {
-		color: "#89D5ED",
-		fontSize: 14,
+	bottomNav: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		paddingVertical: 12,
+		borderTopWidth: 1,
+		borderColor: "#E0E0E0",
+		backgroundColor: "white",
 	},
-	titleDivider: {
-		height: 20,
-		backgroundColor: "#65C5E340", 
-		width: "100%",
-		marginVertical: 20,
-		alignSelf: "center",
+	navItem: {
+		alignItems: "center",
+	},
+	navText: {
+		fontSize: 12,
+		color: "#666",
+		marginTop: 4,
+	},
+	navTextActive: {
+		fontSize: 12,
+		color: "#65C5E3",
+		marginTop: 4,
+		fontWeight: "bold",
 	},
 });
