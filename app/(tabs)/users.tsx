@@ -6,11 +6,12 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
-  StyleSheet
+  StyleSheet,
+  Dimensions
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Dimensions } from 'react-native';
 
+const { width, height } = Dimensions.get('window');
 
 function Users() {
   const [activeTab, setActiveTab] = useState('login');
@@ -27,17 +28,9 @@ function Users() {
   // Forgot states
   const [forgotEmail, setForgotEmail] = useState('');
 
-  const handleLoginTab = () => {
-    setActiveTab('login');
-  };
-
-  const handleRegTab = () => {
-    setActiveTab('register');
-  };
-
-  const handleForgotTab = () => {
-    setActiveTab('forgot');
-  };
+  const handleLoginTab = () => setActiveTab('login');
+  const handleRegTab = () => setActiveTab('register');
+  const handleForgotTab = () => setActiveTab('forgot');
 
   const loginUser = () => {
     if (loginEmail === '' || loginPassword === '') {
@@ -56,7 +49,6 @@ function Users() {
       alert('Passwords do not match.');
       return;
     }
-    // Registration logic here
     alert(`Registered with email: ${regEmail}`);
   };
 
@@ -65,26 +57,25 @@ function Users() {
       alert('Please enter your registered email.');
       return;
     }
-    // Forgot password logic here
     alert(`Password reset email sent to ${forgotEmail}`);
   };
 
-  const { width: screenWidth } = Dimensions.get('window');
-  const logoSize = screenWidth * 0.5; 
-
-
   const renderSocialSignUp = () => (
     <View style={styles.socialContainer}>
-      <Text style={styles.socialText}>Or sign up with</Text>
+      <View style={styles.dividerContainer}>
+        <View style={styles.line} />
+        <Text style={styles.dividerText}>Sign in with</Text>
+        <View style={styles.line} />
+      </View>
       <View style={styles.socialIcons}>
         <TouchableOpacity style={styles.socialIconWrapper}>
-          <Ionicons name="logo-google" size={24} color="#EA4335" />
+          <Ionicons name="logo-google" size={30} color="#2897ba" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.socialIconWrapper}>
-          <Ionicons name="logo-apple" size={24} color="#000" />
+          <Ionicons name="logo-apple" size={30} color="#2897ba" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.socialIconWrapper}>
-          <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+          <Ionicons name="logo-facebook" size={30} color="#2897ba" />
         </TouchableOpacity>
       </View>
     </View>
@@ -92,26 +83,18 @@ function Users() {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <Text style={styles.greeting}>Sign In Here!</Text>
-        <View style={styles.topBarIcons}>
-          <Ionicons name="notifications" size={24} color="#000" />
-          <Image
-            source={require('@/assets/images/react-logo.png')}
-            style={styles.avatar}
-          />
-        </View>
+      {/* White elliptical shape in the middle */}
+      <View style={styles.whiteEllipse} />
+
+      {/* Logo */}
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('@/assets/images/Logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
+        <Text style={styles.logoText}></Text>
       </View>
-
-      {/* WoopLogo */}
-      <View style={styles.WoopLogo}>
-  <Image
-    source={require('@/assets/images/Logo.png')}
-    style={{ width: logoSize, height: logoSize, resizeMode: 'contain' }}
-  />
-</View>
-
 
       {/* Tabs */}
       <View style={styles.tabButtonsContainer}>
@@ -129,39 +112,61 @@ function Users() {
       {/* Login Form */}
       {activeTab === 'login' && (
         <View style={styles.formContainer}>
+          <Text style={styles.inputLabel}>
+            <Ionicons name="person-outline" size={16} color="#2897ba" /> Enter username or email
+          </Text>
           <View style={styles.inputWrapper}>
-            <Text>Email:</Text>
+            <Ionicons name="mail-outline" size={25} color="#2897ba" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
-              placeholder="Enter your email"
+              placeholder="Username or email"
               value={loginEmail}
               onChangeText={setLoginEmail}
               keyboardType="email-address"
             />
           </View>
+
+          <Text style={styles.inputLabel}>
+            <Ionicons name="lock-closed-outline" size={16} color="#2897ba" /> Enter password
+          </Text>
           <View style={styles.inputWrapper}>
-            <Text>Password:</Text>
+            <Ionicons name="lock-closed-outline" size={25} color="#2897ba" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
-              placeholder="Enter your password"
+              placeholder="Password"
               value={loginPassword}
               onChangeText={setLoginPassword}
               secureTextEntry
             />
           </View>
+
           <TouchableOpacity onPress={loginUser} style={styles.submitButton}>
-            <Text style={styles.submitButtonText}>Sign In</Text>
+            <Text style={styles.submitButtonText}>Sign in</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleForgotTab}>
+            <Text style={styles.linkText}>Forgot password?</Text>
           </TouchableOpacity>
 
           {renderSocialSignUp()}
+
+          <View style={styles.bottomLinks}>
+            <Text style={styles.bottomText}>Don’t already have an account? </Text>
+            <TouchableOpacity onPress={handleRegTab}>
+              <Text style={styles.bottomLink}>Create an account</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {/* Register Form */}
       {activeTab === 'register' && (
         <View style={styles.formContainer}>
+          <Text style={styles.inputLabel}>
+            <Ionicons name="person-outline" size={16} color="#2897ba" /> Enter email
+          </Text>
           <View style={styles.inputWrapper}>
-            <Text>Email:</Text>
+            <Ionicons name="mail-outline" size={20} color="#2897ba" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
               placeholder="Enter your email"
@@ -170,8 +175,12 @@ function Users() {
               keyboardType="email-address"
             />
           </View>
+
+          <Text style={styles.inputLabel}>
+            <Ionicons name="lock-closed-outline" size={16} color="#2897ba" /> Enter password
+          </Text>
           <View style={styles.inputWrapper}>
-            <Text>Password:</Text>
+            <Ionicons name="lock-closed-outline" size={20} color="#2897ba" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
               placeholder="Enter your password"
@@ -180,8 +189,12 @@ function Users() {
               secureTextEntry
             />
           </View>
+
+          <Text style={styles.inputLabel}>
+            <Ionicons name="lock-closed-outline" size={16} color="#2897ba" /> Retype password
+          </Text>
           <View style={styles.inputWrapper}>
-            <Text>Retype Password:</Text>
+            <Ionicons name="lock-closed-outline" size={20} color="#2897ba" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
               placeholder="Retype your password"
@@ -190,19 +203,28 @@ function Users() {
               secureTextEntry
             />
           </View>
+
           <TouchableOpacity onPress={registerUser} style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Register</Text>
           </TouchableOpacity>
 
           {renderSocialSignUp()}
+
+          <View style={styles.bottomLinks}>
+            <Text style={styles.bottomText}>Already have an account? </Text>
+            <TouchableOpacity onPress={handleLoginTab}>
+              <Text style={styles.bottomLink}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {/* Forgot Form */}
       {activeTab === 'forgot' && (
         <View style={styles.formContainer}>
+          <Text style={styles.inputLabel}>Enter your registered email:</Text>
           <View style={styles.inputWrapper}>
-            <Text>Enter your registered email:</Text>
+            <Ionicons name="mail-outline" size={20} color="#2897ba" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
               placeholder="Enter your email"
@@ -211,11 +233,19 @@ function Users() {
               keyboardType="email-address"
             />
           </View>
+
           <TouchableOpacity onPress={forgotPassword} style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Send Reset Email</Text>
           </TouchableOpacity>
 
           {renderSocialSignUp()}
+
+          <View style={styles.bottomLinks}>
+            <Text style={styles.bottomText}>Remembered your password? </Text>
+            <TouchableOpacity onPress={handleLoginTab}>
+              <Text style={styles.bottomLink}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </ScrollView>
@@ -225,87 +255,122 @@ function Users() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#C2EFFD', // Blue background
+  },
+  whiteEllipse: {
+    position: 'absolute',
+    // Adjust these values to achieve your desired ellipse shape and position
+    top: height * 0.15,
+    left: -width * 0.5,
+    width: width * 2,
+    height: height * 0.7,
     backgroundColor: '#fff',
+    borderRadius: width,
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  logoContainer: {
     alignItems: 'center',
-    padding: 20,
+    marginTop: 120,
+    marginBottom: -30,
+    zIndex: 1, // Ensure logo appears above ellipse
   },
-  greeting: {
-    fontSize: 24,
+  logoImage: {
+    width: 150,
+    height: 150,
+    flex: 1,
+  },
+  logoText: {
+    fontSize: 48,
     fontWeight: 'bold',
-  },
-  topBarIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginLeft: 10,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginHorizontal: 20,
-    marginTop: 20,
+    color: '#2897ba',
+    marginTop: 10,
   },
   tabButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginVertical: 20,
-  },
-  WoopLogo: {
-    resizeMode: 'contain',
-    alignItems: 'center',
-    marginVertical: 20,
+    zIndex: 1,
   },
   tabButton: {
     marginHorizontal: 10,
     fontSize: 16,
     color: '#999',
+    paddingBottom: 5,
   },
   activeTab: {
-    color: '#000',
+    color: '#2897ba',
     fontWeight: 'bold',
-    textDecorationLine: 'underline',
+    borderBottomWidth: 2,
+    borderBottomColor: '#2897ba',
   },
   formContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
     marginBottom: 40,
+    zIndex: 1,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#2897ba',
+    marginBottom: 5,
+    fontWeight: 'bold',
   },
   inputWrapper: {
-    marginBottom: 15,
+    position: 'relative',
+    marginBottom: 20,
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 10,
+    top: 10,
   },
   textInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    marginTop: 5,
-    paddingHorizontal: 10,
-    height: 40,
+    borderWidth: 2,
+    borderColor: '#2897ba',
+    borderRadius: 25,
+    paddingLeft: 40, 
+    paddingRight: 15,
+    height: 45,
+    fontSize: 16,
+    color: '#333',
+    backgroundColor: '#fff',
   },
   submitButton: {
     backgroundColor: '#2897ba',
-    borderRadius: 10,
-    paddingVertical: 10,
+    borderRadius: 25,
+    paddingVertical: 12,
     alignItems: 'center',
+    marginTop: 10,
     marginBottom: 20,
   },
   submitButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
+  },
+  linkText: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 20,
+    textDecorationLine: 'underline',
   },
   socialContainer: {
     alignItems: 'center',
+    marginVertical: 20,
   },
-  socialText: {
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ccc',
+  },
+  dividerText: {
+    marginHorizontal: 10,
     fontSize: 14,
     color: '#666',
-    marginBottom: 10,
   },
   socialIcons: {
     flexDirection: 'row',
@@ -314,6 +379,21 @@ const styles = StyleSheet.create({
   socialIconWrapper: {
     marginHorizontal: 10,
   },
+  bottomLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  bottomText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  bottomLink: {
+    fontSize: 14,
+    color: '#2897ba',
+    textDecorationLine: 'underline',
+  },
 });
 
 export default Users;
+
