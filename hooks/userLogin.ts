@@ -10,7 +10,7 @@ export async function userLogin(
   });
 
   if (error) {
-    console.error('Error creating user:', error);
+    console.error('Error logging in user:', error);
     return null;
 
   }
