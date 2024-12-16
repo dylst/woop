@@ -15,6 +15,7 @@ import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 // import supabase in a future implementation
+import { supabase } from '@/supabaseClient';
 
 // Add this interface for food items
 interface FoodItem {
@@ -36,10 +37,28 @@ const PreferencesScreen = () => {
 
   // For tracking unsaved changes
   const [hasChanges, setHasChanges] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // This will be used when we integrate Supabase
   useEffect(() => {
     // fetchUserPreferences();
+    const fetchData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        setUserId(user.id);
+        await fetchUserPreferences(user.id);
+      }
+    };
+    
+    fetchData();
+
+    // const testUserId = '10';
+    // setUserId(testUserId);
+    // fetchUserPreferences(testUserId);
   }, []);
 
   // Example of how we'll fetch preferences later
@@ -59,6 +78,36 @@ const PreferencesScreen = () => {
     }
   };
   */
+
+  const fetchUserPreferences = async (userId: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setPreferences({
+          food: data.food || [],
+          dietary: data.dietary || [],
+          notifications: {
+            push: data.push || false,
+            email: data.email || false,
+          },
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching preferences', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleFood = (item: string) => {
     setPreferences((prev) => ({
@@ -109,6 +158,25 @@ const PreferencesScreen = () => {
       console.error('Error saving preferences:', error);
     }
     */
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('preferences').upsert({
+        user_id: userId,
+        food: preferences.food,
+        dietary: preferences.dietary,
+        push: preferences.notifications.push,
+        email: preferences.notifications.email,
+      });
+
+      if (error) throw error;
+
+      setHasChanges(false);
+    } catch (error: any) {
+      console.error('Error saving preferences:', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Example food items array

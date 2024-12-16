@@ -6,92 +6,129 @@ import { Ionicons } from "@expo/vector-icons";
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
-import { Colors } from "@/constants/Colors";
+import { Colors } from '@/constants/Colors';
 import { useColorScheme } from "@/hooks/useColorScheme";
-
+import {
+	View,
+	Text,
+	StyleSheet,
+	ScrollView,
+  } from 'react-native';
 export default function TabLayout() {
 	const colorScheme = useColorScheme();
 
 	return (
 		<Tabs
 			screenOptions={{
-				tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
 				headerShown: false,
 				tabBarButton: HapticTab,
 				tabBarBackground: TabBarBackground,
-				tabBarStyle: Platform.select({
-					ios: {
-						// Use a transparent background on iOS to show the blur effect
-						position: "absolute",
-					},
+				tabBarActiveTintColor: Colors.primary.darkteal,
+				tabBarInactiveTintColor: "#000000",
+				tabBarStyle: {
+					borderTopColor: Colors.primary.lightteal,
+					backgroundColor: Colors.primary.lightteal,
+					height: 70,
+					paddingTop: 16,
+					...Platform.select({
+						ios: {
+							// Use a transparent background on iOS to show the blur effect
+							position: "absolute",
+							backgroundColor: "transparent",
+						},
 					default: {},
-				}),
+					})
+				},
+				tabBarLabelStyle: {
+					fontSize: 14,
+					// color: "#000000",
+					marginTop: -4,
+				},
 			}}
 		>
 			<Tabs.Screen
 				name='index'
 				options={{
 					title: "Home",
-					tabBarIcon: ({ color }) => (
-						<IconSymbol
-							size={28}
-							name='house.fill'
-							color={color}
-						/>
+					tabBarIcon: ({ focused, color }) => (
+						<View style={focused ? styles.activeTab : null }>
+							<Ionicons
+								name="home"
+								size={28}
+								color={focused ? Colors.primary.darkteal : color}
+								style={styles.tabIcon}
+							/>
+						</View>
 					),
+					tabBarLabel: "Home",
 				}}
 			/>
-			<Tabs.Screen
-				name='explore'
-				options={{
-					title: "Explore",
-					tabBarIcon: ({ color }) => (
-						<IconSymbol
-							size={28}
-							name='paperplane.fill'
-							color={color}
-						/>
-					),
-				}}
-			/>
-			<Tabs.Screen
-				name='users'
-				options={{
-					title: "Users",
-					tabBarIcon: ({ color, size }) => (
-						<Ionicons
-							name='people'
-							size={size}
-							color={color}
-						/>
-					),
-				}}
-			/>
-			<Tabs.Screen
-				name='profile'
-				options={{
-					title: "Profile",
-					tabBarIcon: ({ color, size }) => (
-						<Ionicons
-							name='person'
-							size={size}
-							color={color}
-						/>
-					),
-				}}
-			/>
-
 			<Tabs.Screen
 				name='browse'
 				options={{
 					title: "Browse",
-					tabBarIcon: ({ color, size }) => (
-						<Ionicons
-							name='search'
-							size={size}
-							color={color}
-						/>
+					tabBarIcon: ({ focused, color }) => (
+						<View style={focused ? styles.activeTab : null }>
+							<Ionicons
+								name="search"
+								size={28}
+								color={focused ? Colors.primary.darkteal : color}
+								style={styles.tabIcon}
+							/>
+						</View>
 					),
+					tabBarLabel: "Browse",
+				}}
+			/>
+			{/* <Tabs.Screen
+				name='favorites'
+				options={{
+					title: "Favorites",
+					tabBarIcon: ({ focused, color }) => (
+						<View style={[styles.tabIcon, focused ? styles.activeTab : null ]}>
+							<Ionicons
+								name="heart"
+								size={28}
+								color={focused ? Colors.primary.darkteal : color}
+								style={styles.tabIcon}
+							/>
+						</View>
+					),
+					tabBarLabel: "Favorites",
+				}}
+			/>
+			<Tabs.Screen
+				name='reviews'
+				options={{
+					title: "Reviews",
+					tabBarIcon: ({ focused, color }) => (
+						<View style={focused ? styles.activeTab : null }>
+							<Ionicons
+								name="star"
+								size={28}
+								color={focused ? Colors.primary.darkteal : color}
+								style={styles.tabIcon}
+							/>
+						</View>
+					),
+					tabBarLabel: "Reviews",
+				}}
+			/> */}
+			<Tabs.Screen
+				name='profile'
+				options={{
+					title: "Profile",
+					tabBarIcon: ({ focused, color }) => (
+						<View style={focused ? styles.activeTab : null }>
+							<Ionicons
+								name="person"
+								size={28}
+								color={focused ? Colors.primary.darkteal : color}
+								style={styles.tabIcon}
+							/>
+						</View>
+					),
+					tabBarLabel: "Profile",
 				}}
 			/>
 
@@ -103,3 +140,16 @@ export default function TabLayout() {
 		
 	);
 }
+
+const styles = StyleSheet.create({
+	activeTab: {
+		// backgroundColor: "rgba(137, 213, 237, 0.6)",
+		// borderRadius: 50,
+		// padding: 20,
+	},
+	tabIcon: {
+		marginTop: -12,
+		paddingTop: 4,
+		paddingBottom: 4,
+	}
+})
