@@ -86,7 +86,7 @@ const PreferencesScreen = () => {
         .from('preferences')
         .select('*')
         .eq('user_id', userId)
-        .maybeSingle()
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
@@ -161,15 +161,16 @@ const PreferencesScreen = () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from('preferences').upsert({
-        user_id: userId,
-        food: preferences.food,
-        dietary: preferences.dietary,
-        push: preferences.notifications.push,
-        email: preferences.notifications.email,
-      },
-      { onConflict: 'user_id' }
-    );
+      const { error } = await supabase.from('preferences').upsert(
+        {
+          user_id: userId,
+          food: preferences.food,
+          dietary: preferences.dietary,
+          push: preferences.notifications.push,
+          email: preferences.notifications.email,
+        },
+        { onConflict: 'user_id' }
+      );
 
       if (error) throw error;
 
@@ -232,7 +233,7 @@ const PreferencesScreen = () => {
             </View>
           </View>
           <ThemedText style={styles.title}>
-            See more of what <br /> you love
+            See more of what {'\n'} you love
           </ThemedText>
           <ThemedText style={styles.subtitle}>
             Your selections will help us give you better results and
