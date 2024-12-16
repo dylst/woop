@@ -9,6 +9,8 @@ import {
   StyleSheet
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Dimensions } from 'react-native';
+
 
 function Users() {
   const [activeTab, setActiveTab] = useState('login');
@@ -67,6 +69,10 @@ function Users() {
     alert(`Password reset email sent to ${forgotEmail}`);
   };
 
+  const { width: screenWidth } = Dimensions.get('window');
+  const logoSize = screenWidth * 0.5; 
+
+
   const renderSocialSignUp = () => (
     <View style={styles.socialContainer}>
       <Text style={styles.socialText}>Or sign up with</Text>
@@ -88,7 +94,7 @@ function Users() {
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <Text style={styles.greeting}>Hey There!</Text>
+        <Text style={styles.greeting}>Sign In Here!</Text>
         <View style={styles.topBarIcons}>
           <Ionicons name="notifications" size={24} color="#000" />
           <Image
@@ -100,10 +106,12 @@ function Users() {
 
       {/* WoopLogo */}
       <View style={styles.WoopLogo}>
-          <Image
-            source={require('@/assets/images/Logo.png')}
-          />
-        </View>
+  <Image
+    source={require('@/assets/images/Logo.png')}
+    style={{ width: logoSize, height: logoSize, resizeMode: 'contain' }}
+  />
+</View>
+
 
       {/* Tabs */}
       <View style={styles.tabButtonsContainer}>
@@ -251,6 +259,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   WoopLogo: {
+    resizeMode: 'contain',
     alignItems: 'center',
     marginVertical: 20,
   },
