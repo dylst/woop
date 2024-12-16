@@ -9,12 +9,13 @@ import { Ionicons } from '@expo/vector-icons';
 import FeaturedCard from '@/components/ui/FeaturedCard';
 import FiltersHomeNav from '@/components/ui/FiltersHomeNav';
 import TopBar from '@/components/ui/TopBar';
+import { useRouter } from 'expo-router';
 
 const featuredItems = [
   {
     id: '1',
     title: 'Orange Chicken',
-    imageSource: require('@/assets/images/food/american.jpg'),
+    imageSource: require('@/assets/images/food/orange_chicken.jpg'),
     restaurantName: 'Kin Long Beach',
     addressLine: '740 E Broadway Long Beach, CA 90802',
     rating: 4.6
@@ -22,27 +23,19 @@ const featuredItems = [
   {
     id: '2',
     title: 'Beef Pho',
-    imageSource: require('@/assets/images/food/bakeries.jpg'),
-    restaurantName: 'Kin Long Beach',
-    addressLine: '740 E Broadway Long Beach, CA 90802',
+    imageSource: require('@/assets/images/food/beef_pho.jpg'),
+    restaurantName: 'PhoHolic',
+    addressLine: '14932 Bushard St Westminster, CA 92683',
     rating: 4.5,  
   },
   {
     id: '3',
-    title: 'Beef Pho',
-    imageSource: require('@/assets/images/food/barbecue.jpg'),
-    restaurantName: 'Kin Long Beach',
-    addressLine: '740 E Broadway Long Beach, CA 90802',
-    rating: 4.5,  
-  },
-  {
-    id: '4',
-    title: 'Beef Pho',
-    imageSource: require('@/assets/images/food/barbecue.jpg'),
-    restaurantName: 'Kin Long Beach',
-    addressLine: '740 E Broadway Long Beach, CA 90802',
-    rating: 4.5,  
-  },
+    title: 'Adobada Quesadilla',
+    imageSource: require('@/assets/images/food/adobada_quesadilla.jpg'),
+    restaurantName: 'Tacomasa',
+    addressLine: '4740 E 7th St #130, Long Beach, CA 90804',
+    rating: 4.3,  
+  }
 ]
 
 const filtersItems = [
@@ -58,7 +51,7 @@ const filtersItems = [
   }
 ]
 
-const HomePage = () => {
+const HomePage = () => {  
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
       {/* Top Bar */}

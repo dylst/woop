@@ -8,21 +8,29 @@ import {
     ViewStyle,
     StyleSheet,
 } from 'react-native';
-
+import { useRouter } from 'expo-router';
 
 interface FiltersHomeProps {
     imageSource: ImageSourcePropType | { uri: string };
     title: string;
     style?: StyleProp<ViewStyle>;
+    // routePath?: string;
 }
 
 const FiltersHomeNav: React.FC<FiltersHomeProps> = ({
     imageSource,
     title,
     style,
+    // routePath = '/browse',
 }) => {
+    const router = useRouter();
+
+    const handlePress = () => {
+      router.push("/browse");
+    };
+
     return (
-        <TouchableOpacity style={[styles.newBox, style]}>
+        <TouchableOpacity style={[styles.newBox, style]} onPress={handlePress}>
             <Image source={imageSource} style={styles.newImage} />
             <Text style={styles.newBoxText}>{title}</Text>
         </TouchableOpacity>
