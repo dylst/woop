@@ -1,5 +1,5 @@
 import readline from 'readline';
-import { userLogout } from '../useLogout'; // Adjust the path as needed
+import { userLogout } from '../userLogOut'; // Adjust the path as needed
 
 const rl = readline.createInterface({
   input: process.stdin,
