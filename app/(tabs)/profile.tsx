@@ -15,7 +15,7 @@ import { Colors } from '@/constants/Colors';
 import { router } from 'expo-router';
 
 interface ReviewItemProps {
-  image: string;
+  image: any;
   title: string;
   description: string;
   rating: number;
@@ -31,7 +31,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
 }) => (
   <View style={styles.reviewItem}>
     <View style={styles.reviewContent}>
-      <Image source={{ uri: image }} style={styles.reviewImage} />
+      <Image source={image} style={styles.reviewImage} />
       <View style={styles.reviewDetails}>
         <ThemedText style={styles.reviewTitle}>{title}</ThemedText>
         <ThemedText style={styles.reviewDescription}>{description}</ThemedText>
@@ -66,6 +66,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon, count }) => (
 );
 
 const ProfileScreen = () => {
+  const [activeTab, setActiveTab] = React.useState('reviews');
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
@@ -76,7 +77,7 @@ const ProfileScreen = () => {
         {/* Header section */}
         <View style={styles.headerContent}>
           <Image
-            source={{ uri: 'https://placeholder.com/150' }}
+            source={require('@/assets/images/mudkip.jpg')}
             style={styles.profileImage}
           />
           <ThemedText style={styles.userName}>Kyle Kiwikaka</ThemedText>
@@ -145,27 +146,54 @@ const ProfileScreen = () => {
           {/* Tabs Section */}
           <View style={styles.tabContainer}>
             <View style={styles.tabWrapper}>
-              <Pressable style={styles.tabButton}>
-                <ThemedText style={[styles.tab, styles.activeTab]}>
+              <Pressable
+                style={styles.tabButton}
+                onPress={() => setActiveTab('reviews')}
+              >
+                <ThemedText
+                  style={[
+                    styles.tab,
+                    activeTab === 'reviews' && styles.activeTab,
+                  ]}
+                >
                   Reviews
                 </ThemedText>
-                <View style={styles.activeTabIndicator} />
+                {activeTab === 'reviews' && (
+                  <View style={styles.activeTabIndicator} />
+                )}
               </Pressable>
-              <Pressable style={styles.tabButton}>
-                <ThemedText style={styles.tab}>Photos</ThemedText>
+              <Pressable
+                style={styles.tabButton}
+                onPress={() => setActiveTab('photos')}
+              >
+                <ThemedText
+                  style={[
+                    styles.tab,
+                    activeTab === 'photos' && styles.activeTab,
+                  ]}
+                >
+                  Photos
+                </ThemedText>
+                {activeTab === 'photos' && (
+                  <View style={styles.activeTabIndicator} />
+                )}
               </Pressable>
             </View>
           </View>
 
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
-              <ThemedText style={styles.statNumber}>20</ThemedText>
+              <ThemedText style={styles.statNumber}>
+                {activeTab === 'reviews' ? 20 : 3}
+              </ThemedText>
               <ThemedText style={styles.statLabel}>
                 reactions all time
               </ThemedText>
             </View>
             <View style={styles.statBox}>
-              <ThemedText style={styles.statNumber}>44</ThemedText>
+              <ThemedText style={styles.statNumber}>
+                {activeTab === 'reviews' ? 44 : 12}
+              </ThemedText>
               <ThemedText style={styles.statLabel}>
                 views last 90 days
               </ThemedText>
@@ -178,7 +206,7 @@ const ProfileScreen = () => {
               Currently Trending
             </ThemedText>
             <ReviewItem
-              image='https://example.com/crab-shack.jpg'
+              image={require('@/assets/images/try_something_new_dietary.png')}
               title="Dom's Crab Shack"
               description="Dom's Crabs are AMAZING!"
               rating={5}
@@ -192,14 +220,14 @@ const ProfileScreen = () => {
         <View style={styles.recentlyViewedSection}>
           <ThemedText style={styles.sectionTitle}>Recently Viewed</ThemedText>
           <ReviewItem
-            image='https://example.com/boba.jpg'
+            image={require('@/assets/images/food/barbecue.jpg')}
             title="Melody's Boba Noodles"
             description='A good helping of buckshots and boba'
             rating={4}
             reviewCount={35}
           />
           <ReviewItem
-            image='https://example.com/ramen.jpg'
+            image={require('@/assets/images/try_something_new_cuisine.png')}
             title="Jay's Instant Ramen"
             description='Ramen you can buy in stores but with a twist'
             rating={4}
