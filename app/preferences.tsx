@@ -43,22 +43,22 @@ const PreferencesScreen = () => {
   // This will be used when we integrate Supabase
   useEffect(() => {
     // fetchUserPreferences();
-    const fetchData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    // const fetchData = async () => {
+    //   const {
+    //     data: { user },
+    //   } = await supabase.auth.getUser();
 
-      if (user) {
-        setUserId(user.id);
-        await fetchUserPreferences(user.id);
-      }
-    };
-    
-    fetchData();
+    //   if (user) {
+    //     setUserId(user.id);
+    //     await fetchUserPreferences(user.id);
+    //   }
+    // };
 
-    // const testUserId = '10';
-    // setUserId(testUserId);
-    // fetchUserPreferences(testUserId);
+    // fetchData();
+
+    const testUserId = '10';
+    setUserId(testUserId);
+    fetchUserPreferences(testUserId);
   }, []);
 
   // Example of how we'll fetch preferences later
@@ -167,7 +167,9 @@ const PreferencesScreen = () => {
         dietary: preferences.dietary,
         push: preferences.notifications.push,
         email: preferences.notifications.email,
-      });
+      },
+      { onConflict: 'user_id' }
+    );
 
       if (error) throw error;
 
