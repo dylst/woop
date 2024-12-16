@@ -143,12 +143,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   section: {
-    padding: 20,
+    padding: 16,
     marginBottom: 30,
   },
   recentSection: {
     marginBottom: 0,
-    padding: 20,
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 24,

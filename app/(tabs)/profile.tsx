@@ -66,6 +66,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon, count }) => (
 );
 
 const ProfileScreen = () => {
+  const [activeTab, setActiveTab] = React.useState('reviews');
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
@@ -145,27 +146,54 @@ const ProfileScreen = () => {
           {/* Tabs Section */}
           <View style={styles.tabContainer}>
             <View style={styles.tabWrapper}>
-              <Pressable style={styles.tabButton}>
-                <ThemedText style={[styles.tab, styles.activeTab]}>
+              <Pressable
+                style={styles.tabButton}
+                onPress={() => setActiveTab('reviews')}
+              >
+                <ThemedText
+                  style={[
+                    styles.tab,
+                    activeTab === 'reviews' && styles.activeTab,
+                  ]}
+                >
                   Reviews
                 </ThemedText>
-                <View style={styles.activeTabIndicator} />
+                {activeTab === 'reviews' && (
+                  <View style={styles.activeTabIndicator} />
+                )}
               </Pressable>
-              <Pressable style={styles.tabButton}>
-                <ThemedText style={styles.tab}>Photos</ThemedText>
+              <Pressable
+                style={styles.tabButton}
+                onPress={() => setActiveTab('photos')}
+              >
+                <ThemedText
+                  style={[
+                    styles.tab,
+                    activeTab === 'photos' && styles.activeTab,
+                  ]}
+                >
+                  Photos
+                </ThemedText>
+                {activeTab === 'photos' && (
+                  <View style={styles.activeTabIndicator} />
+                )}
               </Pressable>
             </View>
           </View>
 
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
-              <ThemedText style={styles.statNumber}>20</ThemedText>
+              <ThemedText style={styles.statNumber}>
+                {activeTab === 'reviews' ? 20 : 3}
+              </ThemedText>
               <ThemedText style={styles.statLabel}>
                 reactions all time
               </ThemedText>
             </View>
             <View style={styles.statBox}>
-              <ThemedText style={styles.statNumber}>44</ThemedText>
+              <ThemedText style={styles.statNumber}>
+                {activeTab === 'reviews' ? 44 : 12}
+              </ThemedText>
               <ThemedText style={styles.statLabel}>
                 views last 90 days
               </ThemedText>
