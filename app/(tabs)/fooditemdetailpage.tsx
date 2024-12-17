@@ -39,7 +39,7 @@ const foodDetails = {
 
   ],
   photos: [
-    require("@/assets/images/soupone.png"),
+    require('@/assets/images/soupone.png'),
     require("@/assets/images/souptwo.png"),
     require("@/assets/images/soupthree.png"),
     require("@/assets/images/soupfour.png"),
@@ -79,8 +79,13 @@ const PhotosTab = () => (
   <FlatList
     data={foodDetails.photos}
     keyExtractor={(_, index) => index.toString()}
-    numColumns={2}
-    renderItem={({ item }) => <Image source={item} style={styles.photo} />}
+    numColumns={2} // Two columns for the grid layout
+    renderItem={({ item }) => (
+      <View style={styles.photoWrapper}>
+        <Image source={item} style={styles.photo} />
+        <Text style={styles.photoCaption}>{item.caption}</Text>
+      </View>
+    )}
     contentContainerStyle={styles.photoGrid}
   />
 );
@@ -165,9 +170,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 8,
   },
-  photoGrid: { padding: 8 },
-  photo: { width: '48%', height: 120, margin: 4, borderRadius: 8 },
-  relatedSection: { marginTop: 16 },
+  // photoGrid: { padding: 8 },
+  // photo: { width: '48%', height: 120, margin: 4, borderRadius: 8 },
+  photoGrid: {
+    paddingHorizontal: 8,
+    backgroundColor: 'black', // Light background for gallery
+  },
+  
+  photoWrapper: {
+    flex: 1, // Ensures equal width distribution
+    margin: 4, // Adds spacing between photos
+    // aspectRatio: 1,
+    // borderRadius: 8,
+    // overflow: 'hidden',
+    alignItems: 'center', // Centers the image
+    justifyContent: 'center',
+  },
+  
+  photo: {
+    width: '100%', // Takes full width of the wrapper
+    height: 150, // Fixed height for uniformity
+    resizeMode: 'cover', // Ensures the image fills its container
+    borderRadius: 8, // Optional: Rounded corners
+  },
+  photoCaption: {
+    marginTop: 4,
+    fontSize: 12,
+    color: 'white', // Light gray text for captions
+    textAlign: 'center',
+  },
+  relatedSection: { marginTop: 5},
   relatedTitle: { fontSize: 20, fontWeight: 'bold', marginLeft: 16, marginBottom: 8 },
   relatedCard: { marginHorizontal: 8, alignItems: 'center' },
   relatedImage: { width: 100, height: 100, borderRadius: 8 },
