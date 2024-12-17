@@ -1,66 +1,89 @@
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import { Image, TouchableOpacity } from "react-native";
-import { Platform } from "react-native";
+import {
+	View,
+	Text,
+	StyleSheet,
+	SafeAreaView,
+	TextInput,
+	Image,
+	Platform,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, TextInput } from "react-native";
-import RNPickerSelect from "react-native-picker-select";
 import { useRouter } from "expo-router";
-import { Pressable } from "react-native";
+import React, { useState } from "react";
+import TopBar from "@/components/ui/TopBar";
 
-// Teal color used in figma: 89D5ED
 interface BrowseCardProps {
 	browseCardName: string;
+	image: any;
 }
 
-const Dietary = () => {
-	const [text, setText] = useState("");
-	const [selectedCategory, setSelectedCategory] =
-		useState<keyof typeof categoryTitles>("dietary");
-
+export default function Dietary() {
+	const [searchText, setSearchText] = useState("");
 	const router = useRouter();
 
-	const categoryTitles = {
-		cuisine: "Cuisines",
-		dietary: "Dietary Restrictions",
-	};
-
-	const categoryOptions = [
-		{ label: "Cuisines", value: "cuisine" },
-		{ label: "Dietary Restrictions", value: "dietary" },
-	];
-
-	const cusineTypes = {
-		american: "American",
-		italian: "Italian",
-		mexican: "Mexican",
-		chinese: "Chinese",
-		japanese: "Japanese",
-		indian: "Indian",
-		french: "French",
-		mediterranean: "Mediterranean",
-	};
-
 	const dietaryTypes = {
-		vegetarian: "Vegetarian",
-		vegan: "Vegan",
-		glutenFree: "Gluten Free",
-		keto: "Keto",
-		paleo: "Paleo",
-		nutFree: "Nut Free",
-		lactoseFree: "Lactose Free",
-		pescatarian: "Pescatarian",
+		glutenFree: {
+			name: "Gluten Free",
+			image: require("@/assets/images/dietary/GlutenFree.png"),
+		},
+		halal: {
+			name: "Halal",
+			image: require("@/assets/images/dietary/Halal.png"),
+		},
+		lactoseFree: {
+			name: "Lactose Free",
+			image: require("@/assets/images/dietary/LactoseFree.png"),
+		},
+		meat: {
+			name: "Meat",
+			image: require("@/assets/images/dietary/Meat.png"),
+		},
+		nutFree: {
+			name: "Nut Free",
+			image: require("@/assets/images/dietary/NoNut.png"),
+		},
+		noShellfish: {
+			name: "No Shellfish",
+			image: require("@/assets/images/dietary/NoShellfish.png"),
+		},
+		organic: {
+			name: "Organic",
+			image: require("@/assets/images/dietary/Organic.png"),
+		},
+		shellfish: {
+			name: "Shellfish",
+			image: require("@/assets/images/dietary/Shellfish.png"),
+		},
+		soyFree: {
+			name: "Soy Free",
+			image: require("@/assets/images/dietary/SoyFree.png"),
+		},
+		spicy: {
+			name: "Spicy",
+			image: require("@/assets/images/dietary/Spicy.png"),
+		},
+		sweets: {
+			name: "Sweets",
+			image: require("@/assets/images/dietary/Sweets.png"),
+		},
+		vegan: {
+			name: "Vegan",
+			image: require("@/assets/images/dietary/Vegan.png"),
+		},
+		vegetarian: {
+			name: "Vegetarian",
+			image: require("@/assets/images/dietary/Vegetarian.png"),
+		},
+		yogurt: {
+			name: "Yogurt",
+			image: require("@/assets/images/dietary/Yogurt.png"),
+		},
 	};
 
-	const displayItems =
-		selectedCategory === "cuisine"
-			? Object.values(cusineTypes)
-			: Object.values(dietaryTypes);
-
-	const BrowseCard = ({ browseCardName }: BrowseCardProps) => (
+	const BrowseCard = ({ browseCardName, image }: BrowseCardProps) => (
 		<View style={styles.card}>
 			<Image
-				source={require("@/assets/images/react-logo.png")} // Placeholder image
+				source={image}
 				style={styles.cardImage}
 			/>
 			<Text style={styles.cardText}>{browseCardName}</Text>
@@ -69,76 +92,23 @@ const Dietary = () => {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
+			<TopBar />
 			<View style={styles.container}>
-				<TouchableOpacity
-					onPress={() => router.back()}
-					style={styles.cancelButton}
-				></TouchableOpacity>
-				<View style={styles.searchContainer}>
-					<Ionicons
-						name='search'
-						size={24}
-						color={"#89D5ED"}
-					/>
-					<TextInput
-						style={styles.inputSearch}
-						placeholder='Search food item...'
-						value={text}
-						onChangeText={setText}
-						placeholderTextColor='#999'
-						selectionColor='#89D5ED' // Changes text selection color
-						cursorColor='#89D5ED' // Changes cursor color
-						autoFocus={false}
-					/>
-				</View>
-				<View style={styles.headerContainer}>
-					<Text style={styles.custineTitleText}>
-						{categoryTitles[selectedCategory]}
-					</Text>
-					<View>
-						<RNPickerSelect
-							onValueChange={(value) => setSelectedCategory(value)}
-							items={categoryOptions}
-							value={selectedCategory}
-							style={{
-								inputIOS: {
-									fontSize: 16,
-									paddingVertical: 12,
-									paddingHorizontal: 10,
-									borderWidth: 1,
-									borderColor: "#89D5ED",
-									borderRadius: 8,
-									color: "black",
-									marginBottom: 10,
-								},
-								inputAndroid: {
-									fontSize: 16,
-									paddingHorizontal: 10,
-									paddingVertical: 8,
-									borderWidth: 1,
-									borderColor: "#89D5ED",
-									borderRadius: 8,
-									color: "black",
-								},
-							}}
-						/>
-					</View>
-				</View>
-				<View>
-					<View style={styles.gridContainer}>
-						{displayItems.map((cardName, index) => (
-							<BrowseCard
-								key={index}
-								browseCardName={cardName}
-							/>
-						))}
-					</View>
-				</View>
+				{/* Search Bar */}
 
+				<View style={styles.gridContainer}>
+					{Object.values(dietaryTypes).map((dietary, index) => (
+						<BrowseCard
+							key={index}
+							browseCardName={dietary.name}
+							image={dietary.image}
+						/>
+					))}
+				</View>
 			</View>
 		</SafeAreaView>
 	);
-};
+}
 
 const styles = StyleSheet.create({
 	safeArea: {
@@ -155,6 +125,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		width: "90%", // Control width
 		borderWidth: 1,
+		padding: 12,
 		borderColor: "#89D5ED",
 		borderRadius: 8,
 		paddingHorizontal: 10,
@@ -180,7 +151,12 @@ const styles = StyleSheet.create({
 		}),
 	},
 
-	cusineContainer: {},
+	searchInput: {
+		marginLeft: 8,
+		flex: 1,
+		fontSize: 16,
+		color: "#333",
+	},
 	cardText: {
 		flexWrap: "wrap", // Allow text to wrap
 		fontSize: 14, // Smaller font size
@@ -249,5 +225,3 @@ const styles = StyleSheet.create({
 		padding: 8,
 	},
 });
-
-export default Dietary;

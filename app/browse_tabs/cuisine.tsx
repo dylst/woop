@@ -1,66 +1,88 @@
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import { Image } from "react-native";
-import { Platform } from "react-native";
+import {
+	View,
+	Text,
+	StyleSheet,
+	SafeAreaView,
+	TextInput,
+	Image,
+	Platform,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, TextInput } from "react-native";
-import RNPickerSelect from "react-native-picker-select";
 import { useRouter } from "expo-router";
-import { Pressable } from "react-native";
-
-// Teal color used in figma: 89D5ED
+import React, { useState } from "react";
+import TopBar from "@/components/ui/TopBar";
 interface BrowseCardProps {
 	browseCardName: string;
+	image: any;
 }
 
-const Cuisine = () => {
-	const [text, setText] = useState("");
-	const [selectedCategory, setSelectedCategory] =
-		useState<keyof typeof categoryTitles>("cuisine");
-
+export default function Cuisine() {
+	const [searchText, setSearchText] = useState("");
 	const router = useRouter();
 
-	const categoryTitles = {
-		cuisine: "Cuisines",
-		dietary: "Dietary Restrictions",
+	const cuisineTypes = {
+		american: {
+			name: "American",
+			image: require("@/assets/images/food/american.jpg"),
+		},
+		chilean: {
+			name: "Chilean",
+			image: require("@/assets/images/food/Chilean.png"),
+		},
+		chinese: {
+			name: "Chinese",
+			image: require("@/assets/images/food/Chinese.png"),
+		},
+		filipino: {
+			name: "Filipino",
+			image: require("@/assets/images/food/Filipino.png"),
+		},
+		french: {
+			name: "French",
+			image: require("@/assets/images/food/French.png"),
+		},
+		greek: {
+			name: "Greek",
+			image: require("@/assets/images/food/Greek.png"),
+		},
+		indonesian: {
+			name: "Indonesian",
+			image: require("@/assets/images/food/Indonesian.png"),
+		},
+		japanese: {
+			name: "Japanese",
+			image: require("@/assets/images/food/Japanese.png"),
+		},
+		mediterranean: {
+			name: "Mediterranean",
+			image: require("@/assets/images/food/Mediterranean.png"),
+		},
+		mexican: {
+			name: "Mexican",
+			image: require("@/assets/images/food/Mexican.png"),
+		},
+		spanish: {
+			name: "Spanish",
+			image: require("@/assets/images/food/Spanish.png"),
+		},
+		taiwanese: {
+			name: "Taiwanese",
+			image: require("@/assets/images/food/Taiwanese.png"),
+		},
+		thai: {
+			name: "Thai",
+			image: require("@/assets/images/food/Thai.png"),
+		},
+		vietnamese: {
+			name: "Vietnamese",
+			image: require("@/assets/images/food/Vietnamese.png"),
+		},
 	};
 
-	const categoryOptions = [
-		{ label: "Cuisines", value: "cuisine" },
-		{ label: "Dietary Restrictions", value: "dietary" },
-	];
-
-	const cusineTypes = {
-		american: "American",
-		italian: "Italian",
-		mexican: "Mexican",
-		chinese: "Chinese",
-		japanese: "Japanese",
-		indian: "Indian",
-		french: "French",
-		mediterranean: "Mediterranean",
-	};
-
-	const dietaryTypes = {
-		vegetarian: "Vegetarian",
-		vegan: "Vegan",
-		glutenFree: "Gluten Free",
-		keto: "Keto",
-		paleo: "Paleo",
-		nutFree: "Nut Free",
-		lactoseFree: "Lactose Free",
-		pescatarian: "Pescatarian",
-	};
-
-	const displayItems =
-		selectedCategory === "cuisine"
-			? Object.values(cusineTypes)
-			: Object.values(dietaryTypes);
-
-	const BrowseCard = ({ browseCardName }: BrowseCardProps) => (
+	const BrowseCard = ({ browseCardName, image }: BrowseCardProps) => (
 		<View style={styles.card}>
 			<Image
-				source={require("@/assets/images/react-logo.png")} // Placeholder image
+				source={image}
 				style={styles.cardImage}
 			/>
 			<Text style={styles.cardText}>{browseCardName}</Text>
@@ -69,71 +91,36 @@ const Cuisine = () => {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
+			<TopBar />
 			<View style={styles.container}>
-				<View style={styles.searchContainer}>
+				{/* <View style={styles.searchContainer}>
 					<Ionicons
 						name='search'
-						size={24}
-						color={"#89D5ED"}
+						size={20}
+						color='#89D5ED'
 					/>
 					<TextInput
-						style={styles.inputSearch}
-						placeholder='Search food item...'
-						value={text}
-						onChangeText={setText}
+						style={styles.searchInput}
+						placeholder='Search cuisines...'
+						value={searchText}
+						onChangeText={setSearchText}
 						placeholderTextColor='#999'
-						selectionColor='#89D5ED' // Changes text selection color
-						cursorColor='#89D5ED' // Changes cursor color
-						autoFocus={false}
 					/>
-				</View>
-				<View style={styles.headerContainer}>
-					<Text style={styles.custineTitleText}>
-						{categoryTitles[selectedCategory]}
-					</Text>
-					<View>
-						<RNPickerSelect
-							onValueChange={(value) => setSelectedCategory(value)}
-							items={categoryOptions}
-							value={selectedCategory}
-							style={{
-								inputIOS: {
-									fontSize: 16,
-									paddingVertical: 12,
-									paddingHorizontal: 10,
-									borderWidth: 1,
-									borderColor: "#89D5ED",
-									borderRadius: 8,
-									color: "black",
-									marginBottom: 10,
-								},
-								inputAndroid: {
-									fontSize: 16,
-									paddingHorizontal: 10,
-									paddingVertical: 8,
-									borderWidth: 1,
-									borderColor: "#89D5ED",
-									borderRadius: 8,
-									color: "black",
-								},
-							}}
+				</View> */}
+
+				<View style={styles.gridContainer}>
+					{Object.values(cuisineTypes).map((cuisine, index) => (
+						<BrowseCard
+							key={index}
+							browseCardName={cuisine.name}
+							image={cuisine.image}
 						/>
-					</View>
-				</View>
-				<View>
-					<View style={styles.gridContainer}>
-						{displayItems.map((cardName, index) => (
-							<BrowseCard
-								key={index}
-								browseCardName={cardName}
-							/>
-						))}
-					</View>
+					))}
 				</View>
 			</View>
 		</SafeAreaView>
 	);
-};
+}
 
 const styles = StyleSheet.create({
 	safeArea: {
@@ -142,8 +129,7 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flex: 1,
-		alignItems: "center", // Center horizontally
-		paddingTop: 20, // Space from top
+
 	},
 	searchContainer: {
 		flexDirection: "row",
@@ -153,10 +139,17 @@ const styles = StyleSheet.create({
 		borderColor: "#89D5ED",
 		borderRadius: 8,
 		paddingHorizontal: 10,
-		marginTop: 10,
+		marginTop: 20, // Add margin from top
+		marginBottom: 20, // Add margin before grid
 	},
 	searchIcon: {
 		marginRight: 10,
+	},
+	searchInput: {
+		marginLeft: 8,
+		flex: 1,
+		fontSize: 16,
+		color: "#333",
 	},
 	inputSearch: {
 		flex: 1,
@@ -175,7 +168,6 @@ const styles = StyleSheet.create({
 		}),
 	},
 
-	cusineContainer: {},
 	cardText: {
 		flexWrap: "wrap", // Allow text to wrap
 		fontSize: 14, // Smaller font size
@@ -241,5 +233,3 @@ const styles = StyleSheet.create({
 		fontWeight: "500",
 	},
 });
-
-export default Cuisine;
