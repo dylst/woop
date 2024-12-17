@@ -10,9 +10,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-
+import TopBar from "@/components/ui/TopBar";
 interface BrowseCardProps {
 	browseCardName: string;
+	image: any;
 }
 
 export default function Cuisine() {
@@ -20,24 +21,68 @@ export default function Cuisine() {
 	const router = useRouter();
 
 	const cuisineTypes = {
-		american: "American",
-		italian: "Italian",
-		mexican: "Mexican",
-		chinese: "Chinese",
-		japanese: "Japanese",
-		indian: "Indian",
-		french: "French",
-		mediterranean: "Mediterranean",
-		thai: "Thai",
-		korean: "Korean",
-		vietnamese: "Vietnamese",
-		greek: "Greek",
+		american: {
+			name: "American",
+			image: require("@/assets/images/food/american.jpg"),
+		},
+		chilean: {
+			name: "Chilean",
+			image: require("@/assets/images/food/Chilean.png"),
+		},
+		chinese: {
+			name: "Chinese",
+			image: require("@/assets/images/food/Chinese.png"),
+		},
+		filipino: {
+			name: "Filipino",
+			image: require("@/assets/images/food/Filipino.png"),
+		},
+		french: {
+			name: "French",
+			image: require("@/assets/images/food/French.png"),
+		},
+		greek: {
+			name: "Greek",
+			image: require("@/assets/images/food/Greek.png"),
+		},
+		indonesian: {
+			name: "Indonesian",
+			image: require("@/assets/images/food/Indonesian.png"),
+		},
+		japanese: {
+			name: "Japanese",
+			image: require("@/assets/images/food/Japanese.png"),
+		},
+		mediterranean: {
+			name: "Mediterranean",
+			image: require("@/assets/images/food/Mediterranean.png"),
+		},
+		mexican: {
+			name: "Mexican",
+			image: require("@/assets/images/food/Mexican.png"),
+		},
+		spanish: {
+			name: "Spanish",
+			image: require("@/assets/images/food/Spanish.png"),
+		},
+		taiwanese: {
+			name: "Taiwanese",
+			image: require("@/assets/images/food/Taiwanese.png"),
+		},
+		thai: {
+			name: "Thai",
+			image: require("@/assets/images/food/Thai.png"),
+		},
+		vietnamese: {
+			name: "Vietnamese",
+			image: require("@/assets/images/food/Vietnamese.png"),
+		},
 	};
 
-	const BrowseCard = ({ browseCardName }: BrowseCardProps) => (
+	const BrowseCard = ({ browseCardName, image }: BrowseCardProps) => (
 		<View style={styles.card}>
 			<Image
-				source={require("@/assets/images/react-logo.png")}
+				source={image}
 				style={styles.cardImage}
 			/>
 			<Text style={styles.cardText}>{browseCardName}</Text>
@@ -46,8 +91,9 @@ export default function Cuisine() {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
+			<TopBar />
 			<View style={styles.container}>
-				<View style={styles.searchContainer}>
+				{/* <View style={styles.searchContainer}>
 					<Ionicons
 						name='search'
 						size={20}
@@ -60,13 +106,14 @@ export default function Cuisine() {
 						onChangeText={setSearchText}
 						placeholderTextColor='#999'
 					/>
-				</View>
+				</View> */}
 
 				<View style={styles.gridContainer}>
 					{Object.values(cuisineTypes).map((cuisine, index) => (
 						<BrowseCard
 							key={index}
-							browseCardName={cuisine}
+							browseCardName={cuisine.name}
+							image={cuisine.image}
 						/>
 					))}
 				</View>
@@ -82,8 +129,7 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flex: 1,
-		alignItems: "center", // Center horizontally
-		paddingTop: 20, // Space from top
+
 	},
 	searchContainer: {
 		flexDirection: "row",
@@ -93,8 +139,8 @@ const styles = StyleSheet.create({
 		borderColor: "#89D5ED",
 		borderRadius: 8,
 		paddingHorizontal: 10,
-		marginTop: 10,
-		padding: 12,
+		marginTop: 20, // Add margin from top
+		marginBottom: 20, // Add margin before grid
 	},
 	searchIcon: {
 		marginRight: 10,
@@ -122,7 +168,6 @@ const styles = StyleSheet.create({
 		}),
 	},
 
-	cusineContainer: {},
 	cardText: {
 		flexWrap: "wrap", // Allow text to wrap
 		fontSize: 14, // Smaller font size
@@ -188,4 +233,3 @@ const styles = StyleSheet.create({
 		fontWeight: "500",
 	},
 });
-

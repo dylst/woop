@@ -1,3 +1,7 @@
+//
+// TODO:
+// Use top bar for search and buttons
+import TopBar from "@/components/ui/TopBar";
 import {
 	View,
 	Text,
@@ -33,28 +37,10 @@ export default function Browse() {
 						color='#333'
 					/>
 				</Pressable>
-				<Text style={styles.pageTitle}>Search</Text>
-				<Ionicons
-					name='notifications-outline'
-					size={24}
-					color='#333'
-				/>
 			</View>
 
-			{/* Search Bar */}
-			<View style={styles.searchContainer}>
-				<Ionicons
-					name='search'
-					size={20}
-					color='#666'
-				/>
-				<TextInput
-					style={styles.searchInput}
-					placeholder='Search food item...'
-					value={searchText}
-					onChangeText={setSearchText}
-				/>
-			</View>
+			{/* Page Title */}
+			<TopBar />
 
 			{/* Buttons Row */}
 			<View style={styles.buttonContainer}>
@@ -140,9 +126,9 @@ const styles = StyleSheet.create({
 		padding: 12,
 		borderRadius: 8,
 		marginBottom: 20,
-		width: "80%", // Reduced from 100%
-		maxWidth: 1200, // Add maximum width
-		alignSelf: "center", // Center the container
+		width: "80%", //
+		maxWidth: 1200,
+		alignSelf: "center",
 	},
 	searchInput: {
 		marginLeft: 8,
@@ -152,21 +138,22 @@ const styles = StyleSheet.create({
 	},
 	buttonContainer: {
 		flexDirection: "row",
-		justifyContent: "center", 
-		gap: 50	,
+		justifyContent: "center",
+		gap: 50,
 		marginBottom: 20,
 		alignSelf: "center",
 		maxWidth: 1000,
 		width: "100%",
+		marginTop: 20,
 	},
 	button: {
 		backgroundColor: "#65C5E3",
-		paddingVertical: 10, 
-		paddingHorizontal: 15, 
+		paddingVertical: 10,
+		paddingHorizontal: 15,
 		borderRadius: 8,
 		alignItems: "center",
 		justifyContent: "center",
-		width: "25%",	
+		width: "25%",
 	},
 	buttonText: {
 		color: "white",
@@ -175,28 +162,36 @@ const styles = StyleSheet.create({
 	},
 	historyContainer: {
 		flex: 1,
-		marginBottom: 10,
+		marginBottom: 20,
+		maxWidth: 800,
+		alignItems: "center",
+		alignSelf: "center",
+		width: "90%",
 	},
 	historyTitle: {
-		fontSize: 20,
+		fontSize: 24,
 		fontWeight: "bold",
 		color: "#333",
-		marginBottom: 12,
+		marginBottom: 20,
+		textAlign: "center",
 	},
 	historyItem: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		padding: 12,
-		borderRadius: 8,
+		padding: 20,
+		borderRadius: 12,
 		backgroundColor: "#F9F9F9",
-		marginBottom: 8,
+		marginBottom: 12,
 		borderColor: "#E0E0E0",
 		borderWidth: 1,
+		width: "100%",
+		maxWidth: 800,
 	},
 	historyName: {
-		fontSize: 16,
+		fontSize: 18,
 		color: "#333",
+		fontWeight: "500",
 	},
 	bottomNav: {
 		flexDirection: "row",

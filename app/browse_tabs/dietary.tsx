@@ -10,9 +10,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import TopBar from "@/components/ui/TopBar";
 
 interface BrowseCardProps {
 	browseCardName: string;
+	image: any;
 }
 
 export default function Dietary() {
@@ -20,20 +22,68 @@ export default function Dietary() {
 	const router = useRouter();
 
 	const dietaryTypes = {
-		vegetarian: "Vegetarian",
-		vegan: "Vegan",
-		glutenFree: "Gluten Free",
-		keto: "Keto",
-		paleo: "Paleo",
-		nutFree: "Nut Free",
-		lactoseFree: "Lactose Free",
-		pescatarian: "Pescatarian",
+		glutenFree: {
+			name: "Gluten Free",
+			image: require("@/assets/images/dietary/GlutenFree.png"),
+		},
+		halal: {
+			name: "Halal",
+			image: require("@/assets/images/dietary/Halal.png"),
+		},
+		lactoseFree: {
+			name: "Lactose Free",
+			image: require("@/assets/images/dietary/LactoseFree.png"),
+		},
+		meat: {
+			name: "Meat",
+			image: require("@/assets/images/dietary/Meat.png"),
+		},
+		nutFree: {
+			name: "Nut Free",
+			image: require("@/assets/images/dietary/NoNut.png"),
+		},
+		noShellfish: {
+			name: "No Shellfish",
+			image: require("@/assets/images/dietary/NoShellfish.png"),
+		},
+		organic: {
+			name: "Organic",
+			image: require("@/assets/images/dietary/Organic.png"),
+		},
+		shellfish: {
+			name: "Shellfish",
+			image: require("@/assets/images/dietary/Shellfish.png"),
+		},
+		soyFree: {
+			name: "Soy Free",
+			image: require("@/assets/images/dietary/SoyFree.png"),
+		},
+		spicy: {
+			name: "Spicy",
+			image: require("@/assets/images/dietary/Spicy.png"),
+		},
+		sweets: {
+			name: "Sweets",
+			image: require("@/assets/images/dietary/Sweets.png"),
+		},
+		vegan: {
+			name: "Vegan",
+			image: require("@/assets/images/dietary/Vegan.png"),
+		},
+		vegetarian: {
+			name: "Vegetarian",
+			image: require("@/assets/images/dietary/Vegetarian.png"),
+		},
+		yogurt: {
+			name: "Yogurt",
+			image: require("@/assets/images/dietary/Yogurt.png"),
+		},
 	};
 
-	const BrowseCard = ({ browseCardName }: BrowseCardProps) => (
+	const BrowseCard = ({ browseCardName, image }: BrowseCardProps) => (
 		<View style={styles.card}>
 			<Image
-				source={require("@/assets/images/react-logo.png")}
+				source={image}
 				style={styles.cardImage}
 			/>
 			<Text style={styles.cardText}>{browseCardName}</Text>
@@ -42,28 +92,16 @@ export default function Dietary() {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
+			<TopBar />
 			<View style={styles.container}>
 				{/* Search Bar */}
-				<View style={styles.searchContainer}>
-					<Ionicons
-						name='search'
-						size={20}
-						color='#89D5ED'
-					/>
-					<TextInput
-						style={styles.searchInput}
-						placeholder='Search dietary restrictions...'
-						value={searchText}
-						onChangeText={setSearchText}
-						placeholderTextColor='#999'
-					/>
-				</View>
 
 				<View style={styles.gridContainer}>
 					{Object.values(dietaryTypes).map((dietary, index) => (
 						<BrowseCard
 							key={index}
-							browseCardName={dietary}
+							browseCardName={dietary.name}
+							image={dietary.image}
 						/>
 					))}
 				</View>
@@ -187,4 +225,3 @@ const styles = StyleSheet.create({
 		padding: 8,
 	},
 });
-
