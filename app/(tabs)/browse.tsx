@@ -40,7 +40,9 @@ export default function Browse() {
 			</View>
 
 			{/* Page Title */}
-			<TopBar />
+			<View style={styles.topBarContainer}>
+				<TopBar />
+			</View>
 
 			{/* Buttons Row */}
 			<View style={styles.buttonContainer}>
@@ -111,6 +113,13 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
+		marginBottom: 10,
+	},
+	topBarContainer: {
+		paddingHorizontal: 20,
+		width: "100%",
+		maxWidth: 800,
+		alignSelf: "center",
 		marginBottom: 10,
 	},
 	pageTitle: {

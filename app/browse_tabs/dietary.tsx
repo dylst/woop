@@ -92,7 +92,9 @@ export default function Dietary() {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
-			<TopBar />
+			<View style={styles.topBarContainer}>
+				<TopBar />
+			</View>
 			<View style={styles.container}>
 				{/* Search Bar */}
 
@@ -114,11 +116,20 @@ const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
 		backgroundColor: "white",
+		padding: 20,
 	},
+
+	topBarContainer: {
+		paddingHorizontal: 20,
+		width: "100%",
+		maxWidth: 800,
+		alignSelf: "center",
+		marginBottom: 10,
+	},
+
 	container: {
 		flex: 1,
 		alignItems: "center", // Center horizontally
-		paddingTop: 20, // Space from top
 	},
 	searchContainer: {
 		flexDirection: "row",

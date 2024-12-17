@@ -21,16 +21,7 @@ export default function MapScreen() {
 				source={require("@/assets/images/map.png")}
 				style={styles.backgroundImage}
 			>
-				<Pressable
-					style={styles.backButton}
-					onPress={() => router.back()}
-				>
-					<Ionicons
-						name='arrow-back'
-						size={24}
-						color='black'
-					/>
-				</Pressable>
+
 				{/* Search Bar */}
 				<View style={styles.searchContainer}>
 					<View style={styles.searchBar}>

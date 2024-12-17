@@ -91,7 +91,9 @@ export default function Cuisine() {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
-			<TopBar />
+			<View style={styles.topBarContainer}>
+				<TopBar />
+			</View>
 			<View style={styles.container}>
 				{/* <View style={styles.searchContainer}>
 					<Ionicons
@@ -129,7 +131,13 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flex: 1,
-
+	},
+	topBarContainer: {
+		paddingHorizontal: 20,
+		width: "100%",
+		maxWidth: 800,
+		alignSelf: "center",
+		marginBottom: 10,
 	},
 	searchContainer: {
 		flexDirection: "row",
