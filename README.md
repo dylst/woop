@@ -128,3 +128,11 @@ Check your SUPABASE_URL and SUPABASE_ANON_KEY values in the .env file.
 ### License
 
 This project is licensed under the Apache 2.0 License. See the LICENSE file for details.
+
+### Table 
+
+
+
+
+<img width="625" alt="Screenshot 2024-12-21 at 10 43 30 AM" src="https://github.com/user-attachments/assets/e74620ce-ddcb-4c5d-a720-65d554ba9d5e" />
+<img width="628" alt="Screenshot 2024-12-21 at 10 44 24 AM" src="https://github.com/user-attachments/assets/b1f5df31-c8cf-4c34-81eb-456c516045f4" />
