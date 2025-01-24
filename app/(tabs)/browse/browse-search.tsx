@@ -1,40 +1,51 @@
+import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { View, Text, FlatList } from "react-native";
-import { useEffect, useState } from "react";
 import { Restaurant } from "@/types/restaurant.types";
 
-export default function BrowseSearchResults() {
-	const { query, results } = useLocalSearchParams(); // Retrieve params
-	const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-
-	useEffect(() => {
-		if (results) {
-			try {
-				setRestaurants(JSON.parse(results as string)); // Parse the stringified JSON
-			} catch (error) {
-				console.error("Failed to parse results:", error);
-			}
-		}
-	}, [results]);
+export default function BrowseSearch() {
+	const { query, results } = useLocalSearchParams();
+	const searchResults: Restaurant[] = JSON.parse(results as string);
 
 	return (
-		<View style={{ padding: 20, backgroundColor: "white", flex: 1 }}>
-			<Text style={{ fontSize: 18, fontWeight: "bold" }}>
-				Search Results for: {query}
-			</Text>
-
+		<View style={styles.container}>
+			<Text style={styles.searchTitle}>Results for "{query}"</Text>
 			<FlatList
-				data={restaurants}
+				data={searchResults}
 				keyExtractor={(item) => item.id.toString()}
 				renderItem={({ item }) => (
-					<View style={{ padding: 10, borderBottomWidth: 1, borderColor: "#ddd",}}>
-						<Text style={{ fontSize: 16, color: "black" }}>{item.restaurantName}</Text>
-						<Text>
-							{item.address}, {item.cityName}, {item.stateName}
-						</Text>
+					<View style={styles.resultItem}>
+						<Text style={styles.restaurantName}>{item.restaurantName}</Text>
+						<Text style={styles.cuisineType}>{item.cuisineType}</Text>
 					</View>
 				)}
 			/>
 		</View>
 	);
 }
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		padding: 16,
+		backgroundColor: "white",
+	},
+	searchTitle: {
+		fontSize: 20,
+		fontWeight: "bold",
+		marginBottom: 16,
+	},
+	resultItem: {
+		padding: 16,
+		borderBottomWidth: 1,
+		borderBottomColor: "#eee",
+	},
+	restaurantName: {
+		fontSize: 18,
+		fontWeight: "500",
+	},
+	cuisineType: {
+		fontSize: 14,
+		color: "#666",
+		marginTop: 4,
+	},
+});
