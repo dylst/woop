@@ -8,4 +8,8 @@ export interface Restaurant {
 	cityName: string;
 	hoursInterval: string;
 	cuisineType: string;
+	latitude: number;
+	email:string;
+	longitude: number;
+	website: string;
 }

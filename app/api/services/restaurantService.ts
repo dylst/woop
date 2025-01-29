@@ -16,17 +16,17 @@ export const restaurantService = {
 				`/restaurants/location/state/${state}/${page}`
 			);
 
-			console.log("Response Data:", response.data);
+			console.log("Raw API Response:", response.data);
 
-			if (!response.data) {
-				throw new Error("No data received from API");
+			if (!response.data || !Array.isArray(response.data.restaurants)) {
+				throw new Error("API did not return an expected 'restaurants' array.");
 			}
 
-			return response.data;
+			return response.data.restaurants; 
 		} catch (error) {
 			console.error(
 				"Error fetching restaurants:",
-				error instanceof Error ? error.message : 'An unknown error occurred'
+				error instanceof Error ? error.message : "An unknown error occurred"
 			);
 			throw error;
 		}

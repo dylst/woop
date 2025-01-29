@@ -3,7 +3,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { restaurantService } from "../../app/api/services/restaurantService";
-
+import { supabase } from "@/supabaseClient";
+import { Restaurant } from "@/types/restaurant.types";
 const SearchBar = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [loading, setLoading] = useState(false);
@@ -14,21 +15,40 @@ const SearchBar = () => {
 			try {
 				setLoading(true);
 				const results = await restaurantService.getRestaurantsByState("CA", 0);
-        
-				// Filter results based on search query
-				const filteredResults = results.filter(
-					(restaurant) =>
-						restaurant.restaurantName
-							.toLowerCase()
-							.includes(searchQuery.toLowerCase()) ||
-						restaurant.cuisineType.toLowerCase().includes(searchQuery.toLowerCase())
-				);
+				console.log("Search Results:", typeof results, results);
+
+				for (const restaurant of results) {
+					const { error } = await supabase
+						.from("restaurant")
+						.insert([
+							{
+								name: restaurant.restaurantName,
+								addressLin: restaurant.address,
+								city: restaurant.cityName,
+								state: restaurant.stateName,
+							},
+						])
+						
+
+					if (error) throw error;
+				}
+
+				// const { data,error } = await supabase
+				// 	.from("restaurant")
+				// 	.insert([
+				// 		{
+				// 			name: "Lebron",
+				// 			addressLin: "SdAD",
+				// 			city: "San Jose",
+				// 			state: "CA",
+				// 		},
+				// 	])
 
 				router.push({
 					pathname: "/(tabs)/browse/browse-search",
 					params: {
 						query: searchQuery,
-						results: JSON.stringify(filteredResults),
+						// results: JSON.stringify(results),
 					},
 				});
 			} catch (error) {
