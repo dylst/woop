@@ -43,6 +43,10 @@ export default function RootLayout() {
 					name='preferences'
 					options={{ headerShown: false }}
 				/>
+				<Stack.Screen
+					name='add-food-item'
+					options={{ headerShown: false }}
+				/>
 				<Stack.Screen name='+not-found' />
 			</Stack>
 			<StatusBar style='auto' />
