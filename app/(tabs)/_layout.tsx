@@ -126,6 +126,28 @@ export default function TabLayout() {
           tabBarLabel: 'Profile',
         }}
       />
+
+
+      <Tabs.Screen
+        name='fooditemdetailpage'
+        options={{
+          title: 'Food Item Detail Page',
+          tabBarIcon: ({ focused, color }) => (
+            <View style={focused ? styles.activeTab : null}>
+              <Ionicons
+                name='fast-food'
+                size={28}
+                color={focused ? Colors.primary.darkteal : color}
+                style={styles.tabIcon}
+              />
+            </View>
+          ),
+          tabBarLabel: 'Foody Details',
+        }}
+      />
+      
+
+
     </Tabs>
   );
 }
