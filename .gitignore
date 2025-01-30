@@ -39,3 +39,4 @@ app-example
 
 # Supabase
 supabaseClient.js
+.env

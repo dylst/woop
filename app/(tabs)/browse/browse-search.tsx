@@ -18,7 +18,7 @@ export default function BrowseSearchResults() {
 	}, [results]);
 
 	return (
-		<View style={{ padding: 20 }}>
+		<View style={{ padding: 20, backgroundColor: "white", flex: 1 }}>
 			<Text style={{ fontSize: 18, fontWeight: "bold" }}>
 				Search Results for: {query}
 			</Text>
@@ -27,8 +27,8 @@ export default function BrowseSearchResults() {
 				data={restaurants}
 				keyExtractor={(item) => item.id.toString()}
 				renderItem={({ item }) => (
-					<View style={{ padding: 10, borderBottomWidth: 1, borderColor: "#ddd" }}>
-						<Text style={{ fontSize: 16 }}>{item.restaurantName}</Text>
+					<View style={{ padding: 10, borderBottomWidth: 1, borderColor: "#ddd",}}>
+						<Text style={{ fontSize: 16, color: "black" }}>{item.restaurantName}</Text>
 						<Text>
 							{item.address}, {item.cityName}, {item.stateName}
 						</Text>

@@ -2,9 +2,8 @@ import { View, TextInput, StyleSheet, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { restaurantService } from "../../app/api/services/restaurantService";
+import { restaurantService } from "@/app/api/services/restaurantService";
 import { supabase } from "@/supabaseClient";
-import { Restaurant } from "@/types/restaurant.types";
 const SearchBar = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [loading, setLoading] = useState(false);
@@ -14,7 +13,7 @@ const SearchBar = () => {
 		if (searchQuery.trim()) {
 			try {
 				setLoading(true);
-				const results = await restaurantService.getRestaurantsByState("CA", 0);
+				const results = await restaurantService.getRestaurantByZipCode("90815", 0);
 				console.log("Search Results:", typeof results, results);
 
 				for (const restaurant of results) {
@@ -30,25 +29,17 @@ const SearchBar = () => {
 						])
 						
 
-					if (error) throw error;
+					if (error){
+						console.error("Error inserting restaurant:", error);
+					}
 				}
 
-				// const { data,error } = await supabase
-				// 	.from("restaurant")
-				// 	.insert([
-				// 		{
-				// 			name: "Lebron",
-				// 			addressLin: "SdAD",
-				// 			city: "San Jose",
-				// 			state: "CA",
-				// 		},
-				// 	])
 
 				router.push({
 					pathname: "/(tabs)/browse/browse-search",
 					params: {
 						query: searchQuery,
-						// results: JSON.stringify(results),
+						results: JSON.stringify(results),
 					},
 				});
 			} catch (error) {
