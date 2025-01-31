@@ -75,12 +75,12 @@ export default function TabLayout() {
           tabBarLabel: 'Browse',
         }}
       />
-      {/* <Tabs.Screen
+      <Tabs.Screen
 				name='favorites'
 				options={{
 					title: "Favorites",
 					tabBarIcon: ({ focused, color }) => (
-						<View style={[styles.tabIcon, focused ? styles.activeTab : null ]}>
+						<View style={[focused ? styles.activeTab : null ]}>
 							<Ionicons
 								name="heart"
 								size={28}
@@ -91,7 +91,7 @@ export default function TabLayout() {
 					),
 					tabBarLabel: "Favorites",
 				}}
-			/> */}
+			/>
       <Tabs.Screen
         name='reviews'
         options={{

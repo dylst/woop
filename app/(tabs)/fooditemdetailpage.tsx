@@ -8,13 +8,36 @@ import {
 	Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import { supabase } from '@/supabaseClient';
 
 export default function fooditemdetailpage() {
 	const router = useRouter();
 
-    const [favorites, setFavorites] = useState<number[]>([]);
+    const [isFavorite, setIsFavorites] = useState(false);
+    const [itemData, setItemData] = useState<any>(null);
+
+    // TESTING FETCHING ITEM FROM DATABASE
+    // DUMMY DATA FOR RELATED FOOD ITEMS
+    const [relatedFavorites, setRelatedFavorites] = useState<number[]>([]);
+    const TEST_FOOD_ITEM_ID = 200;
+    const TEST_USER_ID = 10;
+
+    const fetchFoodItem = async () => {
+        const {data, error} = await supabase
+            .from("fooditem")
+            .select("*")
+            .eq("id", TEST_FOOD_ITEM_ID)
+            .maybeSingle();
+
+        if (error) {
+            console.log("Error fetching food item:", error);
+            return;
+        }
+
+        setItemData(data);
+    }
 
     const photoRatings = [
         { label: "5", percentage: 80, color: "#E64A19", image: "photo1.jpg" },
@@ -28,6 +51,67 @@ export default function fooditemdetailpage() {
         console.log("Opening photo:", image); // Replace with a full-screen image viewer later
     };
 
+    const checkIfFavorite = async () => {
+        const { data, error } = await supabase
+            .from("favorite")
+            .select("id")
+            .eq("user_id", TEST_USER_ID)
+            .eq("food_item_id", TEST_FOOD_ITEM_ID)
+            .maybeSingle();
+
+        if (!error && data) {
+            setIsFavorites(true);
+        }
+    }
+
+    useEffect(() => {
+        fetchFoodItem();
+        checkIfFavorite();
+    }, [])
+
+    const handleFavoriteToggle = async () => {
+        try {
+            if (!isFavorite) {
+                const { error } = await supabase
+                    .from("favorite")
+                    .insert({
+                        user_id: TEST_USER_ID,
+                        food_item_id: TEST_FOOD_ITEM_ID,
+                    });
+
+                if (error) {
+                    console.log("Error adding favorites:", error);
+                    return;
+                }
+
+                setIsFavorites(true);
+            } else {
+                const { error } = await supabase
+                    .from("favorite")
+                    .delete()
+                    .eq("user_id", TEST_USER_ID)
+                    .eq("food_item_id", TEST_FOOD_ITEM_ID);
+
+                if (error) {
+                    console.log("Error removing favorite:", error);
+                    return;
+                }
+
+                setIsFavorites(false);
+            }
+        } catch (err) {
+            console.error("Favorite toggle error:", err)
+        }
+    }
+
+    function removeNoneFromCategories(value?: string | null) {
+        if (!value) return "";
+        return value.trim().toLowerCase() === "none" ? "" : value;
+    }
+    const cuisineType = removeNoneFromCategories(itemData?.cuisine_type);
+    const dietaryTags = removeNoneFromCategories(itemData?.dietary_tags);
+
+    // DUMMY DATA AND METHODS
     const relatedFood = [
         {
             id: 1,
@@ -35,7 +119,7 @@ export default function fooditemdetailpage() {
             description: "A good helping of boba and backshots",
             rating: 4,
             reviews: 35,
-            image: "https://example.com/image1.jpg",
+            image: require("@/assets/images/backshoot-noods.png"),
         },
         {
             id: 2,
@@ -43,12 +127,12 @@ export default function fooditemdetailpage() {
             description: "Ramen you can buy in stores but with a twist",
             rating: 3.5,
             reviews: 35,
-            image: "https://example.com/image2.jpg",
+            image: require("@/assets/images/Jay's-noods.png"),
         },
     ];
 
-    const handleFavoriteToggle = (id: number) => {
-        setFavorites((prev) =>
+    const handleRelatedFavoriteToggle = (id: number) => {
+        setRelatedFavorites((prev) =>
             prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
         );
     };
@@ -68,15 +152,26 @@ export default function fooditemdetailpage() {
             {/* Image Container */}
             <View style={styles.imageContainer}>
                 <Image
-                    source={require("@/assets/images/Willsoup.png")}
+                    source={{
+                        uri: itemData?.photos
+                    }}
                     style={styles.foodImage}
                 />
+
                 {/* Overlay */}
                 <View style={styles.overlayContainer}>
                     <View style={styles.overlayContent}>
-                        <Text style={styles.foodTitle}>Will’s Coughing Soup</Text>
-                        <Text style={styles.foodLocation}>13 mi - 1507 South Coast Dr, Costa Mesa</Text>
+                        <Text style={styles.foodTitle}>{itemData?.food_name || "Food Name"}</Text>
+                        <Text style={styles.foodLocation}>{itemData?.restaurant_name || "Restaurant name"}</Text>
                     </View>
+                    {/* Add Item to Favorites */}
+                    <Pressable style={styles.heartIcon} onPress={handleFavoriteToggle}>
+                        <Ionicons
+                            name={isFavorite ? "heart" : "heart-outline"}
+                            size={28}
+                            color={"#fff"}
+                        />
+                    </Pressable>
                     <View style={styles.ratingContainer}>
                         <Text style={styles.ratingText}>4.9</Text>
                         <Ionicons name="star" size={18} color="#FFD700" />
@@ -86,7 +181,7 @@ export default function fooditemdetailpage() {
 
             {/* Food Category */}
             <View style={styles.categoryContainer}>
-                <Text style={styles.categoryText}>$$ • Soup, Vietnamese, Vegetarian</Text>
+                <Text style={styles.categoryText}>{itemData?.price_range || "$"} • {cuisineType}{cuisineType && dietaryTags ? ", " : ""} {dietaryTags}</Text>
             </View>
 
             {/* Action Buttons */}
@@ -148,7 +243,7 @@ export default function fooditemdetailpage() {
                 <Text style={styles.sectionTitle}>Related Food Items</Text>
                 {relatedFood.map((item) => (
                     <View key={item.id} style={styles.foodItem}>
-                        <Image source={{ uri: item.image }} style={styles.foodImageSmall} />
+                        <Image source={ item.image } style={styles.foodImageSmall} />
                         <View style={styles.foodDetails}>
                             <Text style={styles.foodName}>{item.name}</Text>
                             <Text style={styles.foodDescription}>{item.description}</Text>
@@ -164,9 +259,9 @@ export default function fooditemdetailpage() {
                                 <Text style={styles.reviewCount}>({item.reviews})</Text>
                             </View>
                         </View>
-                        <Pressable onPress={() => handleFavoriteToggle(item.id)}>
+                        <Pressable onPress={() => handleRelatedFavoriteToggle(item.id)}>
                             <Ionicons
-                                name={favorites.includes(item.id) ? "heart" : "heart-outline"}
+                                name={relatedFavorites.includes(item.id) ? "heart" : "heart-outline"}
                                 size={24}
                                 color="#000"
                             />
@@ -240,6 +335,10 @@ const styles = StyleSheet.create({
   foodLocation: {
       color: "white",
       fontSize: 14,
+  },
+
+  heartIcon: {
+    marginRight: 10,
   },
 
   ratingContainer: {
