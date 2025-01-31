@@ -9,13 +9,19 @@ export default function AddFoodItemScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Ionicons 
-          name="close" 
-          size={24} 
-          onPress={() => router.back()} 
+        <Ionicons
+          name='arrow-back'
+          size={24}
+          onPress={() => router.back()}
           style={styles.closeIcon}
         />
-        <ThemedText style={styles.title}>Add Food Item</ThemedText>
+        <ThemedText style={styles.title}>Create Food Item</ThemedText>
+        <Ionicons
+          name='help'
+          size={24}
+          onPress={() => console.log('help')}
+          style={styles.closeIcon}
+        />
       </View>
       <AddFoodItemForm />
     </SafeAreaView>
@@ -30,16 +36,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    marginTop: 16,
   },
   closeIcon: {
     marginRight: 16,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: 'black',
   },
-}); 
+});
