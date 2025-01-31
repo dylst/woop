@@ -10,5 +10,5 @@ export const axiosInstance = axios.create({
 		"Content-Type": "application/x-www-form-urlencoded",
 	},
 });
-
+//Axios
 export default axiosInstance;
