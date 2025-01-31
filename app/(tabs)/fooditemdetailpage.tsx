@@ -1,184 +1,423 @@
-import React from 'react';
+import TopBar from "@/components/ui/TopBar";
 import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { NavigationProp } from '@react-navigation/native';
-import { Colors } from '@/constants/Colors';
+	View,
+	Text,
+	StyleSheet,
+	SafeAreaView,
+	Pressable,
+	Image,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { useRouter } from "expo-router";
 
-// Define Navigation Types
-type RootStackParamList = {
-  FoodDetails: undefined;
-  Reviews: undefined;
-  Photos: undefined;
-};
+export default function fooditemdetailpage() {
+	const router = useRouter();
 
-type FoodItemDetailProps = {
-  navigation: NavigationProp<RootStackParamList, 'FoodDetails'>;
-};
+    const [favorites, setFavorites] = useState<number[]>([]);
 
-// Sample Data
-const foodDetails = {
-  title: "Will's Coughing Soup",
-  imageSource: require("@/assets/images/Willsoup.png"),
-  rating: 4.9,
-  description: 'Soup · Vietnamese · Vegetarian',
-  reviews: [
-    { id: '1', reviewer: 'Diane', comment: 'Best soup ever! It helped me recover.', rating: 5 },
-    { id: '2', reviewer: 'John', comment: 'Delicious and comforting.', rating: 5 },
-    { id: '3', reviewer: 'Kyle', comment: 'Amazing Soup but a little expensive.', rating: 4},
-    { id: '4', reviewer: 'Dylan', comment: 'Recommend coming here for your first time!', rating: 5},
-    { id: '5', reviewer: 'Melody', comment: 'Lovely place and amazing food!', rating: 5}
+    const photoRatings = [
+        { label: "5", percentage: 80, color: "#E64A19", image: "photo1.jpg" },
+        { label: "4", percentage: 30, color: "#F57C00", image: "photo2.jpg" },
+        { label: "3", percentage: 15, color: "#FFB300", image: "photo3.jpg" },
+        { label: "2", percentage: 10, color: "#FFCA28", image: "photo4.jpg" },
+        { label: "1", percentage: 5, color: "#FFD54F", image: "photo5.jpg" },
+    ];
 
-  ],
-  photos: [
-    require("@/assets/images/soupone.png"),
-    require("@/assets/images/souptwo.png"),
-    require("@/assets/images/soupthree.png"),
-    require("@/assets/images/soupfour.png"),
-  ],
-  relatedItems: [
-    { id: '1', title: "Melody's Baba Noodles", image: require("@/assets/images/backshoot-noods.png") },
-    { id: '2', title: "Jay's Instant Ramen", image: require("@/assets/images/Jay's-noods.png") },
-  ],
-};
+    const handlePhotoClick = (image: string) => {
+        console.log("Opening photo:", image); // Replace with a full-screen image viewer later
+    };
 
-const Tab = createMaterialTopTabNavigator();
+    const relatedFood = [
+        {
+            id: 1,
+            name: "Melody's Boba Noodles",
+            description: "A good helping of boba and backshots",
+            rating: 4,
+            reviews: 35,
+            image: "https://example.com/image1.jpg",
+        },
+        {
+            id: 2,
+            name: "Jay's Instant Ramen",
+            description: "Ramen you can buy in stores but with a twist",
+            rating: 3.5,
+            reviews: 35,
+            image: "https://example.com/image2.jpg",
+        },
+    ];
 
-// Reviews Tab
-const ReviewsTab = () => (
-  <ScrollView style={styles.tabContainer}>
-    {foodDetails.reviews.map((review) => (
-      <View key={review.id} style={styles.reviewCard}>
-        <Text style={styles.reviewer}>{review.reviewer}</Text>
-        <Text>{review.comment}</Text>
-        <View style={styles.starsContainer}>
-          {Array.from({ length: 5 }, (_, index) => (
-            <Ionicons
-              key={index}
-              name={index < review.rating ? 'star' : 'star-outline'}
-              size={18}
-              color={index < review.rating ? 'gold' : '#ccc'}
-            />
-          ))}
-        </View>
-      </View>
-    ))}
-  </ScrollView>
-);
+    const handleFavoriteToggle = (id: number) => {
+        setFavorites((prev) =>
+            prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
+        );
+    };
 
-// Photos Tab
-const PhotosTab = () => (
-  <FlatList
-    data={foodDetails.photos}
-    keyExtractor={(_, index) => index.toString()}
-    numColumns={2}
-    renderItem={({ item }) => <Image source={item} style={styles.photo} />}
-    contentContainerStyle={styles.photoGrid}
-  />
-);
+	return (
+        <SafeAreaView style={styles.container}>
+            {/* Blue Bar */}
+            <View style={styles.blueBar} />
 
-// Main Component
-const FoodItemDetailPage: React.FC<FoodItemDetailProps> = ({ navigation }) => {
-  return (
-    <View style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color="white" />
-      </TouchableOpacity>
-
-      {/* Food Image and Details */}
-      <View style={styles.imageContainer}>
-        <Image source={foodDetails.imageSource} style={styles.foodImage} />
-      </View>
-      <View style={styles.foodInfo}>
-        <Text style={styles.foodTitle}>{foodDetails.title}</Text>
-        <Text style={styles.foodRating}>⭐ {foodDetails.rating}</Text>
-        <Text style={styles.foodDescription}>{foodDetails.description}</Text>
-      </View>
-
-      {/* Tabs for Reviews and Photos */}
-      <Tab.Navigator
-        screenOptions={{
-          tabBarActiveTintColor: 'white',
-          tabBarIndicatorStyle: { backgroundColor: 'white' },
-        }}
-      >
-        <Tab.Screen 
-        name="Reviews" component={ReviewsTab} />
-        <Tab.Screen name="Photos" component={PhotosTab} />
-      </Tab.Navigator>
-
-      {/* Related Food Items */}
-      <View style={styles.relatedSection}>
-        <Text style={styles.relatedTitle}>Related Food Items</Text>
-        <FlatList
-          data={foodDetails.relatedItems}
-          keyExtractor={(item) => item.id}
-          horizontal
-          renderItem={({ item }) => (
-            <View style={styles.relatedCard}>
-              <Image source={item.image} style={styles.relatedImage} />
-              <Text style={styles.relatedTextBold}>{item.title}</Text>
+            {/* Top Navigation */}
+            <View style={styles.topNav}>
+                <Pressable onPress={() => router.back()}>
+                    <Ionicons name="chevron-back" size={28} color="#333" />
+                </Pressable>
             </View>
-          )}
-        />
-      </View>
-    </View>
-  );
-};
+
+            {/* Image Container */}
+            <View style={styles.imageContainer}>
+                <Image
+                    source={require("@/assets/images/Willsoup.png")}
+                    style={styles.foodImage}
+                />
+                {/* Overlay */}
+                <View style={styles.overlayContainer}>
+                    <View style={styles.overlayContent}>
+                        <Text style={styles.foodTitle}>Will’s Coughing Soup</Text>
+                        <Text style={styles.foodLocation}>13 mi - 1507 South Coast Dr, Costa Mesa</Text>
+                    </View>
+                    <View style={styles.ratingContainer}>
+                        <Text style={styles.ratingText}>4.9</Text>
+                        <Ionicons name="star" size={18} color="#FFD700" />
+                    </View>
+                </View>
+            </View>
+
+            {/* Food Category */}
+            <View style={styles.categoryContainer}>
+                <Text style={styles.categoryText}>$$ • Soup, Vietnamese, Vegetarian</Text>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.actionButtonsContainer}>
+                {[
+                    { icon: "star-outline" as const, text: "Add Review" },
+                    { icon: "camera-outline" as const, text: "Add Photo" },
+                    { icon: "map-outline" as const, text: "View Map" },
+                ].map((button, index) => (
+                    <Pressable key={index} style={styles.actionButton}>
+                        <View style={styles.iconCircle}>
+                            <Ionicons name={button.icon} size={24} color="#65C5E3" />
+                        </View>
+                        <Text style={styles.buttonText}>{button.text}</Text>
+                    </Pressable>
+                ))}
+            </View>
+
+            {/* Reviews & Photos Section */}
+            <View style={styles.reviewsPhotosContainer}>
+                {/* Reviews Section */}
+                <View style={styles.reviewsContainer}>
+                    <Text style={styles.sectionTitle}>Reviews</Text>
+                    <View style={styles.ratingRow}>
+                        <Text style={styles.boldText}>Overall Rating</Text>
+                        <View style={styles.starRow}>
+                            {[...Array(5)].map((_, index) => (
+                                <Ionicons key={index} name="star" size={16} color="#FFD700" />
+                            ))}
+                        </View>
+                        <Text style={styles.reviewCount}>3,304 reviews</Text>
+                    </View>
+
+                    {/* View Reviews Button */}
+                    <Pressable onPress={() => router.push("/reviews")} style={styles.viewReviewsButton}>
+                        <Text style={styles.viewReviewsText}>View Reviews →</Text>
+                    </Pressable>
+                </View>
+
+                {/* Photos Section */}
+                <View style={styles.photosContainer}>
+                    <Text style={styles.sectionTitle}>Photos</Text>
+                    {photoRatings.map((item, index) => (
+                        <View key={index} style={styles.photoRow}>
+                            <Text style={styles.photoLabel}>{item.label}</Text>
+                            <Pressable onPress={() => handlePhotoClick(item.image)}>
+                                <View style={[styles.photoBar, { width: `${item.percentage}%`, backgroundColor: item.color }]} />
+                            </Pressable>
+                        </View>
+                    ))}
+                </View>
+            </View>
+
+            {/* Blue Divider */}
+            <View style={styles.blueDivider} />
+
+            {/* Related Food Items */}
+            <View style={styles.relatedContainer}>
+                <Text style={styles.sectionTitle}>Related Food Items</Text>
+                {relatedFood.map((item) => (
+                    <View key={item.id} style={styles.foodItem}>
+                        <Image source={{ uri: item.image }} style={styles.foodImageSmall} />
+                        <View style={styles.foodDetails}>
+                            <Text style={styles.foodName}>{item.name}</Text>
+                            <Text style={styles.foodDescription}>{item.description}</Text>
+                            <View style={styles.ratingRow}>
+                                {[...Array(5)].map((_, i) => (
+                                    <Ionicons
+                                        key={i}
+                                        name={i < item.rating ? "star" : "star-outline"}
+                                        size={16}
+                                        color={i < item.rating ? "#FFD700" : "#D3D3D3"}
+                                    />
+                                ))}
+                                <Text style={styles.reviewCount}>({item.reviews})</Text>
+                            </View>
+                        </View>
+                        <Pressable onPress={() => handleFavoriteToggle(item.id)}>
+                            <Ionicons
+                                name={favorites.includes(item.id) ? "heart" : "heart-outline"}
+                                size={24}
+                                color="#000"
+                            />
+                        </Pressable>
+                    </View>
+                ))}
+            </View>
+        </SafeAreaView>
+	);
+}
+
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.primary.lightteal },
-  backButton: { position: 'absolute', top: 40, left: 20, zIndex: 1 },
-  imageContainer: {
-    backgroundColor: Colors.primary.lightteal,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
+  container: {
+      flex: 1,
+      backgroundColor: "white",
   },
-  foodImage: { width: '100%', height: 250, resizeMode: 'cover' },
-  foodInfo: { padding: 16, backgroundColor: 'lightgray', alignItems: 'center' },
-  foodTitle: { fontSize: 24, fontWeight: 'bold' },
-  foodRating: { fontSize: 18, color: 'black', marginVertical: 4 },
-  foodDescription: { fontSize: 16, color: '#555' },
-  tabContainer: { padding: 16 },
-  reviewCard: {
-    backgroundColor: '#f9f9f9',
-    marginVertical: 8,
-    padding: 12,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  reviewer: { fontSize: 16, fontWeight: 'bold' },
-  starsContainer: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-  photoGrid: { padding: 8 },
-  photo: { width: '48%', height: 120, margin: 4, borderRadius: 8 },
-  relatedSection: { marginTop: 16 },
-  relatedTitle: { fontSize: 20, fontWeight: 'bold', marginLeft: 16, marginBottom: 8 },
-  relatedCard: { marginHorizontal: 8, alignItems: 'center' },
-  relatedImage: { width: 100, height: 100, borderRadius: 8 },
-  relatedText: { marginTop: 4, fontSize: 14, textAlign: 'center' },
-  relatedTextBold: {
-    marginTop: 4,
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: 'bold', // Makes the text bold
-  },
-  
-});
 
-export default FoodItemDetailPage;
+  blueBar: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 65, // Adjust height as needed
+      backgroundColor: "#B3E5FC", // Light blue color
+      zIndex: 1, // Ensures it's above other elements
+  },
+
+  topNav: {
+      position: "absolute",
+      top: 25, // Adjust to ensure it's placed correctly
+      left: 20,
+      zIndex: 2, // Keeps it above the image
+  },
+
+  imageContainer: {
+      position: "relative", // Allows overlay to be absolutely positioned inside
+      width: "100%",
+      height: 250, // Adjust height as needed
+      overflow: "hidden",
+  },
+
+  foodImage: {
+      width: "100%",
+      height: "100%",
+      resizeMode: "cover",
+  },
+
+  overlayContainer: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.4)", // Semi-transparent black for contrast
+      padding: 15,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+  },
+
+  overlayContent: {
+      flex: 1,
+  },
+
+  foodTitle: {
+      color: "white",
+      fontSize: 20,
+      fontWeight: "bold",
+  },
+
+  foodLocation: {
+      color: "white",
+      fontSize: 14,
+  },
+
+  ratingContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "rgba(255, 255, 255, 0.8)", // Light background for contrast
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+  },
+
+  ratingText: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: "#333",
+      marginRight: 4,
+  },
+
+  categoryContainer: {
+      alignItems: "center",
+      marginTop: 10,
+      marginBottom: 15,
+  },
+
+  categoryText: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: "#333",
+  },
+
+  actionButtonsContainer: {
+      flexDirection: "row",
+      justifyContent: "space-around",
+      paddingHorizontal: 70,
+      marginBottom: 10,
+  },
+
+  actionButton: {
+      alignItems: "center",
+  },
+
+  iconCircle: {
+      width: 50,
+      height: 50,
+      backgroundColor: "#E3F7FF", // Light blue background
+      borderRadius: 25, // Circular button
+      justifyContent: "center",
+      alignItems: "center",
+  },
+
+  buttonText: {
+      marginTop: 5,
+      fontSize: 14,
+      color: "#333",
+  },
+
+  reviewsPhotosContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: 20,
+      paddingVertical: 15,
+      borderTopWidth: 1,
+      borderColor: "#E0E0E0",
+  },
+
+  reviewsContainer: {
+      flex: 1,
+  },
+
+  photosContainer: {
+      flex: 1,
+  },
+
+  sectionTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 5,
+  },
+
+  ratingColumn: {
+      flexDirection: "column",
+      marginBottom: 10,
+  },
+
+  boldText: {
+      fontWeight: "bold",
+      fontSize: 16,
+  },
+
+  starRow: {
+      flexDirection: "row",
+      marginVertical: 5,
+  },
+
+  reviewCountText: {
+      fontSize: 12,
+      color: "#666",
+      marginLeft: 5,
+  },
+
+  viewReviewsButton: {
+      marginTop: 5,
+  },
+
+  viewReviewsText: {
+      fontSize: 14,
+      color: "#007AFF",
+      textDecorationLine: "underline",
+  },
+
+  photoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 5,
+  },
+
+  photoLabel: {
+      width: 20,
+      fontSize: 14,
+      fontWeight: "bold",
+  },
+
+  photoBar: {
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: "#E64A19",
+      flex: 1,
+      marginLeft: 5,
+  },
+
+  blueDivider: {
+      height: 6,
+      backgroundColor: "#B3E5FC", // Light blue bar
+      width: "100%",
+      marginVertical: 10,
+  },
+
+  relatedContainer: {
+      paddingHorizontal: 20,
+      paddingVertical: 15,
+  },
+
+  foodItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 15,
+  },
+
+  foodImageSmall: {
+      width: 60,
+      height: 60,
+      borderRadius: 10,
+      marginRight: 10,
+  },
+
+  foodDetails: {
+      flex: 1,
+  },
+
+  foodName: {
+      fontWeight: "bold",
+      fontSize: 16,
+  },
+
+  foodDescription: {
+      fontSize: 14,
+      color: "#666",
+      marginBottom: 5,
+  },
+
+  ratingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+  },
+
+  reviewCount: {
+      fontSize: 12,
+      color: "#666",
+      marginLeft: 5,
+  },
+});

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { supabase } from '@/supabaseClient';
+
 import {
   ScrollView,
   View,
@@ -16,6 +18,7 @@ const { width, height } = Dimensions.get('window');
 function Users() {
   const [activeTab, setActiveTab] = useState('login');
 
+
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -24,6 +27,9 @@ function Users() {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regPasswordRetype, setRegPasswordRetype] = useState('');
+  const [regErrors, setRegErrors] = useState("");
+  const [emailErrors, setEmailErrors] = useState("")
+  const [passwordErrors, setPasswordErrors] = useState("")
 
   // Forgot states
   const [forgotEmail, setForgotEmail] = useState('');
@@ -31,6 +37,12 @@ function Users() {
   const handleLoginTab = () => setActiveTab('login');
   const handleRegTab = () => setActiveTab('register');
   const handleForgotTab = () => setActiveTab('forgot');
+
+ 
+  const validateEmail = (email:string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
 
   const loginUser = () => {
     if (loginEmail === '' || loginPassword === '') {
@@ -40,16 +52,47 @@ function Users() {
     }
   };
 
-  const registerUser = () => {
+  const registerUser = async () => {
+    setEmailErrors("")
+    setRegErrors("")
+    setPasswordErrors("")
+
+    let passValidations = true;
+
     if (!regEmail || !regPassword || !regPasswordRetype) {
-      alert('Please fill in all fields.');
-      return;
+      setRegErrors('Please fill in all fields.');
+      passValidations = false;
+    }
+    if (!validateEmail(regEmail)){
+      setEmailErrors("Email Invalid. Try a different one")
+      passValidations = false;
+    }
+    if (regPassword.length < 6){
+      setPasswordErrors("Needs a password longer than 6 characters")
+      passValidations = false;
     }
     if (regPassword !== regPasswordRetype) {
-      alert('Passwords do not match.');
+      setPasswordErrors('Passwords do not match.');
+      passValidations = false;
+      
+    }
+
+    if (!passValidations){
       return;
     }
-    alert(`Registered with email: ${regEmail}`);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: regEmail,
+        password: regPassword,
+      });
+      console.log(data, error);
+      if (error) {
+        setRegErrors(error.message)
+      }
+    } catch (error) {
+      setRegErrors('There was error registering');
+      console.log(error);
+    }
   };
 
   const forgotPassword = () => {
@@ -174,6 +217,8 @@ function Users() {
               onChangeText={setRegEmail}
               keyboardType="email-address"
             />
+
+            {emailErrors.length > 0 && <Text style={styles.errorText}>{emailErrors}</Text>}
           </View>
 
           <Text style={styles.inputLabel}>
@@ -188,6 +233,8 @@ function Users() {
               onChangeText={setRegPassword}
               secureTextEntry
             />
+            {passwordErrors.length > 0 && <Text style={styles.errorText}>{passwordErrors}</Text>}
+
           </View>
 
           <Text style={styles.inputLabel}>
@@ -203,6 +250,8 @@ function Users() {
               secureTextEntry
             />
           </View>
+
+          {regErrors.length > 0 && <Text style={styles.errorText}>{regErrors}</Text>}
 
           <TouchableOpacity onPress={registerUser} style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Register</Text>
@@ -392,6 +441,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#2897ba',
     textDecorationLine: 'underline',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
