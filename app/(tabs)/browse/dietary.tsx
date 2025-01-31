@@ -149,7 +149,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 		height: 40,
 		fontSize: 16,
-		outline: "none",
 		...Platform.select({
 			ios: {
 				// iOS specific styles
@@ -191,7 +190,21 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		padding: 8,
-		boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", // Web-specific shadow
+		// Remove boxShadow and use platform-specific shadows
+		...Platform.select({
+			web: {
+				boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+			},
+			ios: {
+				shadowColor: "#000",
+				shadowOffset: { width: 0, height: 2 },
+				shadowOpacity: 0.1,
+				shadowRadius: 4,
+			},
+			android: {
+				elevation: 4,
+			},
+		}),
 	},
 	cardImage: {
 		width: 50, // Fixed width for thumbnail

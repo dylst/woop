@@ -48,7 +48,7 @@ export default function Browse() {
 			<View style={styles.buttonContainer}>
 				<Pressable
 					style={styles.button}
-					onPress={() => router.push("/browse_tabs/cuisine")}
+					onPress={() => router.push("/browse/cuisine")}
 				>
 					<Ionicons
 						name='restaurant-outline'
@@ -59,7 +59,7 @@ export default function Browse() {
 				</Pressable>
 				<Pressable
 					style={styles.button}
-					onPress={() => router.push("/browse_tabs/dietary")}
+					onPress={() => router.push("/browse/dietary")}
 				>
 					<Ionicons
 						name='nutrition-outline'
@@ -70,7 +70,10 @@ export default function Browse() {
 				</Pressable>
 				<Pressable
 					style={styles.button}
-					onPress={() => router.push("/browse_tabs/map")}
+					onPress={() => {
+						console.log("Navigating to map...");
+						router.push("/browse/map");
+					}}
 				>
 					<Ionicons
 						name='location-outline'
