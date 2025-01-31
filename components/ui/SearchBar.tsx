@@ -9,6 +9,25 @@ const SearchBar = () => {
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 
+
+	const handleSearchDb = async (name: string) => {
+		try{
+			setLoading(true);
+			const results = await restaurantService.getRestaurantByNameSupabase(name);
+			console.log("Search Results:", typeof results, results);
+			router.push({
+				pathname: "/(tabs)/browse/browse-search",
+				params: {
+					query: searchQuery,
+					results: JSON.stringify(results),
+				},
+			});
+		}catch (e){
+			console.error("Failed catching restaurant:", e);
+		}
+	}
+
+
 	const handleSearch = async () => {
 		if (searchQuery.trim()) {
 			try {
@@ -69,7 +88,7 @@ const SearchBar = () => {
 				placeholder='Search restaurants...'
 				value={searchQuery}
 				onChangeText={setSearchQuery}
-				onSubmitEditing={handleSearch}
+				onSubmitEditing={()=>handleSearchDb(searchQuery)}
 				editable={!loading}
 			/>
 		</View>
