@@ -1,10 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { TextInput, Button, HelperText, Chip, List } from 'react-native-paper';
-import Slider from '@react-native-community/slider';
+import { PhotoUploadScreen } from './PhotoUploadScreen';
+
 type FormData = {
   foodName: string;
   cuisineType: string;
@@ -41,6 +48,7 @@ export default function AddFoodItemForm() {
     control,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<FormData>({
     defaultValues: {
       foodName: '',
@@ -56,9 +64,17 @@ export default function AddFoodItemForm() {
   const [selectedDietaryTags, setSelectedDietaryTags] = React.useState<
     string[]
   >([]);
+  const [showPhotoUpload, setShowPhotoUpload] = React.useState(false);
+
   const onSubmit = (data: FormData) => {
     console.log('Form submitted:', data);
   };
+
+  const handlePhotosSelected = (photos: string[]) => {
+    setValue('photos', photos);
+    setShowPhotoUpload(false);
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* Food Name */}
@@ -131,7 +147,7 @@ export default function AddFoodItemForm() {
                   selected={selectedDietaryTags.includes(tag)}
                   onPress={() => {
                     const newTags = selectedDietaryTags.includes(tag)
-                      ? selectedDietaryTags.filter((t) => t !== tag)
+                      ? selectedDietaryTags.filter((t: string) => t !== tag)
                       : [...selectedDietaryTags, tag];
                     setSelectedDietaryTags(newTags);
                     onChange(newTags);
@@ -152,19 +168,28 @@ export default function AddFoodItemForm() {
         name='priceRange'
         render={({ field: { onChange, value } }) => (
           <View style={styles.inputContainer}>
-            <ThemedText style={styles.label}>
-              Price Range: {'$'.repeat(value)}
-            </ThemedText>
-            <Slider
-              minimumValue={1}
-              maximumValue={4}
-              step={1}
-              value={value}
-              onValueChange={onChange}
-              minimumTrackTintColor={Colors.primary.darkteal}
-              thumbTintColor={Colors.primary.darkteal}
-              maximumTrackTintColor='#d3d3d3'
-            />
+            <ThemedText style={styles.label}>Price Range</ThemedText>
+            <View style={styles.priceContainer}>
+              {[1, 2, 3, 4].map((price) => (
+                <TouchableOpacity
+                  key={price}
+                  style={[
+                    styles.priceButton,
+                    value === price && styles.selectedPriceButton,
+                  ]}
+                  onPress={() => onChange(price)}
+                >
+                  <ThemedText
+                    style={[
+                      styles.priceText,
+                      value === price && styles.selectedPriceText,
+                    ]}
+                  >
+                    {'$'.repeat(price)}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         )}
       />
@@ -200,6 +225,28 @@ export default function AddFoodItemForm() {
           />
         )}
       />
+      <View style={styles.inputContainer}>
+        <Button
+          mode='outlined'
+          onPress={() => setShowPhotoUpload(true)}
+          style={styles.photoButton}
+          icon='camera'
+          textColor='black'
+        >
+          Add Photos
+        </Button>
+        <Modal
+          visible={showPhotoUpload}
+          animationType='slide'
+          presentationStyle='fullScreen'
+        >
+          <PhotoUploadScreen
+            onClose={() => setShowPhotoUpload(false)}
+            onSelectImages={handlePhotosSelected}
+            maxImages={5}
+          />
+        </Modal>
+      </View>
       <Button
         mode='contained'
         onPress={handleSubmit(onSubmit)}
@@ -251,5 +298,33 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 40,
     backgroundColor: Colors.primary.darkteal,
+  },
+  photoButton: {
+    borderColor: 'black',
+    borderWidth: 1,
+    color: 'black',
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  priceButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.primary.darkteal,
+    alignItems: 'center',
+  },
+  selectedPriceButton: {
+    backgroundColor: Colors.primary.darkteal,
+  },
+  priceText: {
+    color: Colors.primary.darkteal,
+    fontSize: 16,
+  },
+  selectedPriceText: {
+    color: 'white',
   },
 });
