@@ -3,9 +3,9 @@ export interface Restaurant {
 	restaurantName: string;
 	address: string;
 	zipCode: string;
-	phone: string;
+	phone?: string;
 	stateName: string;
 	cityName: string;
-	hoursInterval: string;
-	cuisineType: string;
+	hoursInterval?: string;
+	cuisineType?: string;
 }

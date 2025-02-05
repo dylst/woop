@@ -1,5 +1,6 @@
 import { axiosInstance } from "../config/axios";
 import { Restaurant } from "@/types/restaurant.types";
+import {supabase} from "@/supabaseClient";
 
 export const restaurantService = {
 	getRestaurantsByState: async (
@@ -61,6 +62,37 @@ export const restaurantService = {
 			throw error;
 		}
 	},
+	getRestaurantByNameSupabase: async (name: string): Promise<Restaurant[]> => {
+		try {
+			console.log("🔍 Searching for:", name);
+			const trimmedName = name.trim();
+			const { data, error } = await supabase
+				.from("restaurant")
+				.select("*")
+				.ilike("name", `${trimmedName}%`);
+
+			console.log("Supabase Query:", `ilike("name", "${name}%")`);
+			console.log("Supabase Response:", data);
+
+			if (error) {
+				console.error("Supabase Error:", error);
+				return [];
+			}
+
+			return data?.map((restaurant) => ({
+				id: restaurant.id,
+				restaurantName: restaurant.name,
+				address: restaurant.addressLin,
+				zipCode: restaurant.zipCode,
+				stateName: restaurant.state,
+				cityName: restaurant.city,
+			})) || [];
+		} catch (error) {
+			console.error("Error fetching restaurants:", error);
+			return [];
+		}
+	}
+
 };
 
 
