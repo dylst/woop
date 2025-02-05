@@ -1,10 +1,9 @@
 import React, {useEffect, useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView,
-    TouchableOpacity, FlatList, Image, TextInput 
+    FlatList, Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
 import { supabase } from '@/supabaseClient';
 import TopBar from '@/components/ui/TopBar';
 
@@ -18,8 +17,6 @@ interface FavoriteItem {
 }
 
 const favorites = ({ userId }: { userId: string}) => {
-  // const navigation = useNavigation();
-
   // TEST_ID
   userId = '10';
 
@@ -61,6 +58,22 @@ const favorites = ({ userId }: { userId: string}) => {
     fetchFavorites();
   }, []);
 
+    // Remove item from both state and Supabase
+    const handleRemoveItem = async (id: string) => {
+      // Remove from Supabase
+      const { error } = await supabase
+        .from('favorite')
+        .delete()
+        .eq('id', id);
+  
+      if (error) {
+        console.error(error);
+      } else {
+        // Remove from the local state (UI)
+        setFavorites((prevFavorites) => prevFavorites.filter((item) => item.food_item_id !== id));
+      }
+    };
+
   const renderItem = ({ item }: { item: FavoriteItem }) => {
     return (
       <View style={styles.card}>
@@ -69,6 +82,7 @@ const favorites = ({ userId }: { userId: string}) => {
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{item.food_name}</Text>
           <Text style={styles.itemComment}>{item.restaurant_name}</Text>
+
           {/* <View style={styles.ratingContainer}>
             {[...Array(5)].map((_, index) => (
               <Ionicons
@@ -82,6 +96,12 @@ const favorites = ({ userId }: { userId: string}) => {
             <Text style={styles.ratingCount}>({item.rating_count ?? 10 })</Text>
           </View> */}
         </View>
+        <Ionicons
+                name='close-outline'
+                size={28}
+                onPress={() => handleRemoveItem(item.food_item_id)}
+
+              />
       </View>
     );
   };
