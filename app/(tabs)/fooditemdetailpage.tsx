@@ -104,12 +104,11 @@ export default function fooditemdetailpage() {
         }
     }
 
-    function removeNoneFromCategories(value?: string | null) {
-        if (!value) return "";
-        return value.trim().toLowerCase() === "none" ? "" : value;
-    }
-    const cuisineType = removeNoneFromCategories(itemData?.cuisine_type);
-    const dietaryTags = removeNoneFromCategories(itemData?.dietary_tags);
+    const cuisineType = itemData?.cuisine_type ?? [];
+    const dietaryTags = itemData?.dietary_tags ?? [];
+
+    const cuisineText = cuisineType.join(", ");
+    const dietaryText = dietaryTags.join(", ");
 
     // DUMMY DATA AND METHODS
     const relatedFood = [
@@ -181,7 +180,7 @@ export default function fooditemdetailpage() {
 
             {/* Food Category */}
             <View style={styles.categoryContainer}>
-                <Text style={styles.categoryText}>{itemData?.price_range || "$"} • {cuisineType}{cuisineType && dietaryTags ? ", " : ""} {dietaryTags}</Text>
+                <Text style={styles.categoryText}>{itemData?.price_range || "$"}{cuisineText || dietaryText ? " • " : ""}{cuisineText}{cuisineText && dietaryText ? ", " : ""}{dietaryText}</Text>
             </View>
 
             {/* Action Buttons */}
