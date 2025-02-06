@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
+import TopBar from '@/components/ui/TopBar';
 
 interface ReviewItemProps {
   image: any;
@@ -113,6 +114,9 @@ const ReviewsScreen = () => {
         barStyle='dark-content'
         backgroundColor={Colors.primary.lightteal}
       />
+      {/* Top Bar */}
+      <TopBar type='back' title='reviews'/>
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Recent Reviews Section */}
         <View style={styles.recentSection}>

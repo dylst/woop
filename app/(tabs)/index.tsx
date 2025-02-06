@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  SafeAreaView,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,9 +54,9 @@ const filtersItems = [
 
 const HomePage = () => {  
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Top Bar */}
-      <TopBar/>
+      <TopBar type="home"/>
 
       {/* Best in Town Section */}
       <Text style={styles.sectionTitle}>Best in Town!</Text>
@@ -88,28 +89,28 @@ const HomePage = () => {
           />
         ))}
       </View>
-    </ScrollView>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
-    paddingTop: 50,
-    padding: 16,
-  },
+    backgroundColor: "white",
+},
   scrollViewPadding: {
     paddingBottom: 16,
   },
   newSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginVertical: 20,
+    paddingHorizontal: 20,
   },
   shadowProp: {
     shadowColor: '#000',
