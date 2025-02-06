@@ -139,12 +139,12 @@ export default function fooditemdetailpage() {
 	return (
         <SafeAreaView style={styles.container}>
             {/* Blue Bar */}
-            <View style={styles.blueBar} />
+            {/* <View style={styles.blueBar} /> */}
 
             {/* Top Navigation */}
             <View style={styles.topNav}>
                 <Pressable onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={28} color="#333" />
+                    <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton}/>
                 </Pressable>
             </View>
 
@@ -287,6 +287,10 @@ const styles = StyleSheet.create({
       height: 65, // Adjust height as needed
       backgroundColor: "#B3E5FC", // Light blue color
       zIndex: 1, // Ensures it's above other elements
+  },
+
+  backButton: {
+    color: "#fff",
   },
 
   topNav: {

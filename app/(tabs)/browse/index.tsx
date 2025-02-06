@@ -29,7 +29,7 @@ export default function Browse() {
 	return (
 		<SafeAreaView style={styles.container}>
 			{/* Top Navigation */}
-			<View style={styles.topNav}>
+			{/* <View style={styles.topNav}>
 				<Pressable onPress={() => router.back()}>
 					<Ionicons
 						name='chevron-back'
@@ -37,11 +37,11 @@ export default function Browse() {
 						color='#333'
 					/>
 				</Pressable>
-			</View>
+			</View> */}
 
 			{/* Page Title */}
 			<View style={styles.topBarContainer}>
-				<TopBar />
+				<TopBar type="back" title='search'/>
 			</View>
 
 			{/* Buttons Row */}
@@ -110,16 +110,15 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: "white",
-		padding: 16,
 	},
 	topNav: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
+		paddingHorizontal: 20,
 		marginBottom: 10,
 	},
 	topBarContainer: {
-		paddingHorizontal: 20,
 		width: "100%",
 		maxWidth: 800,
 		alignSelf: "center",

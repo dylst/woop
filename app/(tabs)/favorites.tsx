@@ -1,6 +1,6 @@
 import React, {useEffect, useState } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView,
+    View, Text, StyleSheet, SafeAreaView,
     FlatList, Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,7 +31,10 @@ const favorites = ({ userId }: { userId: string}) => {
         fooditem (
           food_name,
           photos,
-          restaurant_name
+          restaurant_name,
+          price_range,
+          cuisine_type,
+          dietary_tags
         )
       `)
       .eq('user_id', userId)
@@ -49,6 +52,9 @@ const favorites = ({ userId }: { userId: string}) => {
         food_name: fav.fooditem?.food_name || '',
         photos: fav.fooditem?.photos || '',
         restaurant_name: fav.fooditem?.restaurant_name || '',
+        price_range: fav.fooditem?.price_range || '',
+        cuisine_type: fav.fooditem?.cuisine_type || '',
+        dietary_tags: fav.fooditem?.dietary_tags || '',
       }));
 
       setFavorites(flattened);
@@ -107,8 +113,8 @@ const favorites = ({ userId }: { userId: string}) => {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-      <TopBar/>
+    <SafeAreaView style={styles.container}>
+      <TopBar type="back" title='favorites'/>
 
       <Text style={styles.myFavoritesLabel}>My Favorites</Text>
       <FlatList<FavoriteItem>
@@ -117,7 +123,7 @@ const favorites = ({ userId }: { userId: string}) => {
         renderItem={renderItem}
         showsHorizontalScrollIndicator={false}
       />
-    </ScrollView>
+    </SafeAreaView>
   )
 };
 
@@ -127,8 +133,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7f7f7',
-    paddingTop: 50,
-    padding: 16,
   },
   card: {
     flexDirection: 'row',
@@ -136,12 +140,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: '#f9f9f9',
     borderRadius: 8,
-    padding: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 5,
   },
   myFavoritesLabel: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginVertical: 20,  }
+    marginVertical: 20,
+    paddingHorizontal: 20,
+  }
   ,
   itemImage: {
     width: 60,
