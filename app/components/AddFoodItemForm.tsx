@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -18,6 +18,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { supabase } from '@/supabaseClient';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 type FormData = {
   foodName: string;
@@ -74,6 +76,8 @@ export default function AddFoodItemForm() {
   >([]);
   const [showPhotoUpload, setShowPhotoUpload] = React.useState(false);
   const [photos, setPhotos] = React.useState<string[]>([]);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const router = useRouter();
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -139,7 +143,8 @@ export default function AddFoodItemForm() {
         return;
       }
 
-      console.log('Food item created:', newFoodItem);
+      // Show success modal
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error submitting form:', error);
       Alert.alert('Upload Error', 'Failed to upload images. Please try again.');
@@ -151,6 +156,36 @@ export default function AddFoodItemForm() {
     setValue('photos', newPhotos);
     setShowPhotoUpload(false);
   };
+
+  const SuccessModal = () => (
+    <Modal visible={showSuccessModal} transparent animationType='fade'>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.iconContainer}>
+            <Ionicons
+              name='checkmark-circle'
+              size={80}
+              color={Colors.primary.darkteal}
+            />
+          </View>
+          <ThemedText style={styles.modalTitle}>Woop!</ThemedText>
+          <ThemedText style={styles.modalMessage}>
+            Your food item has been successfully created
+          </ThemedText>
+          <Button
+            mode='contained'
+            onPress={() => {
+              setShowSuccessModal(false);
+              router.push('/(tabs)');
+            }}
+            style={styles.modalButton}
+          >
+            Back to Home
+          </Button>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <ScrollView style={styles.container}>
@@ -354,6 +389,7 @@ export default function AddFoodItemForm() {
       >
         Done
       </Button>
+      <SuccessModal />
     </ScrollView>
   );
 }
@@ -449,5 +485,47 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 12,
     padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '80%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  iconContainer: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: Colors.primary.darkteal,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+  },
+  modalButton: {
+    backgroundColor: Colors.primary.darkteal,
+    width: '100%',
+    marginTop: 10,
   },
 });
