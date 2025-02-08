@@ -28,6 +28,7 @@ export const Colors = {
 		lightteal: "#CCF1FC",
 		teal: "#50BBDD",
 		darkteal: "#2897BA",
+		lightTealTranslucent20: "rgba(194,239,253,0.2)",
 	},
 	navigationMainColor: {
 		background: "#89D5ED",
