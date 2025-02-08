@@ -5,12 +5,14 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
+  Image,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { TextInput, Button, HelperText, Chip, List } from 'react-native-paper';
 import { PhotoUploadScreen } from './PhotoUploadScreen';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type FormData = {
   foodName: string;
@@ -65,13 +67,15 @@ export default function AddFoodItemForm() {
     string[]
   >([]);
   const [showPhotoUpload, setShowPhotoUpload] = React.useState(false);
+  const [photos, setPhotos] = React.useState<string[]>([]);
 
   const onSubmit = (data: FormData) => {
     console.log('Form submitted:', data);
   };
 
-  const handlePhotosSelected = (photos: string[]) => {
-    setValue('photos', photos);
+  const handlePhotosSelected = (newPhotos: string[]) => {
+    setPhotos(newPhotos);
+    setValue('photos', newPhotos);
     setShowPhotoUpload(false);
   };
 
@@ -231,10 +235,33 @@ export default function AddFoodItemForm() {
           onPress={() => setShowPhotoUpload(true)}
           style={styles.photoButton}
           icon='camera'
-          textColor='black'
+          textColor={Colors.primary.darkteal}
+          // iconColor={Colors.primary.darkteal}
         >
           Add Photos
         </Button>
+
+        {/* Photo Preview Section */}
+        {photos.length > 0 && (
+          <ScrollView horizontal style={styles.photoPreviewContainer}>
+            {photos.map((photo, index) => (
+              <View key={photo} style={styles.photoPreview}>
+                <Image source={{ uri: photo }} style={styles.previewImage} />
+                <TouchableOpacity
+                  style={styles.removePhotoButton}
+                  onPress={() => {
+                    const newPhotos = photos.filter((_, i) => i !== index);
+                    setPhotos(newPhotos);
+                    setValue('photos', newPhotos);
+                  }}
+                >
+                  <MaterialIcons name='close' size={20} color='white' />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+
         <Modal
           visible={showPhotoUpload}
           animationType='slide'
@@ -244,6 +271,7 @@ export default function AddFoodItemForm() {
             onClose={() => setShowPhotoUpload(false)}
             onSelectImages={handlePhotosSelected}
             maxImages={5}
+            initialPhotos={photos}
           />
         </Modal>
       </View>
@@ -326,5 +354,28 @@ const styles = StyleSheet.create({
   },
   selectedPriceText: {
     color: 'white',
+  },
+  photoPreviewContainer: {
+    marginTop: 16,
+    flexDirection: 'row',
+  },
+  photoPreview: {
+    position: 'relative',
+    width: 100,
+    height: 100,
+    marginRight: 8,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 12,
+    padding: 4,
   },
 });

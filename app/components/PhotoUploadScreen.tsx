@@ -1,20 +1,32 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Colors } from '@/constants/Colors';
 
 interface PhotoUploadScreenProps {
   onClose: () => void;
   onSelectImages: (images: Array<string>) => void;
   maxImages?: number;
+  initialPhotos?: string[];
 }
 
 export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({
   onClose,
   onSelectImages,
   maxImages = 5,
+  initialPhotos = [],
 }: PhotoUploadScreenProps) => {
+  const [selectedPhotos, setSelectedPhotos] =
+    React.useState<string[]>(initialPhotos);
+
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
@@ -30,7 +42,8 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({
     });
 
     if (!result.canceled) {
-      onSelectImages([result.assets[0].uri]);
+      const newPhotos = [...selectedPhotos, result.assets[0].uri];
+      setSelectedPhotos(newPhotos);
     }
   };
 
@@ -45,13 +58,25 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.8,
       allowsMultipleSelection: true,
-      selectionLimit: maxImages,
+      selectionLimit: maxImages - selectedPhotos.length,
     });
 
     if (!result.canceled) {
-      const imageUris = result.assets.map((asset) => asset.uri);
-      onSelectImages(imageUris);
+      const newPhotos = [
+        ...selectedPhotos,
+        ...result.assets.map((asset) => asset.uri),
+      ];
+      setSelectedPhotos(newPhotos);
     }
+  };
+
+  const removePhoto = (index: number) => {
+    setSelectedPhotos((photos) => photos.filter((_, i) => i !== index));
+  };
+
+  const handleDone = () => {
+    onSelectImages(selectedPhotos);
+    onClose();
   };
 
   return (
@@ -61,19 +86,47 @@ export const PhotoUploadScreen: React.FC<PhotoUploadScreenProps> = ({
           <ThemedText style={styles.closeButton}>Close</ThemedText>
         </TouchableOpacity>
         <ThemedText style={styles.title}>Add Photos</ThemedText>
-        <View style={styles.placeholder} />
+        <TouchableOpacity onPress={handleDone}>
+          <ThemedText style={styles.doneButton}>Done</ThemedText>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity style={styles.option} onPress={takePhoto}>
-          <MaterialIcons name='camera-alt' size={32} color='white' />
-          <ThemedText style={styles.optionText}>Take Photo</ThemedText>
-        </TouchableOpacity>
+      <ScrollView style={styles.previewContainer}>
+        {selectedPhotos.length > 0 && (
+          <View style={styles.photoGrid}>
+            {selectedPhotos.map((photo, index) => (
+              <View key={photo} style={styles.photoContainer}>
+                <Image source={{ uri: photo }} style={styles.photoPreview} />
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => removePhoto(index)}
+                >
+                  <MaterialIcons name='close' size={20} color='white' />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
-        <TouchableOpacity style={styles.option} onPress={selectFromGallery}>
-          <MaterialIcons name='add-photo-alternate' size={32} color='white' />
-          <ThemedText style={styles.optionText}>Select More</ThemedText>
-        </TouchableOpacity>
+      <View style={styles.optionsContainer}>
+        {selectedPhotos.length < maxImages && (
+          <>
+            <TouchableOpacity style={styles.option} onPress={takePhoto}>
+              <MaterialIcons name='camera-alt' size={32} color='white' />
+              <ThemedText style={styles.optionText}>Take Photo</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.option} onPress={selectFromGallery}>
+              <MaterialIcons
+                name='add-photo-alternate'
+                size={32}
+                color='white'
+              />
+              <ThemedText style={styles.optionText}>Select More</ThemedText>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -89,24 +142,56 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    paddingTop: 30,
+    paddingTop: 60,
   },
   closeButton: {
     color: 'white',
     fontSize: 16,
   },
-  title: {
-    color: 'white',
-    fontSize: 24,
+  doneButton: {
+    color: Colors.primary.darkteal,
+    fontSize: 16,
     fontWeight: '600',
   },
-  placeholder: {
-    width: 40,
+  title: {
+    color: 'white',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  previewContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  photoContainer: {
+    position: 'relative',
+    width: '48%',
+    aspectRatio: 1,
+    marginBottom: 8,
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 12,
+    padding: 4,
   },
   optionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
   },
   option: {
     alignItems: 'center',
