@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Modal,
   Image,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { ThemedText } from '@/components/ThemedText';
@@ -13,6 +15,9 @@ import { Colors } from '@/constants/Colors';
 import { TextInput, Button, HelperText, Chip, List } from 'react-native-paper';
 import { PhotoUploadScreen } from './PhotoUploadScreen';
 import { MaterialIcons } from '@expo/vector-icons';
+import { supabase } from '@/supabaseClient';
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 
 type FormData = {
   foodName: string;
@@ -45,6 +50,7 @@ const DIETARY_TAGS = [
   'Keto',
   'Nut-Free',
 ];
+// another test
 export default function AddFoodItemForm() {
   const {
     control,
@@ -69,8 +75,75 @@ export default function AddFoodItemForm() {
   const [showPhotoUpload, setShowPhotoUpload] = React.useState(false);
   const [photos, setPhotos] = React.useState<string[]>([]);
 
-  const onSubmit = (data: FormData) => {
-    console.log('Form submitted:', data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      const photoUrls = await Promise.all(
+        photos.map(async (photoUri) => {
+          const fileExt = photoUri.startsWith('data:')
+            ? photoUri.match(/data:(.*?);/)?.[1]?.split('/')[1] || 'jpg'
+            : photoUri.split('.').pop() || 'jpg';
+          const fileName = `${Date.now()}_${Math.random()
+            .toString(36)
+            .substring(2)}.${fileExt}`;
+
+          // Platform-specific file handling
+          let fileData;
+          if (Platform.OS === 'web') {
+            const response = await fetch(photoUri);
+            fileData = await response.blob();
+          } else {
+            const base64 = await FileSystem.readAsStringAsync(photoUri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            fileData = decode(base64);
+          }
+
+          const { error: uploadError } = (await Promise.race([
+            supabase.storage.from('food-images').upload(fileName, fileData, {
+              contentType: `image/${fileExt}`,
+              upsert: false,
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Upload timeout')), 30000)
+            ),
+          ])) as { data: any; error: any };
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from('food-images')
+            .getPublicUrl(fileName);
+
+          return publicData.publicUrl;
+        })
+      );
+
+      // Create the food item with photo URLs
+      const { data: newFoodItem, error } = await supabase
+        .from('fooditem')
+        .insert([
+          {
+            food_name: data.foodName,
+            cuisine_type: [data.cuisineType],
+            dietary_tags: data.dietaryTags,
+            price_range: data.priceRange.toString(),
+            restaurant_name: data.restaurantName,
+            description: data.description,
+            photos: photoUrls,
+          },
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error creating food item:', error);
+        return;
+      }
+
+      console.log('Food item created:', newFoodItem);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      Alert.alert('Upload Error', 'Failed to upload images. Please try again.');
+    }
   };
 
   const handlePhotosSelected = (newPhotos: string[]) => {
@@ -236,7 +309,6 @@ export default function AddFoodItemForm() {
           style={styles.photoButton}
           icon='camera'
           textColor={Colors.primary.darkteal}
-          // iconColor={Colors.primary.darkteal}
         >
           Add Photos
         </Button>
