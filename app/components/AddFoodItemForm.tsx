@@ -81,6 +81,12 @@ export default function AddFoodItemForm() {
 
   const onSubmit = async (data: FormData) => {
     try {
+      // Convert price range number to $ symbols
+      const priceRangeToSymbol = (price: number) => {
+        return '$'.repeat(price);
+      };
+
+      // First upload all photos to Supabase storage
       const photoUrls = await Promise.all(
         photos.map(async (photoUri) => {
           const fileExt = photoUri.startsWith('data:')
@@ -122,7 +128,7 @@ export default function AddFoodItemForm() {
         })
       );
 
-      // Create the food item with photo URLs
+      // Create the food item with photo URLs and converted price range
       const { data: newFoodItem, error } = await supabase
         .from('fooditem')
         .insert([
@@ -130,7 +136,7 @@ export default function AddFoodItemForm() {
             food_name: data.foodName,
             cuisine_type: [data.cuisineType],
             dietary_tags: data.dietaryTags,
-            price_range: data.priceRange.toString(),
+            price_range: priceRangeToSymbol(data.priceRange), // Convert number to $ symbols
             restaurant_name: data.restaurantName,
             description: data.description,
             photos: photoUrls,
@@ -147,7 +153,9 @@ export default function AddFoodItemForm() {
       setShowSuccessModal(true);
     } catch (error) {
       console.error('Error submitting form:', error);
-      Alert.alert('Upload Error', 'Failed to upload images. Please try again.');
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+      }
     }
   };
 
