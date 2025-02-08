@@ -1,16 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Modal,
+  Image,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { TextInput, Button, HelperText, Chip, List } from 'react-native-paper';
 import { PhotoUploadScreen } from './PhotoUploadScreen';
+import { MaterialIcons } from '@expo/vector-icons';
+import { supabase } from '@/supabaseClient';
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 type FormData = {
   foodName: string;
@@ -43,6 +52,7 @@ const DIETARY_TAGS = [
   'Keto',
   'Nut-Free',
 ];
+// another test
 export default function AddFoodItemForm() {
   const {
     control,
@@ -65,15 +75,117 @@ export default function AddFoodItemForm() {
     string[]
   >([]);
   const [showPhotoUpload, setShowPhotoUpload] = React.useState(false);
+  const [photos, setPhotos] = React.useState<string[]>([]);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const router = useRouter();
 
-  const onSubmit = (data: FormData) => {
-    console.log('Form submitted:', data);
+  const onSubmit = async (data: FormData) => {
+    try {
+      const photoUrls = await Promise.all(
+        photos.map(async (photoUri) => {
+          const fileExt = photoUri.startsWith('data:')
+            ? photoUri.match(/data:(.*?);/)?.[1]?.split('/')[1] || 'jpg'
+            : photoUri.split('.').pop() || 'jpg';
+          const fileName = `${Date.now()}_${Math.random()
+            .toString(36)
+            .substring(2)}.${fileExt}`;
+
+          // Platform-specific file handling
+          let fileData;
+          if (Platform.OS === 'web') {
+            const response = await fetch(photoUri);
+            fileData = await response.blob();
+          } else {
+            const base64 = await FileSystem.readAsStringAsync(photoUri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            fileData = decode(base64);
+          }
+
+          const { error: uploadError } = (await Promise.race([
+            supabase.storage.from('food-images').upload(fileName, fileData, {
+              contentType: `image/${fileExt}`,
+              upsert: false,
+            }),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Upload timeout')), 30000)
+            ),
+          ])) as { data: any; error: any };
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from('food-images')
+            .getPublicUrl(fileName);
+
+          return publicData.publicUrl;
+        })
+      );
+
+      // Create the food item with photo URLs
+      const { data: newFoodItem, error } = await supabase
+        .from('fooditem')
+        .insert([
+          {
+            food_name: data.foodName,
+            cuisine_type: [data.cuisineType],
+            dietary_tags: data.dietaryTags,
+            price_range: data.priceRange.toString(),
+            restaurant_name: data.restaurantName,
+            description: data.description,
+            photos: photoUrls,
+          },
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error creating food item:', error);
+        return;
+      }
+
+      // Show success modal
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      Alert.alert('Upload Error', 'Failed to upload images. Please try again.');
+    }
   };
 
-  const handlePhotosSelected = (photos: string[]) => {
-    setValue('photos', photos);
+  const handlePhotosSelected = (newPhotos: string[]) => {
+    setPhotos(newPhotos);
+    setValue('photos', newPhotos);
     setShowPhotoUpload(false);
   };
+
+  const SuccessModal = () => (
+    <Modal visible={showSuccessModal} transparent animationType='fade'>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.iconContainer}>
+            <Ionicons
+              name='checkmark-circle'
+              size={80}
+              color={Colors.primary.darkteal}
+            />
+          </View>
+          <ThemedText style={styles.modalTitle}>Woop!</ThemedText>
+          <ThemedText style={styles.modalMessage}>
+            Your food item has been successfully created
+          </ThemedText>
+          <Button
+            mode='contained'
+            onPress={() => {
+              setShowSuccessModal(false);
+              router.push('/(tabs)');
+            }}
+            style={styles.modalButton}
+          >
+            Back to Home
+          </Button>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <ScrollView style={styles.container}>
@@ -231,10 +343,32 @@ export default function AddFoodItemForm() {
           onPress={() => setShowPhotoUpload(true)}
           style={styles.photoButton}
           icon='camera'
-          textColor='black'
+          textColor={Colors.primary.darkteal}
         >
           Add Photos
         </Button>
+
+        {/* Photo Preview Section */}
+        {photos.length > 0 && (
+          <ScrollView horizontal style={styles.photoPreviewContainer}>
+            {photos.map((photo, index) => (
+              <View key={photo} style={styles.photoPreview}>
+                <Image source={{ uri: photo }} style={styles.previewImage} />
+                <TouchableOpacity
+                  style={styles.removePhotoButton}
+                  onPress={() => {
+                    const newPhotos = photos.filter((_, i) => i !== index);
+                    setPhotos(newPhotos);
+                    setValue('photos', newPhotos);
+                  }}
+                >
+                  <MaterialIcons name='close' size={20} color='white' />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+
         <Modal
           visible={showPhotoUpload}
           animationType='slide'
@@ -244,6 +378,7 @@ export default function AddFoodItemForm() {
             onClose={() => setShowPhotoUpload(false)}
             onSelectImages={handlePhotosSelected}
             maxImages={5}
+            initialPhotos={photos}
           />
         </Modal>
       </View>
@@ -254,6 +389,7 @@ export default function AddFoodItemForm() {
       >
         Done
       </Button>
+      <SuccessModal />
     </ScrollView>
   );
 }
@@ -326,5 +462,70 @@ const styles = StyleSheet.create({
   },
   selectedPriceText: {
     color: 'white',
+  },
+  photoPreviewContainer: {
+    marginTop: 16,
+    flexDirection: 'row',
+  },
+  photoPreview: {
+    position: 'relative',
+    width: 100,
+    height: 100,
+    marginRight: 8,
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '80%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  iconContainer: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: Colors.primary.darkteal,
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+  },
+  modalButton: {
+    backgroundColor: Colors.primary.darkteal,
+    width: '100%',
+    marginTop: 10,
   },
 });
