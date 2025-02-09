@@ -24,14 +24,52 @@ interface FavoriteItem {
   date_added?: string;
 }
 
+// Sorting
 type SortMode = 'food_name_asc' | 'food_name_desc' |
   'restaurant_name_asc' | 'restaurant_name_desc' |
   'price_range_asc' | 'price_range_desc' |
   'date_added_newest' | 'date_added_oldest';
 
-// unionize both arrays
+// Filtering: unionize both arrays
 function hasOverlap(itemTags: string[] = [], selectedTags: string[] = []) {
   return itemTags.some((tag) => selectedTags.includes(tag))
+}
+
+// Review
+interface RatingInfo {
+  average: number,
+  count: number,
+}
+
+interface Review {
+  food_item_id: string;
+  rating: number,
+}
+
+function renderStars(average: number) {
+  const stars = [];
+  // Integer part
+  const floorVal = Math.floor(average);
+  // Decimal part
+  const decimal = average - floorVal;
+  // Half star
+  const hasHalf = decimal >= 0.5
+
+  // full star
+  for (let i = 0; i < floorVal && i < 5; i++) {
+    stars.push(<Ionicons key={`full-${i}`} name="star" size={12} color="#ffd700" style={{marginRight: 2}} />) 
+  }
+
+  if (hasHalf && floorVal < 5) {
+    stars.push(<Ionicons key="half" name="star-half" size={12} color="#ffd700" style={{marginRight: 2}} />)
+  }
+
+  const noStars = floorVal + (hasHalf ? 1 : 0);
+  for (let i = noStars; i < 5; i++) {
+    stars.push(<Ionicons key={`empty-${i}`} name="star" size={12} color="#ccc" style={{marginRight: 2}} />)
+  } 
+
+  return stars;
 }
 
 const favorites = ({ userId }: { userId: string }) => {
@@ -39,6 +77,7 @@ const favorites = ({ userId }: { userId: string }) => {
   userId = '10';
 
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo}>({});
 
   // track all unique cuisines/dietary for this user
   const [allCuisines, setAllCuisines] = useState<string[]>([]);
@@ -134,6 +173,47 @@ const favorites = ({ userId }: { userId: string }) => {
     setAllCuisines(uniqueCuisines);
     setAllDietary(uniqueDietary);
     setAllPrices(uniquePrices);
+
+    // fetch ratings
+    const itemIds = flattened.map((f) => f.food_item_id);
+    fetchRatings(itemIds);
+  };
+
+  const fetchRatings = async (itemIds: string[]) => {
+    if (itemIds.length === 0) return;
+
+    const { data, error } = await supabase
+      .from('review')
+      .select('food_item_id, rating')
+      .in('food_item_id', itemIds);
+
+    if (error) {
+      console.error('Error fetching ratings:', error);
+      return;
+    }
+    if (!data) return;
+
+    const map: { [key: string]: { sum: number; count: number } } = {};
+
+    data.forEach((row) => {
+      if (!map[row.food_item_id]) {
+        map[row.food_item_id] = { sum: 0, count: 0};
+      }
+      map[row.food_item_id].sum += row.rating;
+      map[row.food_item_id].count += 1;
+    });
+
+    const finalMap: { [key: string]: RatingInfo } = {};
+    for (const fid in map) {
+      const sum = map[fid].sum;
+      const count = map[fid].count;
+      finalMap[fid] = {
+        average: count === 0 ? 0 : sum / count,
+        count,
+      };
+    }
+
+    setRatingMap(finalMap);
   };
 
   useEffect(() => {
@@ -174,19 +254,21 @@ const favorites = ({ userId }: { userId: string }) => {
   };
 
   const getSortIconName = () => {
-    if (sortMode === 'date_added_oldest' ||
-      sortMode === 'food_name_asc' ||
-      sortMode === 'restaurant_name_asc' ||
-      sortMode === 'price_range_asc'
-    ) return 'caret-up-circle-outline';
-    if (sortMode === 'date_added_newest' ||
-      sortMode === 'food_name_desc' ||
-      sortMode === 'restaurant_name_desc' ||
-      sortMode === 'price_range_desc'
-    ) return 'caret-down-circle-outline';
-
-    return 'caret-up-circle-outline';
-  }
+    switch (sortMode) {
+      case 'date_added_oldest':
+      case 'food_name_asc':
+      case 'restaurant_name_asc':
+      case 'price_range_asc':
+        return 'caret-up-circle-outline';
+      case 'date_added_newest':
+      case 'food_name_desc':
+      case 'restaurant_name_desc':
+      case 'price_range_desc':
+        return 'caret-down-circle-outline';
+      default:
+        return 'caret-down-circle-outline';
+    }
+  };
 
   const getSortButtonText = () => {
     const currentOption = sortOptions.find(
@@ -243,6 +325,10 @@ const favorites = ({ userId }: { userId: string }) => {
     const cuisineText = item.cuisine_type?.join(' ');
     const dietaryText = item.dietary_tags?.join(' ');
 
+    const ratingInfo = ratingMap[item.food_item_id];
+    const average = ratingInfo?.average || 0;
+    const count = ratingInfo?.count || 0;
+
     return (
       <View style={styles.card}>
         <Image source={{ uri: item.photos }} style={styles.itemImage} />
@@ -250,6 +336,10 @@ const favorites = ({ userId }: { userId: string }) => {
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{item.food_name}</Text>
           <Text style={styles.itemComment}>{item.restaurant_name}</Text>
+          <View style={styles.ratingRow}>
+              {renderStars(average)}
+              <Text style={styles.ratingCount}>({count === 1 ? `1 rating` : `${count} ratings`})</Text>
+            </View>
           <View style={styles.itemTagContainer}>
             <Text style={styles.itemTagPrice}>{item.price_range}</Text>
 
@@ -262,20 +352,6 @@ const favorites = ({ userId }: { userId: string }) => {
             ) : null
             }
           </View>
-
-
-          {/* <View style={styles.ratingContainer}>
-            {[...Array(5)].map((_, index) => (
-              <Ionicons
-                key={index}
-                name="star"
-                size={16}
-                color="#FFD700"
-                style={{ marginRight: 2}}
-              />
-            ))}
-            <Text style={styles.ratingCount}>({item.rating_count ?? 10 })</Text>
-          </View> */}
         </View>
         <Ionicons
           name='close-outline'
@@ -450,6 +526,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     textAlign: 'center',
   },
+
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -535,8 +612,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   itemImage: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
     borderRadius: 8,
     marginRight: 12,
   },
@@ -568,10 +645,10 @@ const styles = StyleSheet.create({
     color: '#555',
     fontSize: 14,
   },
-  ratingContainer: {
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginVertical: 3,
   },
   ratingCount: {
     marginLeft: 4,
