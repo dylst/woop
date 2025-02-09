@@ -8,8 +8,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/supabaseClient';
+import { useRouter } from 'expo-router';
 import TopBar from '@/components/ui/TopBar';
 import { Colors } from '@/constants/Colors';
+import { ActivityIndicator } from 'react-native-paper';
 
 interface FavoriteItem {
   user_id: string;
@@ -57,27 +59,30 @@ function renderStars(average: number) {
 
   // full star
   for (let i = 0; i < floorVal && i < 5; i++) {
-    stars.push(<Ionicons key={`full-${i}`} name="star" size={12} color="#ffd700" style={{marginRight: 2}} />) 
+    stars.push(<Ionicons key={`full-${i}`} name="star" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
   }
 
   if (hasHalf && floorVal < 5) {
-    stars.push(<Ionicons key="half" name="star-half" size={12} color="#ffd700" style={{marginRight: 2}} />)
+    stars.push(<Ionicons key="half" name="star-half" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
   }
 
   const noStars = floorVal + (hasHalf ? 1 : 0);
   for (let i = noStars; i < 5; i++) {
-    stars.push(<Ionicons key={`empty-${i}`} name="star" size={12} color="#ccc" style={{marginRight: 2}} />)
-  } 
+    stars.push(<Ionicons key={`empty-${i}`} name="star" size={12} color="#ccc" style={{ marginRight: 2 }} />)
+  }
 
   return stars;
 }
 
 const favorites = ({ userId }: { userId: string }) => {
+  const router = useRouter();
+
   // TEST_ID
   userId = '10';
 
+  const [isLoading, setIsLoading] = useState(true);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo}>({});
+  const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
 
   // track all unique cuisines/dietary for this user
   const [allCuisines, setAllCuisines] = useState<string[]>([]);
@@ -102,6 +107,10 @@ const favorites = ({ userId }: { userId: string }) => {
 
   const screenWidth = Dimensions.get('window').width;
 
+  const handlePress = (foodItemId: string) => {
+    router.push(`/food/${foodItemId}`)
+  };
+
   const sortOptions: { label: string; value: SortMode }[] = [
     { label: 'Date Added (Newest to Oldest)', value: 'date_added_newest' },
     { label: 'Date Added (Oldest to Newest)', value: 'date_added_oldest' },
@@ -114,9 +123,11 @@ const favorites = ({ userId }: { userId: string }) => {
   ]
 
   const fetchFavorites = async () => {
-    const { data, error } = await supabase
-      .from('favorite')
-      .select(`
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('favorite')
+        .select(`
         id,
         user_id,
         food_item_id,
@@ -130,53 +141,58 @@ const favorites = ({ userId }: { userId: string }) => {
         ),
         date_added
       `)
-      .eq('user_id', userId)
-      .order('date_added', { ascending: false })
+        .eq('user_id', userId)
+        .order('date_added', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching favorites:', error);
-      return;
-    }
-
-    if (!data) return;
-
-    const flattened = data.map((fav: any) => ({
-      user_id: fav.user_id,
-      food_item_id: fav.food_item_id,
-      food_name: fav.fooditem?.food_name || '',
-      photos: fav.fooditem?.photos || '',
-      restaurant_name: fav.fooditem?.restaurant_name || '',
-      price_range: fav.fooditem?.price_range || '',
-      cuisine_type: fav.fooditem?.cuisine_type || [],
-      dietary_tags: fav.fooditem?.dietary_tags || [],
-      date_added: fav.date_added || '',
-    }));
-
-    setFavorites(flattened);
-
-    const cuisineSet = new Set<string>();
-    const dietarySet = new Set<string>();
-    const priceSet = new Set<string>();
-
-    flattened.forEach((item) => {
-      item.cuisine_type?.forEach((c: string) => cuisineSet.add(c));
-      item.dietary_tags?.forEach((d: string) => dietarySet.add(d));
-      if (item.price_range) {
-        priceSet.add(item.price_range);
+      if (error) {
+        console.error('Error fetching favorites:', error);
+        return;
       }
-    })
 
-    const uniqueCuisines = Array.from(cuisineSet).sort();
-    const uniqueDietary = Array.from(dietarySet).sort();
-    const uniquePrices = Array.from(priceSet).sort((a, b) => a.length - b.length);
+      if (!data) return;
 
-    setAllCuisines(uniqueCuisines);
-    setAllDietary(uniqueDietary);
-    setAllPrices(uniquePrices);
+      const flattened = data.map((fav: any) => ({
+        user_id: fav.user_id,
+        food_item_id: fav.food_item_id,
+        food_name: fav.fooditem?.food_name || '',
+        photos: fav.fooditem?.photos || '',
+        restaurant_name: fav.fooditem?.restaurant_name || '',
+        price_range: fav.fooditem?.price_range || '',
+        cuisine_type: fav.fooditem?.cuisine_type || [],
+        dietary_tags: fav.fooditem?.dietary_tags || [],
+        date_added: fav.date_added || '',
+      }));
 
-    // fetch ratings
-    const itemIds = flattened.map((f) => f.food_item_id);
-    fetchRatings(itemIds);
+      setFavorites(flattened);
+
+      const cuisineSet = new Set<string>();
+      const dietarySet = new Set<string>();
+      const priceSet = new Set<string>();
+
+      flattened.forEach((item) => {
+        item.cuisine_type?.forEach((c: string) => cuisineSet.add(c));
+        item.dietary_tags?.forEach((d: string) => dietarySet.add(d));
+        if (item.price_range) {
+          priceSet.add(item.price_range);
+        }
+      })
+
+      const uniqueCuisines = Array.from(cuisineSet).sort();
+      const uniqueDietary = Array.from(dietarySet).sort();
+      const uniquePrices = Array.from(priceSet).sort((a, b) => a.length - b.length);
+
+      setAllCuisines(uniqueCuisines);
+      setAllDietary(uniqueDietary);
+      setAllPrices(uniquePrices);
+
+      // fetch ratings
+      const itemIds = flattened.map((f) => f.food_item_id);
+      fetchRatings(itemIds);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const fetchRatings = async (itemIds: string[]) => {
@@ -197,7 +213,7 @@ const favorites = ({ userId }: { userId: string }) => {
 
     data.forEach((row) => {
       if (!map[row.food_item_id]) {
-        map[row.food_item_id] = { sum: 0, count: 0};
+        map[row.food_item_id] = { sum: 0, count: 0 };
       }
       map[row.food_item_id].sum += row.rating;
       map[row.food_item_id].count += 1;
@@ -330,16 +346,20 @@ const favorites = ({ userId }: { userId: string }) => {
     const count = ratingInfo?.count || 0;
 
     return (
-      <View style={styles.card}>
+      <Pressable
+        style={styles.card}
+        onPress={() => handlePress(item.food_item_id)}
+      >
         <Image source={{ uri: item.photos }} style={styles.itemImage} />
 
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{item.food_name}</Text>
           <Text style={styles.itemComment}>{item.restaurant_name}</Text>
           <View style={styles.ratingRow}>
-              {renderStars(average)}
-              <Text style={styles.ratingCount}>({count === 1 ? `1 rating` : `${count} ratings`})</Text>
-            </View>
+            <Text style={styles.ratingAverage}>{average ? (average.toFixed(1)) : '0.0'}</Text>
+            {renderStars(average)}
+            <Text style={styles.ratingCount}>({count === 1 ? `1 rating` : `${count} ratings`})</Text>
+          </View>
           <View style={styles.itemTagContainer}>
             <Text style={styles.itemTagPrice}>{item.price_range}</Text>
 
@@ -359,7 +379,7 @@ const favorites = ({ userId }: { userId: string }) => {
           onPress={() => handleRemoveItem(item.food_item_id)}
 
         />
-      </View>
+      </Pressable>
     );
   };
 
@@ -454,12 +474,17 @@ const favorites = ({ userId }: { userId: string }) => {
             />
           </Pressable>
 
-          <FlatList<FavoriteItem>
-            data={displayedFavorites}
-            keyExtractor={(item) => item.food_item_id.toString()}
-            renderItem={renderItem}
-            showsHorizontalScrollIndicator={false}
-          />
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#0000ff" hidesWhenStopped={true} />
+          ) : (
+            <FlatList<FavoriteItem>
+              data={displayedFavorites}
+              keyExtractor={(item) => item.food_item_id.toString()}
+              renderItem={renderItem}
+              showsHorizontalScrollIndicator={false}
+            />
+          )
+          }
 
           {isSortMenuVisible && (
             <Pressable
@@ -650,9 +675,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 3,
   },
+  ratingAverage: {
+    color: "#555",
+    fontSize: 14,
+    marginRight: 3,
+  },
   ratingCount: {
-    marginLeft: 4,
-    fontSize: 12,
+    marginLeft: 3,
+    fontSize: 10,
     color: '#999',
   }
 });
