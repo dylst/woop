@@ -108,7 +108,10 @@ const ProfileScreen = () => {
                   Add Food
                 </ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => router.push('/add-review')}
+              >
                 <View style={styles.actionIconContainer}>
                   <Ionicons
                     name='create-outline'
