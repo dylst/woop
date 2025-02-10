@@ -1,19 +1,21 @@
 import TopBar from "@/components/ui/TopBar";
 import {
-	View,
-	Text,
-	StyleSheet,
-	SafeAreaView,
-	Pressable,
-	Image,
+    View,
+    Text,
+    StyleSheet,
+    SafeAreaView,
+    Pressable,
+    Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from '@/supabaseClient';
+import { Colors } from '@/constants/Colors';
 
 export default function fooditemdetailpage() {
-	const router = useRouter();
+    const router = useRouter();
+    const { foodItemId } = useLocalSearchParams();
 
     const [isFavorite, setIsFavorites] = useState(false);
     const [itemData, setItemData] = useState<any>(null);
@@ -21,14 +23,14 @@ export default function fooditemdetailpage() {
     // TESTING FETCHING ITEM FROM DATABASE
     // DUMMY DATA FOR RELATED FOOD ITEMS
     const [relatedFavorites, setRelatedFavorites] = useState<number[]>([]);
-    const TEST_FOOD_ITEM_ID = 200;
     const TEST_USER_ID = 10;
 
     const fetchFoodItem = async () => {
-        const {data, error} = await supabase
+        if (!foodItemId) return;
+        const { data, error } = await supabase
             .from("fooditem")
             .select("*")
-            .eq("id", TEST_FOOD_ITEM_ID)
+            .eq("id", foodItemId)
             .maybeSingle();
 
         if (error) {
@@ -52,11 +54,12 @@ export default function fooditemdetailpage() {
     };
 
     const checkIfFavorite = async () => {
+        if (!foodItemId) return;
         const { data, error } = await supabase
             .from("favorite")
             .select("id")
             .eq("user_id", TEST_USER_ID)
-            .eq("food_item_id", TEST_FOOD_ITEM_ID)
+            .eq("food_item_id", foodItemId)
             .maybeSingle();
 
         if (!error && data) {
@@ -71,12 +74,13 @@ export default function fooditemdetailpage() {
 
     const handleFavoriteToggle = async () => {
         try {
+            const foodId = Number(foodItemId);
             if (!isFavorite) {
                 const { error } = await supabase
                     .from("favorite")
                     .insert({
                         user_id: TEST_USER_ID,
-                        food_item_id: TEST_FOOD_ITEM_ID,
+                        food_item_id: foodId,
                     });
 
                 if (error) {
@@ -90,7 +94,7 @@ export default function fooditemdetailpage() {
                     .from("favorite")
                     .delete()
                     .eq("user_id", TEST_USER_ID)
-                    .eq("food_item_id", TEST_FOOD_ITEM_ID);
+                    .eq("food_item_id", foodId);
 
                 if (error) {
                     console.log("Error removing favorite:", error);
@@ -136,7 +140,7 @@ export default function fooditemdetailpage() {
         );
     };
 
-	return (
+    return (
         <SafeAreaView style={styles.container}>
             {/* Blue Bar */}
             {/* <View style={styles.blueBar} /> */}
@@ -144,7 +148,7 @@ export default function fooditemdetailpage() {
             {/* Top Navigation */}
             <View style={styles.topNav}>
                 <Pressable onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton}/>
+                    <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton} />
                 </Pressable>
             </View>
 
@@ -242,7 +246,7 @@ export default function fooditemdetailpage() {
                 <Text style={styles.sectionTitle}>Related Food Items</Text>
                 {relatedFood.map((item) => (
                     <View key={item.id} style={styles.foodItem}>
-                        <Image source={ item.image } style={styles.foodImageSmall} />
+                        <Image source={item.image} style={styles.foodImageSmall} />
                         <View style={styles.foodDetails}>
                             <Text style={styles.foodName}>{item.name}</Text>
                             <Text style={styles.foodDescription}>{item.description}</Text>
@@ -269,257 +273,268 @@ export default function fooditemdetailpage() {
                 ))}
             </View>
         </SafeAreaView>
-	);
+    );
 }
 
 
 const styles = StyleSheet.create({
-  container: {
-      flex: 1,
-      backgroundColor: "white",
-  },
+    container: {
+        flex: 1,
+        backgroundColor: "white",
+    },
 
-  blueBar: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 65, // Adjust height as needed
-      backgroundColor: "#B3E5FC", // Light blue color
-      zIndex: 1, // Ensures it's above other elements
-  },
+    blueBar: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 65, // Adjust height as needed
+        backgroundColor: "#B3E5FC", // Light blue color
+        zIndex: 1, // Ensures it's above other elements
+    },
 
-  backButton: {
-    color: "#fff",
-  },
+    backButton: {
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 1, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        borderRadius: 50,
+        backgroundColor: "#fff",
+        color: Colors.primary.darkteal,
+        width: 40,
+        height: 40,
+        padding: 4,
+        paddingLeft: 5,
+        paddingTop: 6,
+    },
+    topNav: {
+        position: "absolute",
+        top: 25, // Adjust to ensure it's placed correctly
+        left: 20,
+        zIndex: 2, // Keeps it above the image
+    },
 
-  topNav: {
-      position: "absolute",
-      top: 25, // Adjust to ensure it's placed correctly
-      left: 20,
-      zIndex: 2, // Keeps it above the image
-  },
+    imageContainer: {
+        position: "relative", // Allows overlay to be absolutely positioned inside
+        width: "100%",
+        height: 250, // Adjust height as needed
+        overflow: "hidden",
+    },
 
-  imageContainer: {
-      position: "relative", // Allows overlay to be absolutely positioned inside
-      width: "100%",
-      height: 250, // Adjust height as needed
-      overflow: "hidden",
-  },
+    foodImage: {
+        width: "100%",
+        height: "100%",
+        resizeMode: "cover",
+    },
 
-  foodImage: {
-      width: "100%",
-      height: "100%",
-      resizeMode: "cover",
-  },
+    overlayContainer: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.4)", // Semi-transparent black for contrast
+        padding: 15,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+    },
 
-  overlayContainer: {
-      position: "absolute",
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.4)", // Semi-transparent black for contrast
-      padding: 15,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-  },
+    overlayContent: {
+        flex: 1,
+    },
 
-  overlayContent: {
-      flex: 1,
-  },
+    foodTitle: {
+        color: "white",
+        fontSize: 20,
+        fontWeight: "bold",
+    },
 
-  foodTitle: {
-      color: "white",
-      fontSize: 20,
-      fontWeight: "bold",
-  },
+    foodLocation: {
+        color: "white",
+        fontSize: 14,
+    },
 
-  foodLocation: {
-      color: "white",
-      fontSize: 14,
-  },
+    heartIcon: {
+        marginRight: 10,
+    },
 
-  heartIcon: {
-    marginRight: 10,
-  },
+    ratingContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255, 255, 255, 0.8)", // Light background for contrast
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
 
-  ratingContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: "rgba(255, 255, 255, 0.8)", // Light background for contrast
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 12,
-  },
+    ratingText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#333",
+        marginRight: 4,
+    },
 
-  ratingText: {
-      fontSize: 16,
-      fontWeight: "bold",
-      color: "#333",
-      marginRight: 4,
-  },
+    categoryContainer: {
+        alignItems: "center",
+        marginTop: 10,
+        marginBottom: 15,
+    },
 
-  categoryContainer: {
-      alignItems: "center",
-      marginTop: 10,
-      marginBottom: 15,
-  },
+    categoryText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#333",
+    },
 
-  categoryText: {
-      fontSize: 16,
-      fontWeight: "bold",
-      color: "#333",
-  },
+    actionButtonsContainer: {
+        flexDirection: "row",
+        justifyContent: "space-around",
+        paddingHorizontal: 70,
+        marginBottom: 10,
+    },
 
-  actionButtonsContainer: {
-      flexDirection: "row",
-      justifyContent: "space-around",
-      paddingHorizontal: 70,
-      marginBottom: 10,
-  },
+    actionButton: {
+        alignItems: "center",
+    },
 
-  actionButton: {
-      alignItems: "center",
-  },
+    iconCircle: {
+        width: 50,
+        height: 50,
+        backgroundColor: "#E3F7FF", // Light blue background
+        borderRadius: 25, // Circular button
+        justifyContent: "center",
+        alignItems: "center",
+    },
 
-  iconCircle: {
-      width: 50,
-      height: 50,
-      backgroundColor: "#E3F7FF", // Light blue background
-      borderRadius: 25, // Circular button
-      justifyContent: "center",
-      alignItems: "center",
-  },
+    buttonText: {
+        marginTop: 5,
+        fontSize: 14,
+        color: "#333",
+    },
 
-  buttonText: {
-      marginTop: 5,
-      fontSize: 14,
-      color: "#333",
-  },
+    reviewsPhotosContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        borderTopWidth: 1,
+        borderColor: "#E0E0E0",
+    },
 
-  reviewsPhotosContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingHorizontal: 20,
-      paddingVertical: 15,
-      borderTopWidth: 1,
-      borderColor: "#E0E0E0",
-  },
+    reviewsContainer: {
+        flex: 1,
+    },
 
-  reviewsContainer: {
-      flex: 1,
-  },
+    photosContainer: {
+        flex: 1,
+    },
 
-  photosContainer: {
-      flex: 1,
-  },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 5,
+    },
 
-  sectionTitle: {
-      fontSize: 18,
-      fontWeight: "bold",
-      marginBottom: 5,
-  },
+    ratingColumn: {
+        flexDirection: "column",
+        marginBottom: 10,
+    },
 
-  ratingColumn: {
-      flexDirection: "column",
-      marginBottom: 10,
-  },
+    boldText: {
+        fontWeight: "bold",
+        fontSize: 16,
+    },
 
-  boldText: {
-      fontWeight: "bold",
-      fontSize: 16,
-  },
+    starRow: {
+        flexDirection: "row",
+        marginVertical: 5,
+    },
 
-  starRow: {
-      flexDirection: "row",
-      marginVertical: 5,
-  },
+    reviewCountText: {
+        fontSize: 12,
+        color: "#666",
+        marginLeft: 5,
+    },
 
-  reviewCountText: {
-      fontSize: 12,
-      color: "#666",
-      marginLeft: 5,
-  },
+    viewReviewsButton: {
+        marginTop: 5,
+    },
 
-  viewReviewsButton: {
-      marginTop: 5,
-  },
+    viewReviewsText: {
+        fontSize: 14,
+        color: "#007AFF",
+        textDecorationLine: "underline",
+    },
 
-  viewReviewsText: {
-      fontSize: 14,
-      color: "#007AFF",
-      textDecorationLine: "underline",
-  },
+    photoRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 5,
+    },
 
-  photoRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 5,
-  },
+    photoLabel: {
+        width: 20,
+        fontSize: 14,
+        fontWeight: "bold",
+    },
 
-  photoLabel: {
-      width: 20,
-      fontSize: 14,
-      fontWeight: "bold",
-  },
+    photoBar: {
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#E64A19",
+        flex: 1,
+        marginLeft: 5,
+    },
 
-  photoBar: {
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: "#E64A19",
-      flex: 1,
-      marginLeft: 5,
-  },
+    blueDivider: {
+        height: 6,
+        backgroundColor: "#B3E5FC", // Light blue bar
+        width: "100%",
+        marginVertical: 10,
+    },
 
-  blueDivider: {
-      height: 6,
-      backgroundColor: "#B3E5FC", // Light blue bar
-      width: "100%",
-      marginVertical: 10,
-  },
+    relatedContainer: {
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+    },
 
-  relatedContainer: {
-      paddingHorizontal: 20,
-      paddingVertical: 15,
-  },
+    foodItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 15,
+    },
 
-  foodItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 15,
-  },
+    foodImageSmall: {
+        width: 60,
+        height: 60,
+        borderRadius: 10,
+        marginRight: 10,
+    },
 
-  foodImageSmall: {
-      width: 60,
-      height: 60,
-      borderRadius: 10,
-      marginRight: 10,
-  },
+    foodDetails: {
+        flex: 1,
+    },
 
-  foodDetails: {
-      flex: 1,
-  },
+    foodName: {
+        fontWeight: "bold",
+        fontSize: 16,
+    },
 
-  foodName: {
-      fontWeight: "bold",
-      fontSize: 16,
-  },
+    foodDescription: {
+        fontSize: 14,
+        color: "#666",
+        marginBottom: 5,
+    },
 
-  foodDescription: {
-      fontSize: 14,
-      color: "#666",
-      marginBottom: 5,
-  },
+    ratingRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
 
-  ratingRow: {
-      flexDirection: "row",
-      alignItems: "center",
-  },
-
-  reviewCount: {
-      fontSize: 12,
-      color: "#666",
-      marginLeft: 5,
-  },
+    reviewCount: {
+        fontSize: 12,
+        color: "#666",
+        marginLeft: 5,
+    },
 });

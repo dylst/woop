@@ -76,22 +76,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-				name='favorites'
-				options={{
-					title: "Favorites",
-					tabBarIcon: ({ focused, color }) => (
-						<View style={[focused ? styles.activeTab : null ]}>
-							<Ionicons
-								name="heart"
-								size={28}
-								color={focused ? Colors.primary.darkteal : color}
-								style={styles.tabIcon}
-							/>
-						</View>
-					),
-					tabBarLabel: "Favorites",
-				}}
-			/>
+        name='favorites'
+        options={{
+          title: "Favorites",
+          tabBarIcon: ({ focused, color }) => (
+            <View style={[focused ? styles.activeTab : null]}>
+              <Ionicons
+                name="heart"
+                size={28}
+                color={focused ? Colors.primary.darkteal : color}
+                style={styles.tabIcon}
+              />
+            </View>
+          ),
+          tabBarLabel: "Favorites",
+        }}
+      />
       <Tabs.Screen
         name='reviews'
         options={{
@@ -126,28 +126,6 @@ export default function TabLayout() {
           tabBarLabel: 'Profile',
         }}
       />
-
-
-      <Tabs.Screen
-        name='fooditemdetailpage'
-        options={{
-          title: 'Food Item Detail Page',
-          tabBarIcon: ({ focused, color }) => (
-            <View style={focused ? styles.activeTab : null}>
-              <Ionicons
-                name='fast-food'
-                size={28}
-                color={focused ? Colors.primary.darkteal : color}
-                style={styles.tabIcon}
-              />
-            </View>
-          ),
-          tabBarLabel: 'Foody Details',
-        }}
-      />
-      
-
-
     </Tabs>
   );
 }
