@@ -1,11 +1,11 @@
 import TopBar from "@/components/ui/TopBar";
 import {
-    View,
-    Text,
-    StyleSheet,
-    SafeAreaView,
-    Pressable,
-    Image,
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Pressable,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -13,195 +13,228 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from '@/supabaseClient';
 import { Colors } from '@/constants/Colors';
 
-export default function fooditemdetailpage() {
-    const router = useRouter();
-    const { foodItemId } = useLocalSearchParams();
+export default function FoodItemDetailPage() {
+  const router = useRouter();
+  const { foodItemId } = useLocalSearchParams();
 
-    const [isFavorite, setIsFavorites] = useState(false);
-    const [itemData, setItemData] = useState<any>(null);
+  const [isFavorite, setIsFavorites] = useState(false);
+  const [itemData, setItemData] = useState<any>(null);
 
-    // TESTING FETCHING ITEM FROM DATABASE
-    // DUMMY DATA FOR RELATED FOOD ITEMS
-    const [relatedFavorites, setRelatedFavorites] = useState<number[]>([]);
-    const TEST_USER_ID = 10;
+  // TESTING FETCHING ITEM FROM DATABASE
+  // DUMMY DATA FOR RELATED FOOD ITEMS
+  const [relatedFavorites, setRelatedFavorites] = useState<number[]>([]);
+  const TEST_USER_ID = 10;
 
-    const fetchFoodItem = async () => {
-        if (!foodItemId) return;
-        const { data, error } = await supabase
-            .from("fooditem")
-            .select("*")
-            .eq("id", foodItemId)
-            .maybeSingle();
+  const fetchFoodItem = async () => {
+    if (!foodItemId) return;
+    const { data, error } = await supabase
+      .from("fooditem")
+      .select("*")
+      .eq("id", foodItemId)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Error fetching food item:", error);
+      return;
+    }
+
+    setItemData(data);
+  };
+
+  const photoRatings = [
+    { label: "5", percentage: 80, color: "#E64A19", image: "photo1.jpg" },
+    { label: "4", percentage: 30, color: "#F57C00", image: "photo2.jpg" },
+    { label: "3", percentage: 15, color: "#FFB300", image: "photo3.jpg" },
+    { label: "2", percentage: 10, color: "#FFCA28", image: "photo4.jpg" },
+    { label: "1", percentage: 5, color: "#FFD54F", image: "photo5.jpg" },
+  ];
+
+  const handlePhotoClick = (image: string) => {
+    console.log("Opening photo:", image); // Replace with a full-screen image viewer later
+  };
+
+  const checkIfFavorite = async () => {
+    if (!foodItemId) return;
+    const { data, error } = await supabase
+      .from("favorite")
+      .select("id")
+      .eq("user_id", TEST_USER_ID)
+      .eq("food_item_id", foodItemId)
+      .maybeSingle();
+
+    if (!error && data) {
+      setIsFavorites(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchFoodItem();
+    checkIfFavorite();
+  }, []);
+
+  const handleFavoriteToggle = async () => {
+    try {
+      const foodId = Number(foodItemId);
+      if (!isFavorite) {
+        const { error } = await supabase
+          .from("favorite")
+          .insert({
+            user_id: TEST_USER_ID,
+            food_item_id: foodId,
+          });
 
         if (error) {
-            console.log("Error fetching food item:", error);
-            return;
+          console.log("Error adding favorite:", error);
+          return;
         }
 
-        setItemData(data);
-    }
+        setIsFavorites(true);
+      } else {
+        const { error } = await supabase
+          .from("favorite")
+          .delete()
+          .eq("user_id", TEST_USER_ID)
+          .eq("food_item_id", foodId);
 
-    const photoRatings = [
-        { label: "5", percentage: 80, color: "#E64A19", image: "photo1.jpg" },
-        { label: "4", percentage: 30, color: "#F57C00", image: "photo2.jpg" },
-        { label: "3", percentage: 15, color: "#FFB300", image: "photo3.jpg" },
-        { label: "2", percentage: 10, color: "#FFCA28", image: "photo4.jpg" },
-        { label: "1", percentage: 5, color: "#FFD54F", image: "photo5.jpg" },
-    ];
-
-    const handlePhotoClick = (image: string) => {
-        console.log("Opening photo:", image); // Replace with a full-screen image viewer later
-    };
-
-    const checkIfFavorite = async () => {
-        if (!foodItemId) return;
-        const { data, error } = await supabase
-            .from("favorite")
-            .select("id")
-            .eq("user_id", TEST_USER_ID)
-            .eq("food_item_id", foodItemId)
-            .maybeSingle();
-
-        if (!error && data) {
-            setIsFavorites(true);
+        if (error) {
+          console.log("Error removing favorite:", error);
+          return;
         }
+
+        setIsFavorites(false);
+      }
+    } catch (err) {
+      console.error("Favorite toggle error:", err);
     }
+  };
 
-    useEffect(() => {
-        fetchFoodItem();
-        checkIfFavorite();
-    }, [])
+  const cuisineType = itemData?.cuisine_type ?? [];
+  const dietaryTags = itemData?.dietary_tags ?? [];
 
-    const handleFavoriteToggle = async () => {
-        try {
-            const foodId = Number(foodItemId);
-            if (!isFavorite) {
-                const { error } = await supabase
-                    .from("favorite")
-                    .insert({
-                        user_id: TEST_USER_ID,
-                        food_item_id: foodId,
-                    });
+  const cuisineText = cuisineType.join(", ");
+  const dietaryText = dietaryTags.join(", ");
 
-                if (error) {
-                    console.log("Error adding favorites:", error);
-                    return;
-                }
+  // DUMMY DATA FOR RELATED FOOD ITEMS
+  const relatedFood = [
+    {
+      id: 1,
+      name: "Melody's Boba Noodles",
+      description: "A good helping of boba and backshots",
+      rating: 4,
+      reviews: 35,
+      image: require("@/assets/images/backshoot-noods.png"),
+    },
+    {
+      id: 2,
+      name: "Jay's Instant Ramen",
+      description: "Ramen you can buy in stores but with a twist",
+      rating: 3.5,
+      reviews: 35,
+      image: require("@/assets/images/Jay's-noods.png"),
+    },
+  ];
 
-                setIsFavorites(true);
-            } else {
-                const { error } = await supabase
-                    .from("favorite")
-                    .delete()
-                    .eq("user_id", TEST_USER_ID)
-                    .eq("food_item_id", foodId);
+  const handleRelatedFavoriteToggle = (id: number) => {
+    setRelatedFavorites((prev) =>
+      prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
+    );
+  };
 
-                if (error) {
-                    console.log("Error removing favorite:", error);
-                    return;
-                }
+  // Define action buttons with their onPress actions
+  const actionButtons = [
+    {
+      icon: "star-outline" as const,
+      text: "Add Review",
+      onPress: () => router.push("/review-textbox"),
+    },
+    {
+      icon: "camera-outline" as const,
+      text: "Add Photo",
+      onPress: () => console.log("Add Photo Pressed"),
+    },
+    {
+      icon: "map-outline" as const,
+      text: "View Map",
+      onPress: () => console.log("View Map Pressed"),
+    },
+  ];
 
-                setIsFavorites(false);
-            }
-        } catch (err) {
-            console.error("Favorite toggle error:", err)
-        }
-    }
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Top Navigation */}
+      <View style={styles.topNav}>
+        <Pressable onPress={() => router.back()}>
+          <Ionicons
+            name="chevron-back"
+            size={28}
+            color="#333"
+            style={styles.backButton}
+          />
+        </Pressable>
+      </View>
 
-    const cuisineType = itemData?.cuisine_type ?? [];
-    const dietaryTags = itemData?.dietary_tags ?? [];
+      {/* Image Container */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: itemData?.photos }}
+          style={styles.foodImage}
+        />
 
-    const cuisineText = cuisineType.join(", ");
-    const dietaryText = dietaryTags.join(", ");
+        {/* Overlay */}
+        <View style={styles.overlayContainer}>
+          <View style={styles.overlayContent}>
+            <Text style={styles.foodTitle}>
+              {itemData?.food_name || "Food Name"}
+            </Text>
+            <Text style={styles.foodLocation}>
+              {itemData?.restaurant_name || "Restaurant name"}
+            </Text>
+          </View>
+          {/* Add Item to Favorites */}
+          <Pressable style={styles.heartIcon} onPress={handleFavoriteToggle}>
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={28}
+              color={"#fff"}
+            />
+          </Pressable>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingText}>4.9</Text>
+            <Ionicons name="star" size={18} color="#FFD700" />
+          </View>
+        </View>
+      </View>
 
-    // DUMMY DATA AND METHODS
-    const relatedFood = [
-        {
-            id: 1,
-            name: "Melody's Boba Noodles",
-            description: "A good helping of boba and backshots",
-            rating: 4,
-            reviews: 35,
-            image: require("@/assets/images/backshoot-noods.png"),
-        },
-        {
-            id: 2,
-            name: "Jay's Instant Ramen",
-            description: "Ramen you can buy in stores but with a twist",
-            rating: 3.5,
-            reviews: 35,
-            image: require("@/assets/images/Jay's-noods.png"),
-        },
-    ];
+      {/* Food Category */}
+      <View style={styles.categoryContainer}>
+        <Text style={styles.categoryText}>
+          {itemData?.price_range || "$"}
+          {cuisineText || dietaryText ? " • " : ""}
+          {cuisineText}
+          {cuisineText && dietaryText ? ", " : ""}
+          {dietaryText}
+        </Text>
+      </View>
 
-    const handleRelatedFavoriteToggle = (id: number) => {
-        setRelatedFavorites((prev) =>
-            prev.includes(id) ? prev.filter((fav) => fav !== id) : [...prev, id]
-        );
-    };
-
-    return (
-        <SafeAreaView style={styles.container}>
-            {/* Blue Bar */}
-            {/* <View style={styles.blueBar} /> */}
-
-            {/* Top Navigation */}
-            <View style={styles.topNav}>
-                <Pressable onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton} />
-                </Pressable>
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
+        {actionButtons.map((button, index) => (
+          <Pressable
+            key={index}
+            style={styles.actionButton}
+            onPress={button.onPress}
+          >
+            <View style={styles.iconCircle}>
+              <Ionicons
+                name={button.icon}
+                size={24}
+                color="#65C5E3"
+              />
             </View>
-
-            {/* Image Container */}
-            <View style={styles.imageContainer}>
-                <Image
-                    source={{
-                        uri: itemData?.photos
-                    }}
-                    style={styles.foodImage}
-                />
-
-                {/* Overlay */}
-                <View style={styles.overlayContainer}>
-                    <View style={styles.overlayContent}>
-                        <Text style={styles.foodTitle}>{itemData?.food_name || "Food Name"}</Text>
-                        <Text style={styles.foodLocation}>{itemData?.restaurant_name || "Restaurant name"}</Text>
-                    </View>
-                    {/* Add Item to Favorites */}
-                    <Pressable style={styles.heartIcon} onPress={handleFavoriteToggle}>
-                        <Ionicons
-                            name={isFavorite ? "heart" : "heart-outline"}
-                            size={28}
-                            color={"#fff"}
-                        />
-                    </Pressable>
-                    <View style={styles.ratingContainer}>
-                        <Text style={styles.ratingText}>4.9</Text>
-                        <Ionicons name="star" size={18} color="#FFD700" />
-                    </View>
-                </View>
-            </View>
-
-            {/* Food Category */}
-            <View style={styles.categoryContainer}>
-                <Text style={styles.categoryText}>{itemData?.price_range || "$"}{cuisineText || dietaryText ? " • " : ""}{cuisineText}{cuisineText && dietaryText ? ", " : ""}{dietaryText}</Text>
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtonsContainer}>
-                {[
-                    { icon: "star-outline" as const, text: "Add Review" },
-                    { icon: "camera-outline" as const, text: "Add Photo" },
-                    { icon: "map-outline" as const, text: "View Map" },
-                ].map((button, index) => (
-                    <Pressable key={index} style={styles.actionButton}>
-                        <View style={styles.iconCircle}>
-                            <Ionicons name={button.icon} size={24} color="#65C5E3" />
-                        </View>
-                        <Text style={styles.buttonText}>{button.text}</Text>
-                    </Pressable>
-                ))}
-            </View>
+            <Text style={styles.buttonText}>{button.text}</Text>
+          </Pressable>
+        ))}
+      </View>
 
             {/* Reviews & Photos Section */}
             <View style={styles.reviewsPhotosContainer}>
