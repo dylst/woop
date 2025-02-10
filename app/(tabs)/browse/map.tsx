@@ -25,7 +25,7 @@ export default function MapScreen() {
 			<MapView
 				style={{ width: "100%", height: "100%" }}
 				provider="google"
-				googleMapsApiKey="AIzaSyAX_lO9dzeSfLVhlGAFpx0x7opZKdP8pHE" as any // Quick TypeScript bypass
+				googleMapsApiKey={process.env.EXPO_PUBLIC_GOOGLE_MAPS} as any
 				loadingFallback={
 					<View>
 						<Text>Loading Map...</Text>
