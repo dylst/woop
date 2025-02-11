@@ -159,6 +159,8 @@ export default function FoodItemDetailPage() {
     },
   ];
 
+  const imageUrl = Array.isArray(itemData?.photos) && itemData?.photos.length > 0 ? itemData.photos[0] : '';
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Top Navigation */}
@@ -176,7 +178,7 @@ export default function FoodItemDetailPage() {
       {/* Image Container */}
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: itemData?.photos }}
+          source={{ uri: imageUrl }}
           style={styles.foodImage}
         />
 

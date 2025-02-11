@@ -9,18 +9,29 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import MapView from '@teovilla/react-native-web-maps';
 
-const { width, height } = Dimensions.get("window");
 
 export default function MapScreen() {
 	const router = useRouter();
 
 	return (
 		<View style={styles.container}>
-			<ImageBackground
-				source={require("@/assets/images/map.png")}
-				style={styles.backgroundImage}
-			>
+			{/*<ImageBackground*/}
+			{/*	source={require("@/assets/images/map.png")}*/}
+			{/*	style={styles.backgroundImage}*/}
+			{/*>*/}
+
+			<MapView
+				style={{ width: "100%", height: "100%" }}
+				provider="google"
+				googleMapsApiKey="AIzaSyAX_lO9dzeSfLVhlGAFpx0x7opZKdP8pHE" as any // Quick TypeScript bypass
+				loadingFallback={
+					<View>
+						<Text>Loading Map...</Text>
+					</View>
+				}
+			/>
 
 				{/* Search Bar */}
 				<View style={styles.searchContainer}>
@@ -52,7 +63,7 @@ export default function MapScreen() {
 						</View>
 					</View>
 				</View>
-			</ImageBackground>
+			{/*</ImageBackground>*/}
 		</View>
 	);
 }
