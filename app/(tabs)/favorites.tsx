@@ -18,7 +18,7 @@ interface FavoriteItem {
   food_item_id: string;
 
   food_name?: string;
-  photos?: string;
+  photos?: string[];
   restaurant_name?: string;
   price_range?: string;
   cuisine_type?: string[];
@@ -155,7 +155,7 @@ const favorites = ({ userId }: { userId: string }) => {
         user_id: fav.user_id,
         food_item_id: fav.food_item_id,
         food_name: fav.fooditem?.food_name || '',
-        photos: fav.fooditem?.photos || '',
+        photos: fav.fooditem?.photos || [],
         restaurant_name: fav.fooditem?.restaurant_name || '',
         price_range: fav.fooditem?.price_range || '',
         cuisine_type: fav.fooditem?.cuisine_type || [],
@@ -345,12 +345,14 @@ const favorites = ({ userId }: { userId: string }) => {
     const average = ratingInfo?.average || 0;
     const count = ratingInfo?.count || 0;
 
+    const imageUrl = Array.isArray(item.photos) && item.photos.length > 0 ? item.photos[0] : '';
+
     return (
       <Pressable
         style={styles.card}
         onPress={() => handlePress(item.food_item_id)}
       >
-        <Image source={{ uri: item.photos }} style={styles.itemImage} />
+        <Image source={{ uri: imageUrl }} style={styles.itemImage} />
 
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{item.food_name}</Text>
