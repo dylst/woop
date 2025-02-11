@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="10477090-ce16-4336-bab1-1a5dd0133473" name="Changes" comment="add Supabase integration for restaurant search and update search functionality" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="joseph" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;JojayD&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/dylst/woop.git&quot;,
+    &quot;accountId&quot;: &quot;40c12ef5-06ba-479a-9b3e-796375dc84cc&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;dylst&quot;,
+    &quot;repository&quot;: &quot;woop&quot;
+  }
+}</component>
+  <component name="PackageJsonUpdateNotifier">
+    <dismissed value="$PROJECT_DIR$/package.json" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="2sHHEyT1uaBJjHEdhStLzY31iiY" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "ts.external.directory.path": "/Users/jojo/woop/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="ReactDesignerToolWindowState">
+    <option name="myId2Visible">
+      <map>
+        <entry key="com.intellij.reactbuddy.reactComponents" value="false" />
+        <entry key="com.intellij.reactbuddy.reactInspector" value="false" />
+        <entry key="com.intellij.reactbuddy.storybook" value="false" />
+      </map>
+    </option>
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/types" />
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-822845ee3bb5-JavaScript-WS-243.23654.120" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="10477090-ce16-4336-bab1-1a5dd0133473" name="Changes" comment="" />
+      <created>1733032978429</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1733032978429</updated>
+      <workItem from="1733032979704" duration="60000" />
+      <workItem from="1738105472518" duration="315000" />
+      <workItem from="1738108042816" duration="101000" />
+      <workItem from="1738114486780" duration="7894000" />
+      <workItem from="1738280592474" duration="3770000" />
+      <workItem from="1738291307936" duration="14000" />
+      <workItem from="1738298662167" duration="12000" />
+      <workItem from="1738308021958" duration="2000000" />
+      <workItem from="1738352996680" duration="12900000" />
+      <workItem from="1738885414516" duration="4306000" />
+      <workItem from="1738992569642" duration="10312000" />
+      <workItem from="1739150531402" duration="7902000" />
+      <workItem from="1739221623648" duration="8473000" />
+    </task>
+    <task id="LOCAL-00001" summary="pushing my changes">
+      <option name="closed" value="true" />
+      <created>1738281322488</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1738281322488</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fixing merge errors">
+      <option name="closed" value="true" />
+      <created>1738282762604</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1738282762604</updated>
+    </task>
+    <task id="LOCAL-00003" summary="fixing merge errors - lol">
+      <option name="closed" value="true" />
+      <created>1738283048002</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1738283048002</updated>
+    </task>
+    <task id="LOCAL-00004" summary="deleting .env from repo">
+      <option name="closed" value="true" />
+      <created>1738283678570</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1738283678570</updated>
+    </task>
+    <task id="LOCAL-00005" summary="added more restaurants and added searchDb for quicker querying">
+      <option name="closed" value="true" />
+      <created>1738367912663</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1738367912663</updated>
+    </task>
+    <task id="LOCAL-00006" summary="add restaurant location search by city and enhance restaurant data structure">
+      <option name="closed" value="true" />
+      <created>1739231496167</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1739231496167</updated>
+    </task>
+    <task id="LOCAL-00007" summary="add restaurant search functionality using Supabase and update related components">
+      <option name="closed" value="true" />
+      <created>1739231518312</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1739231518312</updated>
+    </task>
+    <task id="LOCAL-00008" summary="add Supabase integration for restaurant search and update search functionality">
+      <option name="closed" value="true" />
+      <created>1739231741015</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1739231741015</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="pushing my changes" />
+    <MESSAGE value="fixing merge errors" />
+    <MESSAGE value="fixing merge errors - lol" />
+    <MESSAGE value="deleting .env from repo" />
+    <MESSAGE value="added more restaurants and added searchDb for quicker querying" />
+    <MESSAGE value="add restaurant location search by city and enhance restaurant data structure" />
+    <MESSAGE value="add restaurant search functionality using Supabase and update related components" />
+    <MESSAGE value="add Supabase integration for restaurant search and update search functionality" />
+    <option name="LAST_COMMIT_MESSAGE" value="add Supabase integration for restaurant search and update search functionality" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/app/api/services/restaurantService.ts</url>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

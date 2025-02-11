@@ -1,0 +1,101 @@
+Index: components/ui/SearchBar.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import { View, TextInput, StyleSheet, ActivityIndicator } from \"react-native\";\nimport { Ionicons } from \"@expo/vector-icons\";\nimport { useRouter } from \"expo-router\";\nimport { useState } from \"react\";\nimport { restaurantService } from \"@/app/api/services/restaurantService\";\nimport { supabase } from \"@/supabaseClient\";\nconst SearchBar = () => {\n\tconst [searchQuery, setSearchQuery] = useState(\"\");\n\tconst [loading, setLoading] = useState(false);\n\tconst router = useRouter();\n\n\tconst handleSearch = async () => {\n\t\tif (searchQuery.trim()) {\n\t\t\ttry {\n\t\t\t\tsetLoading(true);\n\t\t\t\tconst results = await restaurantService.getRestaurantByZipCode(\"90815\", 0);\n\t\t\t\tconsole.log(\"Search Results:\", typeof results, results);\n\n\t\t\t\tfor (const restaurant of results) {\n\t\t\t\t\tconst { error } = await supabase\n\t\t\t\t\t\t.from(\"restaurant\")\n\t\t\t\t\t\t.insert([\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\tname: restaurant.restaurantName,\n\t\t\t\t\t\t\t\taddressLin: restaurant.address,\n\t\t\t\t\t\t\t\tcity: restaurant.cityName,\n\t\t\t\t\t\t\t\tstate: restaurant.stateName,\n\t\t\t\t\t\t\t},\n\t\t\t\t\t\t])\n\t\t\t\t\t\t\n\n\t\t\t\t\tif (error){\n\t\t\t\t\t\tconsole.error(\"Error inserting restaurant:\", error);\n\t\t\t\t\t}\n\t\t\t\t}\n\n\n\t\t\t\trouter.push({\n\t\t\t\t\tpathname: \"/(tabs)/browse/browse-search\",\n\t\t\t\t\tparams: {\n\t\t\t\t\t\tquery: searchQuery,\n\t\t\t\t\t\tresults: JSON.stringify(results),\n\t\t\t\t\t},\n\t\t\t\t});\n\t\t\t} catch (error) {\n\t\t\t\tconsole.error(\"Search failed:\", error);\n\t\t\t} finally {\n\t\t\t\tsetLoading(false);\n\t\t\t}\n\t\t}\n\t};\n\n\treturn (\n\t\t<View style={styles.searchContainer}>\n\t\t\t{loading ? (\n\t\t\t\t<ActivityIndicator\n\t\t\t\t\tsize='small'\n\t\t\t\t\tcolor='#89D5ED'\n\t\t\t\t/>\n\t\t\t) : (\n\t\t\t\t<Ionicons\n\t\t\t\t\tname='search'\n\t\t\t\t\tsize={20}\n\t\t\t\t\tcolor='#89D5ED'\n\t\t\t\t/>\n\t\t\t)}\n\t\t\t<TextInput\n\t\t\t\tstyle={styles.searchInput}\n\t\t\t\tplaceholder='Search restaurants...'\n\t\t\t\tvalue={searchQuery}\n\t\t\t\tonChangeText={setSearchQuery}\n\t\t\t\tonSubmitEditing={handleSearch}\n\t\t\t\teditable={!loading}\n\t\t\t/>\n\t\t</View>\n\t);\n};\n\nconst styles = StyleSheet.create({\n\tsearchContainer: {\n\t\tflexDirection: \"row\",\n\t\talignItems: \"center\",\n\t\tborderColor: \"#c2effd\",\n\t\tborderStyle: \"solid\",\n\t\tborderWidth: 1,\n\t\tbackgroundColor: \"rgba(194,239,253,0.2)\",\n\t\tpadding: 10,\n\t\tborderRadius: 50,\n\t\televation: 2,\n\t},\n\tsearchInput: {\n\t\tflex: 1,\n\t\tmarginLeft: 8,\n\t\tcolor: \"#2897ba\",\n\t},\n});\n\nexport default SearchBar;\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/components/ui/SearchBar.tsx b/components/ui/SearchBar.tsx
+--- a/components/ui/SearchBar.tsx	(revision bd05bb82458376aad93005a21cfea437b25f44a7)
++++ b/components/ui/SearchBar.tsx	(date 1738363788646)
+@@ -9,11 +9,33 @@
+ 	const [loading, setLoading] = useState(false);
+ 	const router = useRouter();
+ 
++	const handleSearchDb = async () => {
++		if(searchQuery.trim()){
++			try{
++				setLoading(true);
++				const results = await restaurantService.getRestaurantByNameSupabase(searchQuery);
++				console.log("Search Results:", typeof results, results);
++
++				router.push({
++					pathname: "/(tabs)/browse/browse-search",
++					params: {
++						query: searchQuery,
++						results: JSON.stringify(results),
++					},
++				});
++			}catch (error) {
++				console.error("Search failed:", error);
++			}
++
++
++		}
++	}
++
+ 	const handleSearch = async () => {
+ 		if (searchQuery.trim()) {
+ 			try {
+ 				setLoading(true);
+-				const results = await restaurantService.getRestaurantByZipCode("90815", 0);
++				const results = await restaurantService.getRestaurantByZipCode("90701", 6);
+ 				console.log("Search Results:", typeof results, results);
+ 
+ 				for (const restaurant of results) {
+@@ -69,7 +91,7 @@
+ 				placeholder='Search restaurants...'
+ 				value={searchQuery}
+ 				onChangeText={setSearchQuery}
+-				onSubmitEditing={handleSearch}
++				onSubmitEditing={handleSearchDb}
+ 				editable={!loading}
+ 			/>
+ 		</View>
+Index: app/api/services/restaurantService.ts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import { axiosInstance } from \"../config/axios\";\nimport { Restaurant } from \"@/types/restaurant.types\";\n\nexport const restaurantService = {\n\tgetRestaurantsByState: async (\n\t\tstate: string,\n\t\tpage: number = 0\n\t): Promise<Restaurant[]> => {\n\t\ttry {\n\t\t\tconsole.log(\n\t\t\t\t\"Fetching restaurants from:\",\n\t\t\t\t`${axiosInstance.defaults.baseURL}/restaurants/location/state/${state}/${page}`\n\t\t\t);\n\n\t\t\tconst response = await axiosInstance.get(\n\t\t\t\t`/restaurants/location/state/${state}/${page}`\n\t\t\t);\n\n\t\t\tconsole.log(\"Raw API Response:\", response.data);\n\n\t\t\t// if (!response.data || !Array.isArray(response.data.restaurants)) {\n\t\t\t// \tthrow new Error(\"API did not return an expected 'restaurants' array.\");\n\t\t\t// }\n\n\t\t\treturn response.data.restaurants; \n\t\t} catch (error) {\n\t\t\tconsole.error(\n\t\t\t\t\"Error fetching restaurants:\",\n\t\t\t\terror instanceof Error ? error.message : \"An unknown error occurred\"\n\t\t\t);\n\t\t\tthrow error;\n\t\t}\n\t},\n\tgetRestaurantByZipCode: async (\n\t\tzipCode: string,\n\t\tpage: number = 0\n\t): Promise<Restaurant[]> => {\n\t\ttry {\n\t\t\tconsole.log(\n\t\t\t\t\"Fetching restaurants from:\",\n\t\t\t\t`${axiosInstance.defaults.baseURL}/restaurants/location/${zipCode}/${page}`\n\t\t\t);\n\n\t\t\tconst response = await axiosInstance.get(\n\t\t\t\t`restaurants/location/zipcode/${zipCode}/${page}`\n\t\t\t);\n\n\t\t\tconsole.log(\"Raw API Response:\", response.data);\n\n\t\t\tif (!response.data || !Array.isArray(response.data.restaurants)) {\n\t\t\t\tconsole.error(\"API did not return an expected 'restaurants' array.\");\n\n\t\t\t}\n\n\t\t\treturn response.data.restaurants;\n\t\t} catch (error) {\n\t\t\tconsole.error(\n\t\t\t\t\"Error fetching restaurants:\",\n\t\t\t\terror instanceof Error ? error.message : \"An unknown error occurred\"\n\t\t\t);\n\t\t\tthrow error;\n\t\t}\n\t},\n};\n\n\n\n\n\nexport default restaurantService;\n
+===================================================================
+diff --git a/app/api/services/restaurantService.ts b/app/api/services/restaurantService.ts
+--- a/app/api/services/restaurantService.ts	(revision bd05bb82458376aad93005a21cfea437b25f44a7)
++++ b/app/api/services/restaurantService.ts	(date 1738365129134)
+@@ -1,5 +1,6 @@
+ import { axiosInstance } from "../config/axios";
+ import { Restaurant } from "@/types/restaurant.types";
++import {supabase} from "@/supabaseClient";
+ 
+ export const restaurantService = {
+ 	getRestaurantsByState: async (
+@@ -61,6 +62,31 @@
+ 			throw error;
+ 		}
+ 	},
++
++	getRestaurantByNameSupabase: async (name: string): Promise<Restaurant[]> => {
++		try {
++			console.log("Fetching restaurants from Supabase:", name);
++			const trimmedName = name.trim();
++			const { data, error } = await supabase.from("restaurant").select("*").ilike("name", `${trimmedName}%`);
++			if (error) {
++				console.error("Error fetching restaurants:", error);
++			}
++
++			if(!data){
++				return []
++			}else{
++				console.log("Data:", data);
++			}
++
++			return data;
++		} catch (error) {
++			console.error(
++				"Error fetching restaurants:",
++				error instanceof Error ? error.message : "An unknown error occurred"
++			);
++			throw error;
++		}
++	}
+ };
+ 
+ 
