@@ -339,6 +339,11 @@ export default function BusinessReviewScreen() {
     router.push(`/food/${foodItemId}`);
   };
 
+  const handlePostReview = async () => {
+    const dummyUserId = 'dummy-user-id';
+
+  };
+
   // --- Render functions for list items ---
   const renderNearbyItem = ({ item }: { item: Restaurant }) => (
     <Pressable
@@ -462,11 +467,11 @@ export default function BusinessReviewScreen() {
         <Ionicons
           name="arrow-back"
           size={24}
-          onPress={() => router.back()}
+          onPress={() => router.push('/(tabs)/profile')}
           style={styles.closeIcon}
         />
         <ThemedText style={styles.title}>
-          Nearby & Suggested Hot Foods Items
+          Nearby & Suggested Hot Foods
         </ThemedText>
         <Ionicons
           name="help"

@@ -18,7 +18,6 @@ const { width, height } = Dimensions.get('window');
 function Users() {
   const [activeTab, setActiveTab] = useState('login');
 
-
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -28,8 +27,8 @@ function Users() {
   const [regPassword, setRegPassword] = useState('');
   const [regPasswordRetype, setRegPasswordRetype] = useState('');
   const [regErrors, setRegErrors] = useState("");
-  const [emailErrors, setEmailErrors] = useState("")
-  const [passwordErrors, setPasswordErrors] = useState("")
+  const [emailErrors, setEmailErrors] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState("");
 
   // Forgot states
   const [forgotEmail, setForgotEmail] = useState('');
@@ -38,8 +37,7 @@ function Users() {
   const handleRegTab = () => setActiveTab('register');
   const handleForgotTab = () => setActiveTab('forgot');
 
- 
-  const validateEmail = (email:string) => {
+  const validateEmail = (email: string) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   };
@@ -53,9 +51,9 @@ function Users() {
   };
 
   const registerUser = async () => {
-    setEmailErrors("")
-    setRegErrors("")
-    setPasswordErrors("")
+    setEmailErrors("");
+    setRegErrors("");
+    setPasswordErrors("");
 
     let passValidations = true;
 
@@ -63,35 +61,57 @@ function Users() {
       setRegErrors('Please fill in all fields.');
       passValidations = false;
     }
-    if (!validateEmail(regEmail)){
-      setEmailErrors("Email Invalid. Try a different one")
+    if (!validateEmail(regEmail)) {
+      setEmailErrors("Email Invalid. Try a different one");
       passValidations = false;
     }
-    if (regPassword.length < 6){
-      setPasswordErrors("Needs a password longer than 6 characters")
+    if (regPassword.length < 6) {
+      setPasswordErrors("Needs a password longer than 6 characters");
       passValidations = false;
     }
     if (regPassword !== regPasswordRetype) {
       setPasswordErrors('Passwords do not match.');
       passValidations = false;
-      
     }
 
-    if (!passValidations){
+    if (!passValidations) {
       return;
     }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email: regEmail,
         password: regPassword,
       });
+
       console.log(data, error);
       if (error) {
-        setRegErrors(error.message)
+        setRegErrors(error.message);
+      } else {
+        // Registration was successful.
+        // Call your deployed email function to send the confirmation email.
+        const emailResponse = await fetch('http://localhost:54321/functions/v1/resend', {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: regEmail,
+            subject: "Confirm Your Registration",
+            html: `<p>Thank you for registering. Please confirm your email by clicking <a href="https://yourapp.com/confirm?email=${encodeURIComponent(regEmail)}">here</a>.</p>`
+          }),
+        });
+
+        if (emailResponse.ok) {
+          alert("Registration successful! A confirmation email has been sent.");
+        } else {
+          alert("Registration successful, but we could not send the confirmation email.");
+          console.error("Email sending error:", await emailResponse.text());
+        }
       }
     } catch (error) {
-      setRegErrors('There was error registering');
-      console.log(error);
+      setRegErrors('There was an error registering');
+      console.error(error);
     }
   };
 
@@ -217,7 +237,6 @@ function Users() {
               onChangeText={setRegEmail}
               keyboardType="email-address"
             />
-
             {emailErrors.length > 0 && <Text style={styles.errorText}>{emailErrors}</Text>}
           </View>
 
@@ -234,7 +253,6 @@ function Users() {
               secureTextEntry
             />
             {passwordErrors.length > 0 && <Text style={styles.errorText}>{passwordErrors}</Text>}
-
           </View>
 
           <Text style={styles.inputLabel}>
@@ -304,11 +322,10 @@ function Users() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#C2EFFD', // Blue background
+    backgroundColor: '#C2EFFD',
   },
   whiteEllipse: {
     position: 'absolute',
-    // Adjust these values to achieve your desired ellipse shape and position
     top: height * 0.15,
     left: -width * 0.5,
     width: width * 2,
@@ -320,7 +337,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 120,
     marginBottom: -30,
-    zIndex: 1, // Ensure logo appears above ellipse
+    zIndex: 1,
   },
   logoImage: {
     width: 150,
@@ -375,7 +392,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#2897ba',
     borderRadius: 25,
-    paddingLeft: 40, 
+    paddingLeft: 40,
     paddingRight: 15,
     height: 45,
     fontSize: 16,
@@ -450,4 +467,3 @@ const styles = StyleSheet.create({
 });
 
 export default Users;
-

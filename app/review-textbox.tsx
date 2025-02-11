@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -12,36 +12,122 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
+import { supabase } from '@/supabaseClient'; // Adjust the import path accordingly
 
 const screenHeight = Dimensions.get('window').height;
 
+type RatingInfo = {
+  average: number;
+  count: number;
+};
+
 export default function AddReviewScreen() {
-  // Assume the restaurant name is passed as a route parameter
+  // Using 'restaurantName' parameter as a placeholder.
   const { restaurantName } = useLocalSearchParams();
+
+  // States for the review form
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  // Dummy tag options; adjust as needed
   const availableTags = ['Delicious', 'Spicy', 'Friendly', 'Worth It', 'Overpriced'];
 
-  // When a star is pressed, update the rating (1 to 5)
+  // State for fetched ratings
+  const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
+
+  // Dummy food item ID for testing (replace with a route parameter if needed)
+  const dummyFoodItemId = '191';
+
+  // For testing, you might have used a dummy user id.
+  // **Option 1: Use Supabase Auth to get the current user id**
+  // const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  // useEffect(() => {
+  //   const getCurrentUser = async () => {
+  //     const { data: { user } } = await supabase.auth.getUser();
+  //     setCurrentUserId(user?.id || null);
+  //   };
+  //   getCurrentUser();
+  // }, []);
+  
+  // **Option 2: For testing only, ensure a dummy user with id 100 exists in your "user" table**
+  const dummyUserId = 100;
+
+  // Function to fetch ratings for given food item IDs
+  const fetchRatings = async (itemIds: string[]) => {
+    if (itemIds.length === 0) return;
+
+    const { data, error } = await supabase
+      .from('review')
+      .select('food_item_id, rating')
+      .in('food_item_id', itemIds);
+
+    if (error) {
+      console.error('Error fetching ratings:', error);
+      return;
+    }
+    if (!data) return;
+
+    const map: { [key: string]: { sum: number; count: number } } = {};
+
+    data.forEach((row: any) => {
+      if (!map[row.food_item_id]) {
+        map[row.food_item_id] = { sum: 0, count: 0 };
+      }
+      map[row.food_item_id].sum += row.rating;
+      map[row.food_item_id].count += 1;
+    });
+
+    const finalMap: { [key: string]: RatingInfo } = {};
+    for (const fid in map) {
+      const sum = map[fid].sum;
+      const count = map[fid].count;
+      finalMap[fid] = {
+        average: count === 0 ? 0 : sum / count,
+        count,
+      };
+    }
+
+    setRatingMap(finalMap);
+  };
+
+  // Fetch ratings when the component mounts
+  useEffect(() => {
+    fetchRatings([dummyFoodItemId]);
+  }, []);
+
   const handleStarPress = (starIndex: number) => {
     setRating(starIndex);
   };
 
-  // Toggle a tag selection
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
-  // Called when "Post Review" is pressed
-  const handlePostReview = () => {
-    console.log("Review posted:", { rating, reviewText, selectedTags });
-    // Add review submission logic here...
+  const handlePostReview = async () => {
+    // If using authentication, replace dummyUserId with currentUserId.
+    // if (!currentUserId) {
+    //   console.error("No user logged in");
+    //   return;
+    // }
+    const reviewData = {
+      review_text: reviewText,
+      user_id: dummyUserId, // Replace this with the authenticated user's id when available
+      food_item_id: Number(dummyFoodItemId),
+      rating: rating,
+      review_date: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase.from('review').insert([reviewData]);
+
+    if (error) {
+      console.error('Error posting review:', error);
+    } else {
+      console.log('Review posted successfully:', data);
+    }
   };
+
+  const currentRatingInfo = ratingMap[dummyFoodItemId];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -51,11 +137,21 @@ export default function AddReviewScreen() {
           <Ionicons name="arrow-back" size={24} style={styles.closeIcon} />
         </Pressable>
         <ThemedText style={styles.title}>
-          Review for {restaurantName || "Restaurant"}
+          Review for {restaurantName || "Food Item"}
         </ThemedText>
         <Pressable onPress={() => console.log("help")}>
           <Ionicons name="help" size={24} style={styles.closeIcon} />
         </Pressable>
+      </View>
+
+      <View style={styles.currentRatingContainer}>
+        {currentRatingInfo ? (
+          <Text style={styles.currentRatingText}>
+            Current Average Rating: {currentRatingInfo.average.toFixed(1)} ({currentRatingInfo.count} reviews)
+          </Text>
+        ) : (
+          <Text style={styles.currentRatingText}>No ratings yet.</Text>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.contentContainer}>
@@ -80,10 +176,7 @@ export default function AddReviewScreen() {
 
         {/* Review Details Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionText}>
-            Tell us about your experience
-          </Text>
-          {/* Tags Row */}
+          <Text style={styles.sectionText}>Tell us about your experience</Text>
           <View style={styles.tagContainer}>
             {availableTags.map((tag) => (
               <Pressable
@@ -105,7 +198,6 @@ export default function AddReviewScreen() {
               </Pressable>
             ))}
           </View>
-          {/* Text Input */}
           <TextInput
             style={styles.textBox}
             placeholder="Write your review here..."
@@ -113,7 +205,6 @@ export default function AddReviewScreen() {
             value={reviewText}
             onChangeText={setReviewText}
           />
-          {/* Picture Option */}
           <Pressable
             style={styles.pictureOption}
             onPress={() => console.log("Picture option pressed")}
@@ -123,11 +214,9 @@ export default function AddReviewScreen() {
           </Pressable>
         </View>
 
-        {/* Spacer so content scrolls above the fixed button */}
         <View style={{ height: screenHeight * 0.25 }} />
       </ScrollView>
 
-      {/* Post Review Button fixed 20% from the bottom */}
       <View style={styles.postReviewContainer}>
         <Pressable style={styles.postReviewButton} onPress={handlePostReview}>
           <Text style={styles.postReviewText}>Post Review</Text>
@@ -155,6 +244,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000',
+  },
+  currentRatingContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  currentRatingText: {
+    fontSize: 16,
+    color: '#333',
   },
   contentContainer: {
     paddingHorizontal: 16,
@@ -203,7 +300,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     padding: 10,
-    height: screenHeight * 0.35, // approximately 35% of the screen height
+    height: screenHeight * 0.35,
     textAlignVertical: 'top',
     marginBottom: 10,
   },
@@ -218,7 +315,7 @@ const styles = StyleSheet.create({
   },
   postReviewContainer: {
     position: 'absolute',
-    bottom: '20%', // fixed 20% from the bottom
+    bottom: '20%',
     left: 0,
     right: 0,
     alignItems: 'center',
