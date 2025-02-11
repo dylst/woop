@@ -91,7 +91,30 @@ export const restaurantService = {
 			console.error("Error fetching restaurants:", error);
 			return [];
 		}
+	}, getRestaurantByCity: async (stateName: string, cityName: string, page: number) =>{
+		try {
+			const response = await axiosInstance.get(
+				`restaurants/location/state/${stateName}/city/${cityName}/${page}`
+			);
+
+			console.log("Raw API Response:", response.data);
+
+			if (!response.data || !Array.isArray(response.data.restaurants)) {
+				console.error("API did not return an expected 'restaurants' array.");
+
+			}
+
+			return response.data.restaurants;
+		} catch (error) {
+			console.error(
+				"Error fetching restaurants:",
+				error instanceof Error ? error.message : "An unknown error occurred"
+			);
+			throw error;
+		}
 	}
+
+
 
 };
 

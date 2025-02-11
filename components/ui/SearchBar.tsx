@@ -32,7 +32,7 @@ const SearchBar = () => {
 		if (searchQuery.trim()) {
 			try {
 				setLoading(true);
-				const results = await restaurantService.getRestaurantByZipCode("90815", 0);
+				const results = await restaurantService.getRestaurantByCity("CA", "Cerritos", 0);
 				console.log("Search Results:", typeof results, results);
 
 				for (const restaurant of results) {
@@ -44,6 +44,13 @@ const SearchBar = () => {
 								addressLin: restaurant.address,
 								city: restaurant.cityName,
 								state: restaurant.stateName,
+								zipcode: restaurant.zipCode.substring(0,5),
+								webUrl: restaurant.webUrl,
+								hours: restaurant.hoursInterval,
+								cuisineType: restaurant.cuisineType,
+								idRestaurant: restaurant.id,
+								latitude: restaurant.latitude,
+								longitude: restaurant.longitude,
 							},
 						])
 						
@@ -88,7 +95,7 @@ const SearchBar = () => {
 				placeholder='Search restaurants...'
 				value={searchQuery}
 				onChangeText={setSearchQuery}
-				onSubmitEditing={()=>handleSearchDb(searchQuery)}
+				onSubmitEditing={handleSearch}
 				editable={!loading}
 			/>
 		</View>

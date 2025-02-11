@@ -1,5 +1,5 @@
 export interface Restaurant {
-  id:number;
+  	id:number;
 	restaurantName: string;
 	address: string;
 	zipCode: string;
@@ -8,4 +8,7 @@ export interface Restaurant {
 	cityName: string;
 	hoursInterval?: string;
 	cuisineType?: string;
+	longitude?: string;
+	latitude?: string;
+	webUrl?: string;
 }

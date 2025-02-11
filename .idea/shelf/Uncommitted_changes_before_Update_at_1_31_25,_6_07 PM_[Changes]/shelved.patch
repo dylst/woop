@@ -1,0 +1,18 @@
+Index: .env
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>EXPO_PUBLIC_API_KEY=6873eebcdfmshe6f2414415dce88p1346bfjsn16067c819f51\nEXPO_PUBLIC_API_HOST=restaurants-near-me-usa.p.rapidapi.com\nEXPO_PUBLIC_API_URL=https://restaurants-near-me-usa.p.rapidapi.com
+===================================================================
+diff --git a/.env b/.env
+--- a/.env	(revision 9503702b7ddc84922d40b46e0d05d082051c84cc)
++++ b/.env	(date 1738367632170)
+@@ -1,3 +1,6 @@
+ EXPO_PUBLIC_API_KEY=6873eebcdfmshe6f2414415dce88p1346bfjsn16067c819f51
+ EXPO_PUBLIC_API_HOST=restaurants-near-me-usa.p.rapidapi.com
+-EXPO_PUBLIC_API_URL=https://restaurants-near-me-usa.p.rapidapi.com
+\ No newline at end of file
++EXPO_PUBLIC_API_URL=https://restaurants-near-me-usa.p.rapidapi.com
++
++EXPO_PUBLIC_SUPABASE_URL=https://kwunuyczgqvpnfsdueyl.supabase.co/
++EXPO_PUBLIC_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3dW51eWN6Z3F2cG5mc2R1ZXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyODI5NDYsImV4cCI6MjA1Mzg1ODk0Nn0.cPguVmpezV60nBoMyUiryG_QqY5IMNPwEh6bawH8QuY
+\ No newline at end of file
