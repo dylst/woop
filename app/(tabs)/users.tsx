@@ -27,6 +27,7 @@ function Users() {
   const [loginError, setLoginError] = useState('');
 
   // Register states
+  const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regPasswordRetype, setRegPasswordRetype] = useState('');
@@ -42,13 +43,13 @@ function Users() {
   const handleLoginTab = () => setActiveTab('login');
   const handleRegTab = () => setActiveTab('register');
   const handleForgotTab = () => setActiveTab('forgot');
-  
+
   // Used for redirecting 
   const router = useRouter();
- 
+
   const { user, setUser } = useUser();
-  
-  const validateEmail = (email:string) => {
+
+  const validateEmail = (email: string) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   };
@@ -59,17 +60,43 @@ function Users() {
 
     if (loginEmail === '' || loginPassword === '') {
       setLoginError('Please enter your email and password.');
-      return 
-    } else {
-      const {data, error} = await supabase.auth.signInWithPassword({email : loginEmail, password: loginPassword })
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword
+      })
       if (error) {
         setLoginError("There was an error logging")
         console.error(error.message)
-      } else {
+      } else if (data && data.user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("User is authenticated:", session.user);
+
+          const { data: profileData, error: profileError } = await supabase
+            .from('profile')
+            .insert([
+              {
+                id: data.user.id,
+                username: regUsername || data.user.user_metadata.username || 'default_username',
+              },
+            ])
+          if (profileError) {
+            console.log('Error creating profile:', profileError.message);
+          }
+        } else {
+          console.log("No active session. User is not authenticated.");
+        }
         //setting user in the context 
-        setUser(data.user)   
-        router.push("/")
+        setUser(data.user);
+        router.push("/");
       }
+    } catch (error) {
+      setLoginError("There was an error logging in");
+      console.log(error);
     }
   };
 
@@ -80,15 +107,15 @@ function Users() {
 
     let passValidations = true;
 
-    if (!regEmail || !regPassword || !regPasswordRetype) {
+    if (!regUsername || !regEmail || !regPassword || !regPasswordRetype) {
       setRegErrors('Please fill in all fields.');
       passValidations = false;
     }
-    if (!validateEmail(regEmail)){
-      setEmailErrors("Email Invalid. Try a different one")
+    if (!validateEmail(regEmail)) {
+      setEmailErrors("Email invalid. Try a different one")
       passValidations = false;
     }
-    if (regPassword.length < 6){
+    if (regPassword.length < 6) {
       setPasswordErrors("Needs a password longer than 6 characters")
       passValidations = false;
     }
@@ -98,13 +125,18 @@ function Users() {
 
     }
 
-    if (!passValidations){
+    if (!passValidations) {
       return;
     }
     try {
       const { data, error } = await supabase.auth.signUp({
         email: regEmail,
         password: regPassword,
+        options: {
+          data: {
+            username: regUsername
+          }
+        }
       });
       console.log(data, error);
       if (error) {
@@ -240,7 +272,19 @@ function Users() {
       {activeTab === 'register' && (
         <View style={styles.formContainer}>
           <Text style={styles.inputLabel}>
-            <Ionicons name="person-outline" size={16} color="#2897ba" /> Enter email
+            <Ionicons name="person-outline" size={16} color="#2897ba" /> Enter username
+          </Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons name="person-outline" size={16} color="#2897ba" style={styles.inputIcon} />
+            <TextInput
+              style={styles.textInput}
+              placeholder='Enter your username'
+              value={regUsername}
+              onChangeText={setRegUsername}
+            />
+          </View>
+          <Text style={styles.inputLabel}>
+            <Ionicons name="mail-outline" size={16} color="#2897ba" /> Enter email
           </Text>
           <View style={styles.inputWrapper}>
             <Ionicons name="mail-outline" size={20} color="#2897ba" style={styles.inputIcon} />
@@ -412,7 +456,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#2897ba',
     borderRadius: 25,
-    paddingLeft: 40, 
+    paddingLeft: 40,
     paddingRight: 15,
     height: 45,
     fontSize: 16,
