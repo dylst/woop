@@ -13,9 +13,11 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from '@/supabaseClient';
 import { Colors } from '@/constants/Colors';
 
+
 export default function FoodItemDetailPage() {
   const router = useRouter();
   const { foodItemId } = useLocalSearchParams();
+  const [reviews, setReviews] = useState<any[]>([]); 
 
   const [isFavorite, setIsFavorites] = useState(false);
   const [itemData, setItemData] = useState<any>(null);
@@ -40,6 +42,26 @@ export default function FoodItemDetailPage() {
 
     setItemData(data);
   };
+
+  const fetchReviews = async () => {
+    if (!foodItemId) return;
+  
+    const { data, error } = await supabase
+      .from("review")
+      .select("rating, review_text, created_at, user_id")
+      .eq("food_item_id", foodItemId)
+      .order("created_at", { ascending: false });
+  
+    if (error) {
+      console.error("Error fetching reviews:", error);
+      return;
+    }
+  
+    setReviews(data);
+  };
+  
+
+
 
   const photoRatings = [
     { label: "5", percentage: 80, color: "#E64A19", image: "photo1.jpg" },
@@ -69,8 +91,9 @@ export default function FoodItemDetailPage() {
 
   useEffect(() => {
     fetchFoodItem();
-    checkIfFavorite();
+    fetchReviews();  // Add this line
   }, []);
+  
 
   const handleFavoriteToggle = async () => {
     try {
@@ -144,8 +167,8 @@ export default function FoodItemDetailPage() {
   const actionButtons = [
     {
       icon: "star-outline" as const,
-      text: "Add Review",
-      onPress: () => router.push("/review-textbox"),
+      text: "Write a Review",
+      onPress: () => router.push(`/review-textbox?foodItemId=${foodItemId}`), // ✅ Correctly passes foodItemId
     },
     {
       icon: "camera-outline" as const,
@@ -158,6 +181,7 @@ export default function FoodItemDetailPage() {
       onPress: () => console.log("View Map Pressed"),
     },
   ];
+  
 
   const imageUrl = Array.isArray(itemData?.photos) && itemData?.photos.length > 0 ? itemData.photos[0] : '';
 
