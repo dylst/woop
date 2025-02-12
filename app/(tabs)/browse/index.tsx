@@ -28,16 +28,6 @@ export default function Browse() {
 
 	return (
 		<SafeAreaView style={styles.container}>
-			{/* Top Navigation */}
-			{/* <View style={styles.topNav}>
-				<Pressable onPress={() => router.back()}>
-					<Ionicons
-						name='chevron-back'
-						size={28}
-						color='#333'
-					/>
-				</Pressable>
-			</View> */}
 
 			{/* Page Title */}
 			<View style={styles.topBarContainer}>
