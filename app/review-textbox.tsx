@@ -28,7 +28,7 @@ export default function AddReviewScreen() {
       .from("review")
       .insert([
         {
-          user_id: 1,
+          user_id: 10,
           food_item_id: numericFoodItemId,
           rating: numericRating,
           review_text: reviewText,
