@@ -12,6 +12,8 @@ import {
   Dimensions
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useNavigation, useRouter } from 'expo-router';
+import { useUser } from '../context/UserContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,6 +24,7 @@ function Users() {
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   // Register states
   const [regEmail, setRegEmail] = useState('');
@@ -33,22 +36,40 @@ function Users() {
 
   // Forgot states
   const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotErrors, setForgetErrors] = useState("");
+  const [showForgotEmail, setShowForgotEmail] = useState(false);
 
   const handleLoginTab = () => setActiveTab('login');
   const handleRegTab = () => setActiveTab('register');
   const handleForgotTab = () => setActiveTab('forgot');
-
+  
+  // Used for redirecting 
+  const router = useRouter();
  
+  const { user, setUser } = useUser();
+  
   const validateEmail = (email:string) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   };
 
-  const loginUser = () => {
+  const loginUser = async () => {
+
+    setLoginError("")
+
     if (loginEmail === '' || loginPassword === '') {
-      alert('Please enter your email and password.');
+      setLoginError('Please enter your email and password.');
+      return 
     } else {
-      alert(`Logging in as ${loginEmail}`);
+      const {data, error} = await supabase.auth.signInWithPassword({email : loginEmail, password: loginPassword })
+      if (error) {
+        setLoginError("There was an error logging")
+        console.error(error.message)
+      } else {
+        //setting user in the context 
+        setUser(data.user)   
+        router.push("/")
+      }
     }
   };
 
@@ -74,7 +95,7 @@ function Users() {
     if (regPassword !== regPasswordRetype) {
       setPasswordErrors('Passwords do not match.');
       passValidations = false;
-      
+
     }
 
     if (!passValidations){
@@ -88,6 +109,8 @@ function Users() {
       console.log(data, error);
       if (error) {
         setRegErrors(error.message)
+      } else {
+        router.push('/');
       }
     } catch (error) {
       setRegErrors('There was error registering');
@@ -95,13 +118,22 @@ function Users() {
     }
   };
 
-  const forgotPassword = () => {
+  const forgotPassword = async () => {
+    setForgetErrors("")
+    setShowForgotEmail(false)
+
     if (!forgotEmail) {
-      alert('Please enter your registered email.');
+      setForgetErrors('Please enter your registered email.');
       return;
     }
-    alert(`Password reset email sent to ${forgotEmail}`);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail);
+    if (error) {
+      setForgetErrors('There was an error resetting password');
+    } else {
+      setShowForgotEmail(true)
+    }
   };
+
 
   const renderSocialSignUp = () => (
     <View style={styles.socialContainer}>
@@ -182,6 +214,8 @@ function Users() {
               secureTextEntry
             />
           </View>
+
+          {loginError.length > 0 && <Text style={styles.errorText}>{loginError}</Text>}
 
           <TouchableOpacity onPress={loginUser} style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Sign in</Text>
@@ -282,6 +316,9 @@ function Users() {
               keyboardType="email-address"
             />
           </View>
+
+          {forgotErrors.length > 0 && <Text style={styles.errorText}>{forgotErrors}</Text>}
+          {showForgotEmail && <Text>{showForgotEmail}</Text>}
 
           <TouchableOpacity onPress={forgotPassword} style={styles.submitButton}>
             <Text style={styles.submitButtonText}>Send Reset Email</Text>
