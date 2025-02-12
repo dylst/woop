@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import TopBar from '@/components/ui/TopBar';
 import { Colors } from '@/constants/Colors';
 import { ActivityIndicator } from 'react-native-paper';
+import { useUser } from '../context/UserContext';
 
 interface FavoriteItem {
   user_id: string;
@@ -76,9 +77,15 @@ function renderStars(average: number) {
 
 const favorites = ({ userId }: { userId: string }) => {
   const router = useRouter();
+  const { user } = useUser();
 
+  console.log(user)
+
+  //eventually you would do user.id
+  
   // TEST_ID
   userId = '10';
+  
 
   const [isLoading, setIsLoading] = useState(true);
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
