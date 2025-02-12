@@ -51,7 +51,7 @@ export default function AddReviewScreen() {
           <Ionicons name="arrow-back" size={24} style={styles.closeIcon} />
         </Pressable>
         <ThemedText style={styles.title}>
-          Review for {restaurantName || "Restaurant"}
+          Review {restaurantName || "Food Item"}
         </ThemedText>
         <Pressable onPress={() => console.log("help")}>
           <Ionicons name="help" size={24} style={styles.closeIcon} />

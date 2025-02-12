@@ -70,9 +70,12 @@ const HomePage = () => {
     );
   }
   return (
+    
     <SafeAreaView style={styles.container}>
       {/* Top Bar */}
       <TopBar type="home" />
+
+      
 
       {/* Best in Town Section */}
       <Text style={styles.sectionTitle}>Best in Town!</Text>
@@ -94,6 +97,8 @@ const HomePage = () => {
           })}
         </ScrollView>
       </View>
+
+      
 
       {/* Try Something New Section */}
       <Text style={styles.sectionTitle}>Try something new!</Text>
