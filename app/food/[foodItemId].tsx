@@ -1,4 +1,3 @@
-import TopBar from "@/components/ui/TopBar";
 import {
   View,
   Text,
@@ -43,22 +42,22 @@ export default function FoodItemDetailPage() {
     setItemData(data);
   };
 
-  const fetchReviews = async () => {
-    if (!foodItemId) return;
+  // const fetchReviews = async () => {
+  //   if (!foodItemId) return;
   
-    const { data, error } = await supabase
-      .from("review")
-      .select("rating, review_text, created_at, user_id")
-      .eq("food_item_id", foodItemId)
-      .order("created_at", { ascending: false });
+  //   const { data, error } = await supabase
+  //     .from("review")
+  //     .select("rating, review_text, created_at, user_id")
+  //     .eq("food_item_id", foodItemId)
+  //     .order("created_at", { ascending: false });
   
-    if (error) {
-      console.error("Error fetching reviews:", error);
-      return;
-    }
+  //   if (error) {
+  //     console.error("Error fetching reviews:", error);
+  //     return;
+  //   }
   
-    setReviews(data);
-  };
+  //   setReviews(data);
+  // };
   
 
 
@@ -91,7 +90,7 @@ export default function FoodItemDetailPage() {
 
   useEffect(() => {
     fetchFoodItem();
-    fetchReviews();  // Add this line
+    checkIfFavorite();  
   }, []);
   
 
@@ -168,7 +167,7 @@ export default function FoodItemDetailPage() {
     {
       icon: "star-outline" as const,
       text: "Write a Review",
-      onPress: () => router.push(`/review-textbox?foodItemId=${foodItemId}`), // ✅ Correctly passes foodItemId
+      onPress: () => router.push(`/review-textbox?foodItemId=${foodItemId}`), 
     },
     {
       icon: "camera-outline" as const,
@@ -189,7 +188,7 @@ export default function FoodItemDetailPage() {
     <SafeAreaView style={styles.container}>
       {/* Top Navigation */}
       <View style={styles.topNav}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.push('/(tabs)')}>
           <Ionicons
             name="chevron-back"
             size={28}
@@ -278,7 +277,7 @@ export default function FoodItemDetailPage() {
                     </View>
 
                     {/* View Reviews Button */}
-                    <Pressable onPress={() => router.push("/reviews")} style={styles.viewReviewsButton}>
+                    <Pressable onPress={() => router.push("/fooditem_review")} style={styles.viewReviewsButton}>
                         <Text style={styles.viewReviewsText}>View Reviews →</Text>
                     </Pressable>
                 </View>
