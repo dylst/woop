@@ -4,11 +4,13 @@ import { SafeAreaView, StyleSheet, View, Text, Pressable, TextInput, ScrollView,
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
+import { useUser } from './context/UserContext';
 
 const screenHeight = Dimensions.get('window').height;
 
 export default function AddReviewScreen() {
   const params = useLocalSearchParams();
+  const { user } = useUser();
   const foodItemId = params.foodItemId || "5";  
 
   const [rating, setRating] = useState(0);
@@ -28,7 +30,7 @@ export default function AddReviewScreen() {
       .from("review")
       .insert([
         {
-          user_id: 10,
+          profile_id: user?.id,
           food_item_id: numericFoodItemId,
           rating: numericRating,
           review_text: reviewText,

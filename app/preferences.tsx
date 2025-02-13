@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 // import supabase in a future implementation
 import { supabase } from '@/supabaseClient';
+import { useUser } from './context/UserContext';
 
 // Add this interface for food items
 interface FoodItem {
@@ -25,7 +26,9 @@ interface FoodItem {
 }
 
 const PreferencesScreen = () => {
-  // Initial state will eventually be populated from Supabase
+  const { user } = useUser();
+  const userId = user?.id;
+
   const [preferences, setPreferences] = useState({
     food: [] as string[],
     dietary: [] as string[],
@@ -38,46 +41,12 @@ const PreferencesScreen = () => {
   // For tracking unsaved changes
   const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
-  // This will be used when we integrate Supabase
   useEffect(() => {
-    // fetchUserPreferences();
-    // const fetchData = async () => {
-    //   const {
-    //     data: { user },
-    //   } = await supabase.auth.getUser();
-
-    //   if (user) {
-    //     setUserId(user.id);
-    //     await fetchUserPreferences(user.id);
-    //   }
-    // };
-
-    // fetchData();
-
-    const testUserId = '10';
-    setUserId(testUserId);
-    fetchUserPreferences(testUserId);
-  }, []);
-
-  // Example of how we'll fetch preferences later
-  /*
-  const fetchUserPreferences = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .single();
-      
-      if (error) throw error;
-      
-      setPreferences(data);
-    } catch (error) {
-      console.error('Error fetching preferences:', error);
+    if (userId) {
+      fetchUserPreferences(userId);
     }
-  };
-  */
+  }, [userId]);
 
   const fetchUserPreferences = async (userId: string) => {
     try {
@@ -85,7 +54,7 @@ const PreferencesScreen = () => {
       const { data, error } = await supabase
         .from('preferences')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', userId)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
@@ -141,35 +110,18 @@ const PreferencesScreen = () => {
   };
 
   const handleSave = async () => {
-    // This will be implemented when we add Supabase
-    /*
-    try {
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: currentUser.id,
-          ...preferences
-        });
-
-      if (error) throw error;
-      
-      setHasChanges(false);
-    } catch (error) {
-      console.error('Error saving preferences:', error);
-    }
-    */
     if (!userId) return;
     setLoading(true);
     try {
       const { error } = await supabase.from('preferences').upsert(
         {
-          user_id: userId,
+          profile_id: userId,
           food: preferences.food,
           dietary: preferences.dietary,
           push: preferences.notifications.push,
           email: preferences.notifications.email,
         },
-        { onConflict: 'user_id' }
+        { onConflict: 'profile_id' }
       );
 
       if (error) throw error;

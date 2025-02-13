@@ -11,20 +11,24 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from '@/supabaseClient';
 import { Colors } from '@/constants/Colors';
+import { useUser } from "../context/UserContext";
 
 
 export default function FoodItemDetailPage() {
   const router = useRouter();
+  const { user } = useUser();
   const { foodItemId } = useLocalSearchParams();
-  const [reviews, setReviews] = useState<any[]>([]); 
 
+  const [reviews, setReviews] = useState<any[]>([]); 
   const [isFavorite, setIsFavorites] = useState(false);
   const [itemData, setItemData] = useState<any>(null);
 
   // TESTING FETCHING ITEM FROM DATABASE
   // DUMMY DATA FOR RELATED FOOD ITEMS
   const [relatedFavorites, setRelatedFavorites] = useState<number[]>([]);
-  const TEST_USER_ID = 10;
+  // const TEST_USER_ID = 10;
+
+  const userId = user?.id;
 
   const fetchFoodItem = async () => {
     if (!foodItemId) return;
@@ -79,7 +83,7 @@ export default function FoodItemDetailPage() {
     const { data, error } = await supabase
       .from("favorite")
       .select("id")
-      .eq("user_id", TEST_USER_ID)
+      .eq("profile_id", userId)
       .eq("food_item_id", foodItemId)
       .maybeSingle();
 
@@ -101,7 +105,7 @@ export default function FoodItemDetailPage() {
         const { error } = await supabase
           .from("favorite")
           .insert({
-            user_id: TEST_USER_ID,
+            profile_id: userId,
             food_item_id: foodId,
           });
 
@@ -115,7 +119,7 @@ export default function FoodItemDetailPage() {
         const { error } = await supabase
           .from("favorite")
           .delete()
-          .eq("user_id", TEST_USER_ID)
+          .eq("profile_id", userId)
           .eq("food_item_id", foodId);
 
         if (error) {

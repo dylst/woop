@@ -18,6 +18,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/supabaseClient'; // Make sure your Supabase client is imported
 import { ThemedText } from '@/components/ThemedText';
 import { Restaurant } from '@/types/restaurant.types';
+import { useUser } from './context/UserContext';
 
 //
 // Helper function for rendering stars based on the average rating
@@ -67,7 +68,7 @@ function renderStars(average: number) {
 //
 // Define your FavoriteItem and RatingInfo types (or import them)
 type FavoriteItem = {
-  user_id: string;
+  profile_id: string;
   food_item_id: string;
   food_name?: string;
   photos?: string;
@@ -134,7 +135,9 @@ export default function BusinessReviewScreen() {
 
   // --- API Call: Fetch Favorites from Supabase ---
   // (Make sure you have your user ID; here we hardcode it as '10')
-  const userId = '10';
+
+  const { user } = useUser();
+  const userId = user?.id;
 
   const fetchFavorites = async () => {
     setIsLoading(true);
@@ -143,7 +146,7 @@ export default function BusinessReviewScreen() {
         .from('favorite')
         .select(`
           id,
-          user_id,
+          profile_id,
           food_item_id,
           fooditem (
             food_name,
@@ -155,7 +158,7 @@ export default function BusinessReviewScreen() {
           ),
           date_added
         `)
-        .eq('user_id', userId)
+        .eq('profile_id', userId)
         .order('date_added', { ascending: false });
 
       if (error) {
@@ -166,7 +169,7 @@ export default function BusinessReviewScreen() {
 
       // Flatten the returned data structure
       const flattened = data.map((fav: any) => ({
-        user_id: fav.user_id,
+        profile_id: fav.profile_id,
         food_item_id: fav.food_item_id,
         food_name: fav.fooditem?.food_name || '',
         photos: fav.fooditem?.photos || '',
