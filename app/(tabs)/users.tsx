@@ -76,16 +76,27 @@ function Users() {
         if (session) {
           console.log("User is authenticated:", session.user);
 
-          const { data: profileData, error: profileError } = await supabase
+          const { data: existingProfile, error: profileFetchError } = await supabase
             .from('profile')
-            .insert([
-              {
-                id: data.user.id,
-                username: regUsername || data.user.user_metadata.username || 'default_username',
-              },
-            ])
-          if (profileError) {
-            console.log('Error creating profile:', profileError.message);
+            .select('*')
+            .eq('id', data.user.id)
+            .maybeSingle();
+          if (profileFetchError) {
+            console.error('Error fetching profile:', profileFetchError.message);
+          }
+
+          if (!existingProfile) {
+            const { data: newProfile, error: newProfileError } = await supabase
+              .from('profile')
+              .insert([
+                {
+                  id: data.user.id,
+                  username: regUsername || data.user.user_metadata.username || 'default_username',
+                },
+              ])
+            if (newProfileError) {
+              console.log('Error creating profile:', newProfileError.message);
+            }
           }
         } else {
           console.log("No active session. User is not authenticated.");
@@ -143,6 +154,7 @@ function Users() {
         setRegErrors(error.message)
       } else {
         router.push('/');
+        // setActiveTab('user'); // have not tested this yet, should make the user return to the login screen instead of the home screen
       }
     } catch (error) {
       setRegErrors('There was error registering');
