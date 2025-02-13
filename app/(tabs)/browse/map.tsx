@@ -9,56 +9,83 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import MapView from '@teovilla/react-native-web-maps';
-
-
+import MapView from "react-native-maps";
+import { useEffect, useState } from "react";
+import { mapService } from "@/app/api/services/mapService";
+import  Marker from "@teovilla/react-native-web-maps";
+import { Map } from "@/types/map.types";
 export default function MapScreen() {
 	const router = useRouter();
+	const [markers, setMarkers] = useState<Map[]>([]);
+	useEffect(() => {
+		const fetchMarkers = async () => {
+			const res = await mapService.fetchMarkerLongLang("Long Beach");
+			setMarkers(res);
+		};
+		fetchMarkers();
+		console.log("Markers are set", markers)
+	}, []);
+
 
 	return (
 		<View style={styles.container}>
-
 			<MapView
-				style={{ width: "100%", height: "100%" }}
-				provider="google"
-				googleMapsApiKey={process.env.EXPO_PUBLIC_GOOGLE_MAPS} as any // Quick TypeScript bypass
+				provider='google'
+				googleMapsApiKey={process.env.EXPO_PUBLIC_GOOGLE_MAPS}
+				initialRegion={{
+					latitude: 37.78825,
+					longitude: -122.4324,
+					latitudeDelta: 0.0922,
+					longitudeDelta: 0.0421,
+				}}
 				loadingFallback={
 					<View>
 						<Text>Loading Map...</Text>
 					</View>
 				}
-			/>
+			>
+				{markers.map((m, index) => (
+					<Marker
+						key={index}
+						coordinate={{
+							latitude: parseFloat(m.latitude),
+							longitude: parseFloat(m.longitude),
+						}}
+					/>
+				))}
+				;
+			</MapView>
 
-				{/* Search Bar */}
-				<View style={styles.searchContainer}>
-					<View style={styles.searchBar}>
-						<Ionicons
-							name='search'
-							size={20}
-							color='#666'
-						/>
-						<TextInput
-							placeholder='Search for restaurants, cuisines...'
-							style={styles.searchInput}
-							placeholderTextColor='#666'
-						/>
+			{/* Search Bar */}
+			<View style={styles.searchContainer}>
+				<View style={styles.searchBar}>
+					<Ionicons
+						name='search'
+						size={20}
+						color='#666'
+					/>
+					<TextInput
+						placeholder='Search for restaurants, cuisines...'
+						style={styles.searchInput}
+						placeholderTextColor='#666'
+					/>
+				</View>
+			</View>
+
+			{/* Popular Foods Bottom Sheet */}
+			<View style={styles.bottomSheet}>
+				<Text style={styles.bottomSheetTitle}>Popular Near You</Text>
+				<View style={styles.popularItems}>
+					<View style={styles.popularItem}>
+						<Text style={styles.itemTitle}>Pizza</Text>
+						<Text style={styles.itemSubtitle}>15+ places nearby</Text>
+					</View>
+					<View style={styles.popularItem}>
+						<Text style={styles.itemTitle}>Sushi</Text>
+						<Text style={styles.itemSubtitle}>8 places nearby</Text>
 					</View>
 				</View>
-
-				{/* Popular Foods Bottom Sheet */}
-				<View style={styles.bottomSheet}>
-					<Text style={styles.bottomSheetTitle}>Popular Near You</Text>
-					<View style={styles.popularItems}>
-						<View style={styles.popularItem}>
-							<Text style={styles.itemTitle}>Pizza</Text>
-							<Text style={styles.itemSubtitle}>15+ places nearby</Text>
-						</View>
-						<View style={styles.popularItem}>
-							<Text style={styles.itemTitle}>Sushi</Text>
-							<Text style={styles.itemSubtitle}>8 places nearby</Text>
-						</View>
-					</View>
-				</View>
+			</View>
 			{/*</ImageBackground>*/}
 		</View>
 	);
