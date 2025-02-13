@@ -15,7 +15,7 @@ import { ActivityIndicator } from 'react-native-paper';
 import { useUser } from '../context/UserContext';
 
 interface FavoriteItem {
-  user_id: string;
+  profile_id: string;
   food_item_id: string;
 
   food_name?: string;
@@ -75,16 +75,11 @@ function renderStars(average: number) {
   return stars;
 }
 
-const favorites = ({ userId }: { userId: string }) => {
+const favorites = () => {
   const router = useRouter();
   const { user } = useUser();
 
-  console.log(user)
-
-  //eventually you would do user.id
-  
-  // TEST_ID
-  userId = '10';
+  const userId = user?.id;
   
 
   const [isLoading, setIsLoading] = useState(true);
@@ -136,7 +131,7 @@ const favorites = ({ userId }: { userId: string }) => {
         .from('favorite')
         .select(`
         id,
-        user_id,
+        profile_id,
         food_item_id,
         fooditem (
           food_name,
@@ -148,7 +143,7 @@ const favorites = ({ userId }: { userId: string }) => {
         ),
         date_added
       `)
-        .eq('user_id', userId)
+        .eq('profile_id', userId)
         .order('date_added', { ascending: false })
 
       if (error) {
@@ -159,7 +154,7 @@ const favorites = ({ userId }: { userId: string }) => {
       if (!data) return;
 
       const flattened = data.map((fav: any) => ({
-        user_id: fav.user_id,
+        profile_id: fav.profile_id,
         food_item_id: fav.food_item_id,
         food_name: fav.fooditem?.food_name || '',
         photos: fav.fooditem?.photos || [],
