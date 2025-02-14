@@ -93,13 +93,13 @@ const ProfileScreen = () => {
           {/* Action Buttons section */}
           <View style={styles.actionButtonsSection}>
             <View style={styles.actionButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => router.push('/add-food-item')}
+                onPress={() => router.push('/food/add-food-item')}
               >
                 <View style={styles.actionIconContainer}>
                   <Ionicons
-                    name="fast-food-outline"
+                    name='fast-food-outline'
                     size={24}
                     color={Colors.primary.darkteal}
                   />
@@ -108,7 +108,7 @@ const ProfileScreen = () => {
                   Add Food
                 </ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => router.push('/add-review')}
               >
