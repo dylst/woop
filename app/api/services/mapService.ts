@@ -12,6 +12,7 @@ export const mapService = {
             }
 
             const responseData = data?.map((map) => ({
+                name: map.name,
                 longitude: map.longitude,
                 latitude: map.latitude
             })) || [];
