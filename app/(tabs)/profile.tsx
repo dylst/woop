@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Image,
@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { router } from 'expo-router';
+import { useUser } from '../context/UserContext';
+import { supabase } from '@/supabaseClient';
 
 interface ReviewItemProps {
   image: any;
@@ -66,7 +68,36 @@ const StatItem: React.FC<StatItemProps> = ({ icon, count }) => (
 );
 
 const ProfileScreen = () => {
+  const { user } = useUser();
+  const userId = user?.id;
+
+  const [userData, setUserData] = useState<any>(null);
   const [activeTab, setActiveTab] = React.useState('reviews');
+
+  const fetchProfile = async () => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from('profile')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Error fetching profile:", error)
+      return;
+    }
+
+    setUserData(data);
+  }
+
+  useEffect(() => {
+    fetchProfile();
+  }, [userId]);
+
+  const firstName = userData?.first_name || userData?.username;
+  const lastName = userData?.last_name || '';
+  
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
@@ -77,10 +108,10 @@ const ProfileScreen = () => {
         {/* Header section */}
         <View style={styles.headerContent}>
           <Image
-            source={require('@/assets/images/mudkip.jpg')}
+            source={{ uri: userData?.avatar }}
             style={styles.profileImage}
           />
-          <ThemedText style={styles.userName}>Kyle Kiwikaka</ThemedText>
+          <ThemedText style={styles.userName}>{firstName} {lastName}</ThemedText>
           {/* Stats section */}
           <View style={styles.statsSection}>
             <View style={styles.statsContainer}>

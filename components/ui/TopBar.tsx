@@ -23,7 +23,8 @@ const TopBar = ({
       .from('profile')
       .select(`
         username,
-        first_name`)
+        first_name,
+        avatar`)
       .eq('id', userId)
       .maybeSingle();
 
@@ -86,10 +87,12 @@ const TopBar = ({
           <Pressable onPress={() => handleNavigationPress()}>
             <Ionicons name='notifications' size={24} color='#000' />
           </Pressable>
-          <Image
-            source={require('@/assets/images/react-logo.png')}
-            style={styles.avatar}
-          />
+          <Pressable onPress={() => router.push('/profile')}>
+            <Image
+              source={{ uri: userData?.avatar }}
+              style={styles.avatar}
+            />
+          </Pressable>
         </TouchableOpacity>
       </View>
       <SearchBar />
@@ -115,9 +118,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 50,
     marginLeft: 12,
   },
   titleContainer: {
