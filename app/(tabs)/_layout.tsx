@@ -23,7 +23,7 @@ export default function TabLayout() {
         tabBarStyle: {
           borderTopColor: Colors.primary.lightteal,
           backgroundColor: Colors.primary.lightteal,
-          height: 70,
+          height: 85,
           paddingTop: 16,
           ...Platform.select({
             ios: {
