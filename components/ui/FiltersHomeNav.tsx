@@ -40,7 +40,7 @@ const FiltersHomeNav: React.FC<FiltersHomeProps> = ({
 const styles = StyleSheet.create({
       newBox: {
         width: '48%',
-        height: 290,
+        height: 250,
         backgroundColor: '#fff',
         borderRadius: 20,
         elevation: 2,
@@ -55,8 +55,7 @@ const styles = StyleSheet.create({
       newBoxText: {
         fontSize: 24,
         fontWeight: 'bold',
-        paddingTop: 20,
-        paddingBottom: 16,
+        paddingVertical: 16,
       },
 })
 
