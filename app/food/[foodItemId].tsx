@@ -192,7 +192,7 @@ export default function FoodItemDetailPage() {
     <SafeAreaView style={styles.container}>
       {/* Top Navigation */}
       <View style={styles.topNav}>
-        <Pressable onPress={() => router.push('/(tabs)')}>
+        <Pressable onPress={() => router.back()}>
           <Ionicons
             name="chevron-back"
             size={28}
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     },
     topNav: {
         position: "absolute",
-        top: 25, // Adjust to ensure it's placed correctly
+        top: 70, // Adjust to ensure it's placed correctly
         left: 20,
         zIndex: 2, // Keeps it above the image
     },
