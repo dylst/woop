@@ -70,6 +70,8 @@ export default function SuggestEditFoodItemForm() {
   const [selectedDietaryTags, setSelectedDietaryTags] = useState<string[]>([]);
   const [showCuisineDropdown, setShowCuisineDropdown] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
   const [originalData, setOriginalData] = useState<FormData | null>(null);
 
   useEffect(() => {
@@ -351,12 +353,62 @@ export default function SuggestEditFoodItemForm() {
         </Button>
         <Button
           mode='outlined'
+          onPress={() => setDeleteModalVisible(true)}
+          style={styles.deleteButton}
+          textColor='red'
+        >
+          Suggest Delete
+        </Button>
+        <Button
+          mode='outlined'
           onPress={() => router.push(`/food/${foodItemId}`)}
           style={styles.cancelButton}
+          textColor='gray'
         >
           Cancel
         </Button>
         <SuccessModal />
+        <Modal visible={deleteModalVisible} transparent animationType='fade'>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ThemedText style={styles.deleteModalTitle}>
+                Suggest Delete
+              </ThemedText>
+              <TextInput
+                label='Reason'
+                placeholder='Food item is no longer available...'
+                value={deleteReason}
+                onChangeText={setDeleteReason}
+                mode='outlined'
+                activeOutlineColor='gray'
+                style={[styles.deleteInput]}
+              />
+              <View style={styles.deleteButtonContainer}>
+                <Button
+                  mode='contained'
+                  onPress={() => {
+                    setDeleteModalVisible(false);
+                    setShowSuccessModal(true);
+                  }}
+                  style={[styles.deleteModalButton, { flex: 1 }]}
+                >
+                  Submit
+                </Button>
+                <Button
+                  mode='outlined'
+                  textColor='gray'
+                  onPress={() => {
+                    setDeleteModalVisible(false);
+                    setDeleteReason('');
+                  }}
+                  style={[styles.deleteModalCancelButton, { flex: 1 }]}
+                >
+                  Cancel
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
@@ -410,7 +462,17 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   submitButton: { marginTop: 24, backgroundColor: Colors.primary.darkteal },
-  cancelButton: { marginTop: 12, borderColor: Colors.primary.darkteal },
+  deleteButton: { marginTop: 12, borderColor: 'red' },
+  cancelButton: { marginTop: 12, borderColor: 'gray' },
+  deleteModalButton: {
+    borderColor: Colors.primary.darkteal,
+    backgroundColor: Colors.primary.purple,
+    marginRight: 5,
+  },
+  deleteModalCancelButton: {
+    borderColor: 'gray',
+    backgroundColor: 'white',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -419,20 +481,22 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    width: '80%',
-    maxWidth: 400,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'stretch',
+    width: '90%',
+    maxWidth: 350,
   },
   iconContainer: {
     marginBottom: 20,
+    alignItems: 'center',
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
     color: Colors.primary.darkteal,
+    textAlign: 'center',
   },
   modalMessage: {
     fontSize: 16,
@@ -444,5 +508,23 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: '100%',
     backgroundColor: Colors.primary.darkteal,
+  },
+  deleteModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: Colors.primary.purple,
+    textAlign: 'center',
+  },
+  deleteButtonContainer: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    gap: 5,
+  },
+  deleteInput: {
+    height: 100,
+    width: '100%',
+    backgroundColor: 'white',
   },
 });
