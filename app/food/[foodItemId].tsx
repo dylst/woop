@@ -281,7 +281,13 @@ export default function FoodItemDetailPage() {
                     </View>
 
                     {/* View Reviews Button */}
-                    <Pressable onPress={() => router.push("/fooditem_review")} style={styles.viewReviewsButton}>
+                    <Pressable 
+                        onPress={() => router.push({ 
+                          pathname: "/fooditem_review", 
+                          params: { foodItemId: String(foodItemId) }  // Convert to string
+                        })} 
+                        style={styles.viewReviewsButton}
+                      >
                         <Text style={styles.viewReviewsText}>View Reviews →</Text>
                     </Pressable>
                 </View>
