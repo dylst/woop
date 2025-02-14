@@ -32,7 +32,7 @@ const SearchBar = () => {
 		if (searchQuery.trim()) {
 			try {
 				setLoading(true);
-				const results = await restaurantService.getRestaurantByCity("CA", "Cerritos", 0);
+				const results = await restaurantService.getRestaurantByCity("CA", "Long Beach", 1);
 				console.log("Search Results:", typeof results, results);
 
 				for (const restaurant of results) {
@@ -95,7 +95,7 @@ const SearchBar = () => {
 				placeholder='Search restaurants...'
 				value={searchQuery}
 				onChangeText={setSearchQuery}
-				onSubmitEditing={handleSearch}
+				onSubmitEditing={()=>handleSearchDb(searchQuery)}
 				editable={!loading}
 			/>
 		</View>
@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
 		borderRadius: 50,
 		elevation: 2,
 		marginHorizontal: 10,
+		marginBottom: 10,
 	},
 	searchInput: {
 		flex: 1,
