@@ -20,6 +20,7 @@ import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '../context/UserContext';
 
 type FormData = {
   foodName: string;
@@ -29,6 +30,8 @@ type FormData = {
   restaurantName: string;
   description: string;
   photos: string[];
+  rating: number;
+  reviewText: string;
 };
 const CUISINE_TYPES = [
   'American',
@@ -68,6 +71,8 @@ export default function AddFoodItemForm() {
       restaurantName: '',
       description: '',
       photos: [],
+      rating: 0,
+      reviewText: '',
     },
   });
   const [showCuisineDropdown, setShowCuisineDropdown] = React.useState(false);
@@ -78,15 +83,18 @@ export default function AddFoodItemForm() {
   const [photos, setPhotos] = React.useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
+  const { user } = useUser();
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Convert price range number to $ symbols
-      const priceRangeToSymbol = (price: number) => {
-        return '$'.repeat(price);
-      };
+      if (!user) {
+        alert('You must be logged in to submit a food item.');
+        return;
+      }
 
-      // First upload all photos to Supabase storage
+      const priceRangeToSymbol = (price: number) => '$'.repeat(price);
+
+      // Upload photos
       const photoUrls = await Promise.all(
         photos.map(async (photoUri) => {
           const fileExt = photoUri.startsWith('data:')
@@ -96,7 +104,6 @@ export default function AddFoodItemForm() {
             .toString(36)
             .substring(2)}.${fileExt}`;
 
-          // Platform-specific file handling
           let fileData;
           if (Platform.OS === 'web') {
             const response = await fetch(photoUri);
@@ -108,7 +115,7 @@ export default function AddFoodItemForm() {
             fileData = decode(base64);
           }
 
-          const { error: uploadError } = (await Promise.race([
+          const { error: uploadError } = await Promise.race([
             supabase.storage.from('food-images').upload(fileName, fileData, {
               contentType: `image/${fileExt}`,
               upsert: false,
@@ -116,46 +123,65 @@ export default function AddFoodItemForm() {
             new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Upload timeout')), 30000)
             ),
-          ])) as { data: any; error: any };
+          ]);
 
           if (uploadError) throw uploadError;
 
           const { data: publicData } = supabase.storage
             .from('food-images')
             .getPublicUrl(fileName);
-
           return publicData.publicUrl;
         })
       );
 
-      // Create the food item with photo URLs and converted price range
-      const { data: newFoodItem, error } = await supabase
+      // Check if the food item exists using foodName and restaurantName
+      const { data: existingFoodItems, error: fetchError } = await supabase
         .from('fooditem')
-        .insert([
-          {
-            food_name: data.foodName,
-            cuisine_type: [data.cuisineType],
-            dietary_tags: data.dietaryTags,
-            price_range: priceRangeToSymbol(data.priceRange), // Convert number to $ symbols
-            restaurant_name: data.restaurantName,
-            description: data.description,
-            photos: photoUrls,
-          },
-        ])
-        .select();
+        .select('*')
+        .eq('food_name', data.foodName)
+        .eq('restaurant_name', data.restaurantName);
+      if (fetchError) throw fetchError;
 
-      if (error) {
-        console.error('Error creating food item:', error);
-        return;
+      let foodItemId;
+      if (existingFoodItems && existingFoodItems.length > 0) {
+        foodItemId = existingFoodItems[0].id;
+      } else {
+        const { data: newFoodItems, error: foodError } = await supabase
+          .from('fooditem')
+          .insert([
+            {
+              food_name: data.foodName,
+              cuisine_type: [data.cuisineType],
+              dietary_tags: data.dietaryTags,
+              price_range: priceRangeToSymbol(data.priceRange),
+              restaurant_name: data.restaurantName,
+              description: data.description,
+              photos: photoUrls,
+            },
+          ])
+          .select();
+        if (foodError || !newFoodItems || newFoodItems.length === 0)
+          throw foodError;
+        foodItemId = newFoodItems[0].id;
       }
 
-      // Show success modal
+      // Insert a new review for the food item
+      const { error: reviewError } = await supabase.from('review').insert([
+        {
+          food_item_id: foodItemId,
+          rating: data.rating,
+          review_text: data.reviewText,
+          review_date: new Date().toISOString(),
+          profile_id: user.id,
+        },
+      ]);
+      if (reviewError) throw reviewError;
+
       setShowSuccessModal(true);
     } catch (error) {
       console.error('Error submitting form:', error);
-      if (error instanceof Error) {
+      if (error instanceof Error)
         console.error('Error details:', error.message);
-      }
     }
   };
 
@@ -178,7 +204,7 @@ export default function AddFoodItemForm() {
           </View>
           <ThemedText style={styles.modalTitle}>Woop!</ThemedText>
           <ThemedText style={styles.modalMessage}>
-            Your food item has been successfully created
+            Your submission has been saved successfully
           </ThemedText>
           <Button
             mode='contained'
@@ -343,6 +369,46 @@ export default function AddFoodItemForm() {
             mode='outlined'
             activeOutlineColor={Colors.primary.darkteal}
           />
+        )}
+      />
+      {/* Rating */}
+      <Controller
+        control={control}
+        name='rating'
+        rules={{ required: 'Rating is required' }}
+        render={({ field: { onChange, value } }) => (
+          <View style={styles.inputContainer}>
+            <ThemedText style={styles.label}>Rating</ThemedText>
+            <View style={styles.starRow}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => onChange(star)}>
+                  <Ionicons
+                    name={star <= value ? 'star' : 'star-outline'}
+                    size={24}
+                    color='#FFD700'
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+      />
+      {/* Review Text */}
+      <Controller
+        control={control}
+        name='reviewText'
+        rules={{ required: 'Review text is required' }}
+        render={({ field: { onChange, value } }) => (
+          <View style={styles.inputContainer}>
+            <TextInput
+              label='Review Text'
+              value={value}
+              onChangeText={onChange}
+              style={styles.input}
+              multiline
+              mode='outlined'
+            />
+          </View>
         )}
       />
       <View style={styles.inputContainer}>
@@ -535,5 +601,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.darkteal,
     width: '100%',
     marginTop: 10,
+  },
+  starRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
 });
