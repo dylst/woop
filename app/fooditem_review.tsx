@@ -1,168 +1,169 @@
 import {
-    View,
-    Text,
-    StyleSheet,
-    SafeAreaView,
-    Pressable,
-    ScrollView,
-  } from "react-native";
-  import { Ionicons } from "@expo/vector-icons";
-  import React, { useEffect, useState } from "react";
-  import { useRouter, useLocalSearchParams } from "expo-router";
-  import { supabase } from "@/supabaseClient";
-  import { Colors } from "@/constants/Colors";
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Pressable,
+  ScrollView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { supabase } from "@/supabaseClient";
+
+export default function AuthorModerationPage() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const foodItemId = params.foodItemId ? String(params.foodItemId) : "1";
+
+  const [reviews, setReviews] = useState<any[]>([]);
+
+  // Fetch reviews including user information
+  const fetchReviews = async () => {
+    if (!foodItemId) return;
+
+    const { data: reviewsData, error: reviewsError } = await supabase
+      .from("review")
+      .select(`
+        id, 
+        review_text, 
+        rating, 
+        review_date, 
+        profile_id,
+        profile:profile_id (username, first_name, last_name)
+      `)
+      .eq("food_item_id", String(foodItemId));
+
+    if (reviewsError) {
+      console.error("Error fetching reviews:", reviewsError);
+      return;
+    }
+
+    setReviews(reviewsData || []);
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, [foodItemId]);
+
+  // Delete a review
+  const handleDeleteReview = async (reviewId: number) => {
+    console.log(" ",reviewId);
   
-  export default function AuthorModerationPage() {
-    const router = useRouter();
-    const { foodItemId } = useLocalSearchParams();
-    const [reviews, setReviews] = useState<any[]>([]);
-    const [comments, setComments] = useState<any[]>([]);
+    const { data, error } = await supabase
+      .from("review")
+      .delete()
+      .eq("id", reviewId);
   
-    const fetchReviewsAndComments = async () => {
-      if (!foodItemId) return;
-      
-      // Fetch reviews related to the foodItemId
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("review")
-        .select("id, review_text, rating")
-        .eq("food_item_id", foodItemId);
+    if (error) {
+      console.error("❌ Error deleting review from Supabase:", error.message);
+      return;
+    }
   
-      if (reviewsError) {
-        console.error("Error fetching reviews:", reviewsError);
-        return;
-      }
   
-      setReviews(reviewsData);
-      
-      if (reviewsData.length === 0) return;
+    // Remove from state to update UI
+    setReviews((prevReviews) => prevReviews.filter((review) => review.id !== reviewId));
+  };
   
-      // Extract review IDs
-      const reviewIds = reviewsData.map((review) => review.id);
-      
-      // Fetch comments related to those reviews
-      const { data: commentsData, error: commentsError } = await supabase
-        .from("comments")
-        .select("id, comment_text, review_id")
-        .in("review_id", reviewIds);
   
-      if (commentsError) {
-        console.error("Error fetching comments:", commentsError);
-        return;
-      }
-  
-      setComments(commentsData);
-    };
-  
-    const deleteComment = async (commentId: number) => {
-      const { error } = await supabase
-        .from("comments")
-        .delete()
-        .eq("id", commentId);
-  
-      if (error) {
-        console.error("Error deleting comment:", error);
-        return;
-      }
-  
-      setComments(comments.filter((comment) => comment.id !== commentId));
-    };
-  
-    useEffect(() => {
-      fetchReviewsAndComments();
-    }, []);
-  
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.topNav}>
-          <Pressable onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton} />
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.topNav}>
+        <Pressable 
+            onPress={() => router.push({ 
+              pathname: "/food/[foodItemId]", 
+              params: { foodItemId: foodItemId } 
+            })}
+          >
+           <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton} />
           </Pressable>
-        </View>
-  
-        <ScrollView style={styles.contentContainer}>
-          <Text style={styles.sectionTitle}>Reviews</Text>
-          {reviews.length > 0 ? (
-            reviews.map((review) => (
-              <View key={review.id} style={styles.reviewContainer}>
-                <Text style={styles.reviewTitle}>{review.review_text}</Text>
-                <Text style={styles.reviewMeta}>Rating: {review.rating}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noComments}>No reviews yet.</Text>
-          )}
-  
-          <Text style={styles.sectionTitle}>Comments</Text>
-          {comments.length > 0 ? (
-            comments.map((comment) => (
-              <View key={comment.id} style={styles.commentContainer}>
-                <Text style={styles.commentText}>{comment.comment_text}</Text>
-                <Pressable onPress={() => deleteComment(comment.id)}>
-                  <Ionicons name="trash-outline" size={20} color="red" />
-                </Pressable>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noComments}>No comments yet.</Text>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-  
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: "white",
-    },
-    topNav: {
-      position: "absolute",
-      top: 20,
-      left: 20,
-      zIndex: 2,
-    },
-    backButton: {
-      padding: 10,
-    },
-    contentContainer: {
-      padding: 20,
-      marginTop: 50,
-    },
-    reviewContainer: {
-      padding: 15,
-      borderWidth: 1,
-      borderColor: "#ddd",
-      borderRadius: 8,
-      marginBottom: 20,
-    },
-    reviewTitle: {
-      fontSize: 18,
-      fontWeight: "bold",
-    },
-    reviewMeta: {
-      fontSize: 14,
-      color: "gray",
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: "bold",
-      marginBottom: 10,
-    },
-    commentContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: "#ddd",
-    },
-    commentText: {
-      fontSize: 16,
-    },
-    noComments: {
-      fontSize: 16,
-      color: "gray",
-      textAlign: "center",
-    },
-  });
-  
+      </View>
+
+      <ScrollView style={styles.contentContainer}>
+        <Text style={styles.sectionTitle}>Reviews</Text>
+        {reviews.length > 0 ? (
+          reviews.map((review, index) => (
+            <View key={index} style={styles.reviewContainer}>
+              <Text style={styles.reviewUser}>
+                {review.profile?.first_name || review.profile?.username || "Anonymous"}
+              </Text>
+              <Text style={styles.reviewTitle}>{review.review_text}</Text>
+              <Text style={styles.reviewMeta}>
+                Rating: {review.rating} | Date: {new Date(review.review_date).toLocaleDateString()}
+              </Text>
+
+              {/* Delete Button */}
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => handleDeleteReview(review.id)}
+              >
+                <Ionicons name="trash-outline" size={20} color="red" />
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.noReviews}>No reviews yet.</Text>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  topNav: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    zIndex: 2,
+  },
+  backButton: {
+    padding: 10,
+  },
+  contentContainer: {
+    padding: 20,
+    marginTop: 50,
+  },
+  reviewContainer: {
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    marginBottom: 20,
+    position: "relative", // Ensures the delete button is positioned correctly
+  },
+  reviewUser: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#007bff",
+    marginBottom: 4,
+  },
+  reviewTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  reviewMeta: {
+    fontSize: 14,
+    color: "gray",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  noReviews: {
+    fontSize: 16,
+    color: "gray",
+    textAlign: "center",
+  },
+  deleteButton: {
+    position: "absolute",
+    right: 10,
+    top: 10,
+    padding: 5,
+  },
+});

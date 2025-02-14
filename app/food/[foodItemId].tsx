@@ -258,50 +258,45 @@ export default function FoodItemDetailPage() {
         ))}
       </View>
 
-      {/* Reviews & Photos Section */}
-      <View style={styles.reviewsPhotosContainer}>
-        {/* Reviews Section */}
-        <View style={styles.reviewsContainer}>
-          <Text style={styles.sectionTitle}>Reviews</Text>
-          <View style={styles.ratingRow}>
-            <Text style={styles.boldText}>Overall Rating</Text>
-            <View style={styles.starRow}>
-              {[...Array(5)].map((_, index) => (
-                <Ionicons key={index} name='star' size={16} color='#FFD700' />
-              ))}
-            </View>
-            <Text style={styles.reviewCount}>3,304 reviews</Text>
-          </View>
+            {/* Reviews & Photos Section */}
+            <View style={styles.reviewsPhotosContainer}>
+                {/* Reviews Section */}
+                <View style={styles.reviewsContainer}>
+                    <Text style={styles.sectionTitle}>Reviews</Text>
+                    <View style={styles.ratingRow}>
+                        <Text style={styles.boldText}>Overall Rating</Text>
+                        <View style={styles.starRow}>
+                            {[...Array(5)].map((_, index) => (
+                                <Ionicons key={index} name="star" size={16} color="#FFD700" />
+                            ))}
+                        </View>
+                        <Text style={styles.reviewCount}>3,304 reviews</Text>
+                    </View>
 
-          {/* View Reviews Button */}
-          <Pressable
-            onPress={() => router.push('/fooditem_review')}
-            style={styles.viewReviewsButton}
-          >
-            <Text style={styles.viewReviewsText}>View Reviews →</Text>
-          </Pressable>
-        </View>
+                    {/* View Reviews Button */}
+                    <Pressable 
+                        onPress={() => router.push({ 
+                          pathname: "/fooditem_review", 
+                          params: { foodItemId: String(foodItemId) }  // Convert to string
+                        })} 
+                        style={styles.viewReviewsButton}
+                      >
+                        <Text style={styles.viewReviewsText}>View Reviews →</Text>
+                    </Pressable>
+                </View>
 
-        {/* Photos Section */}
-        <View style={styles.photosContainer}>
-          <Text style={styles.sectionTitle}>Photos</Text>
-          {photoRatings.map((item, index) => (
-            <View key={index} style={styles.photoRow}>
-              <Text style={styles.photoLabel}>{item.label}</Text>
-              <Pressable onPress={() => handlePhotoClick(item.image)}>
-                <View
-                  style={[
-                    styles.photoBar,
-                    {
-                      width: `${item.percentage}%`,
-                      backgroundColor: item.color,
-                    },
-                  ]}
-                />
-              </Pressable>
-            </View>
-          ))}
-        </View>
+                {/* Photos Section */}
+                <View style={styles.photosContainer}>
+                    <Text style={styles.sectionTitle}>Photos</Text>
+                    {photoRatings.map((item, index) => (
+                        <View key={index} style={styles.photoRow}>
+                            <Text style={styles.photoLabel}>{item.label}</Text>
+                            <Pressable onPress={() => handlePhotoClick(item.image)}>
+                                <View style={[styles.photoBar, { width: `${item.percentage}%`, backgroundColor: item.color }]} />
+                            </Pressable>
+                        </View>
+                    ))}
+                </View>
       </View>
 
       {/* Blue Divider */}
