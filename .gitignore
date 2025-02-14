@@ -42,4 +42,3 @@ supabaseClient.js
 .env
 
 ios/woop/Info.plist
-ios/woop/AppDelegate.mm
