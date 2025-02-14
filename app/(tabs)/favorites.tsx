@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView,
   FlatList, Image,
   Pressable, ScrollView,
   TouchableOpacity,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/supabaseClient';
@@ -81,8 +82,9 @@ const favorites = () => {
 
   const userId = user?.id;
   
-
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
 
@@ -112,6 +114,11 @@ const favorites = () => {
   const handlePress = (foodItemId: string) => {
     router.push(`/food/${foodItemId}`)
   };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchFavorites().then(() => setRefreshing(false));
+  }, []); 
 
   const sortOptions: { label: string; value: SortMode }[] = [
     { label: 'Date Added (Newest to Oldest)', value: 'date_added_newest' },
@@ -235,8 +242,10 @@ const favorites = () => {
   };
 
   useEffect(() => {
-    fetchFavorites();
-  }, []);
+    if (userId) {
+      fetchFavorites();
+    }
+  }, [userId]);
 
   // Remove item from both state and Supabase
   const handleRemoveItem = async (id: string) => {
@@ -394,7 +403,8 @@ const favorites = () => {
     iconType?: 'food' | 'diet' | 'price'
   ) => {
     return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}
+      style={{ paddingHorizontal: 20 }}>
         {data.map((tag) => {
           const isActive = selected.includes(tag);
           return (
@@ -448,17 +458,17 @@ const favorites = () => {
       {favorites.length > 0 ?
         <>
           {allCuisines.length > 0 && (
-            <View style={styles.tagBlock}>
+            <View>
               {renderTagRow(allCuisines, selectedCuisines, toggleCuisine, 'food')}
             </View>
           )}
           {allDietary.length > 0 && (
-            <View style={styles.tagBlock}>
+            <View>
               {renderTagRow(allDietary, selectedDietary, toggleDietary, 'diet')}
             </View>
           )}
           {allPrices.length > 0 && (
-            <View style={styles.tagBlock}>
+            <View>
               {renderTagRow(allPrices, selectedPrices, togglePrice, 'price')}
             </View>
           )}
@@ -486,6 +496,7 @@ const favorites = () => {
               keyExtractor={(item) => item.food_item_id.toString()}
               renderItem={renderItem}
               showsHorizontalScrollIndicator={false}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
             />
           )
           }
@@ -537,7 +548,7 @@ export default favorites
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#ffffff',
   },
   emptyContainer: {
     flex: 1,
@@ -560,8 +571,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
     paddingHorizontal: 20,
     paddingVertical: 5,
   },
@@ -605,9 +614,6 @@ const styles = StyleSheet.create({
   },
   sortOptionText: {
     fontSize: 14,
-  },
-  tagBlock: {
-    paddingHorizontal: 20,
   },
   tag: {
     flexDirection: 'row',

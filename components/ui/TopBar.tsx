@@ -1,15 +1,45 @@
-import React, { useMemo } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '@/components/ui/SearchBar';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+import { useUser } from '@/app/context/UserContext';
+import { supabase } from '@/supabaseClient';
 
 const TopBar = ({
   type = 'home',
-  name = 'Kyle',
   title = '',
 }) => {
-  const navigation = useNavigation();
+  const router = useRouter();
+
+  const { user } = useUser();
+  const userId = user?.id;
+
+  const [userData, setUserData] = useState<any>(null);
+
+  const fetchProfile = async () => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from('profile')
+      .select(`
+        username,
+        first_name`)
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Error fetching profile:", error);
+      return;
+    }
+
+    setUserData(data);
+  }
+
+  useEffect(() => {
+    fetchProfile();
+  }, [userId]);
+
+  const name = userData?.first_name || userData?.username;
 
   // list of greetings
   const greetingTemplates = [
@@ -27,34 +57,40 @@ const TopBar = ({
     return greetingTemplates[randomIndex].replace('{name}', name);
   }, [greetingTemplates, name]);
 
+  const handleNavigationPress = () => {
+    router.push(`/notifications`);
+  }
+
   const handleBackPress = () => {
-    navigation.goBack();
+    router.back();
   };
 
   return (
     <View>
       <View style={styles.topBar}>
-      {type === 'home' ? (
-        <Text style={styles.greeting}>{greeting}</Text>
-      ) : (
+        {type === 'home' ? (
+          <Text style={styles.greeting}>{greeting}</Text>
+        ) : (
           <TouchableOpacity style={styles.backContainer} onPress={handleBackPress}>
-            <Ionicons name="chevron-back" size={24} color="#000"/>
+            <Ionicons name="chevron-back" size={24} color="#000" />
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
-      )}
-      <View style={styles.titleContainer}>
-        {type !== 'home' && (
-        <Text style={styles.title}>{title}</Text>
         )}
-      </View>
+        <View style={styles.titleContainer}>
+          {type !== 'home' && (
+            <Text style={styles.title}>{title}</Text>
+          )}
+        </View>
 
-        <View style={styles.topBarIcons}>
-          <Ionicons name='notifications' size={24} color='#000' />
+        <TouchableOpacity style={styles.topBarIcons}>
+          <Pressable onPress={() => handleNavigationPress()}>
+            <Ionicons name='notifications' size={24} color='#000' />
+          </Pressable>
           <Image
             source={require('@/assets/images/react-logo.png')}
             style={styles.avatar}
           />
-        </View>
+        </TouchableOpacity>
       </View>
       <SearchBar />
     </View>
@@ -68,7 +104,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    // paddingTop: 12,
   },
   greeting: {
     fontSize: 22,

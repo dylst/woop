@@ -192,7 +192,7 @@ export default function FoodItemDetailPage() {
     <SafeAreaView style={styles.container}>
       {/* Top Navigation */}
       <View style={styles.topNav}>
-        <Pressable onPress={() => router.push('/(tabs)')}>
+        <Pressable onPress={() => router.back()}>
           <Ionicons
             name='chevron-back'
             size={28}
