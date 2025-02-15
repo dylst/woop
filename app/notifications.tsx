@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { SafeAreaView, View, Text, StyleSheet, RefreshControl, ScrollView, Pressable } from "react-native";
+import { SafeAreaView, View, Text, StyleSheet, RefreshControl, ScrollView, Pressable, Button } from "react-native";
 import { useNotificationContext } from "./context/NotificationContext";
 import { useUser } from "./context/UserContext";
 import { supabase } from "@/supabaseClient";
 import { useRouter } from 'expo-router';
 import { NotificationCard } from "@/components/ui/NotificationCard";
 import { Ionicons } from "@expo/vector-icons";
+
+// Import for scheduling local notification when new one arrives
+import * as Notifications from "expo-notifications"
 
 interface Notification {
     id: string;
@@ -21,9 +24,7 @@ interface Notification {
 }
 
 export default function NotificationsScreen() {
-    // const { notifications } = useNotificationContext();
     const router = useRouter();
-
     const { user } = useUser();
     const loggedInProfileId = user?.id;
 
@@ -56,6 +57,39 @@ export default function NotificationsScreen() {
         fetchNotifications();
     }, [loggedInProfileId]);
 
+    useEffect(() => {
+        if (!loggedInProfileId) return;
+
+        const channel = supabase
+            .channel('notifications-channel')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'notification',
+                    filter: `receiver_profile_id=eq.${loggedInProfileId}`
+                },
+                (payload) => {
+                    const newNotification = payload.new as Notification;
+                    setNotifications(prev => [newNotification, ...prev]);
+
+                    Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: newNotification.title || 'New Notification',
+                            body: newNotification.description || '',
+                        },
+                        trigger: null,
+                    })
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [loggedInProfileId]);
+
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchNotifications().finally(() => setRefreshing(false));
@@ -84,6 +118,7 @@ export default function NotificationsScreen() {
                 <View style={styles.right}>
                     { /* balance out right side */}
                 </View>
+
             </View>
             <ScrollView
                 showsVerticalScrollIndicator={false}

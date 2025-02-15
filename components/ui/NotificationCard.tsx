@@ -85,6 +85,11 @@ export function NotificationCard({
     return (
         <TouchableOpacity
             style={styles.card}
+            onPress={() => {
+                if (food_item_id && onPressFoodItem) {
+                    onPressFoodItem(food_item_id);
+                }
+            }}
         >
             { /* User image or announcement */}
             <View style={styles.leftSection}>
