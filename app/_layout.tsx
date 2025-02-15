@@ -12,6 +12,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { UserProvider, useUser } from './context/UserContext';
+import { NotificationProvider } from './context/NotificationContext';
+import { supabase } from '@/supabaseClient';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -35,9 +37,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <UserProvider>
-      <AuthRedirect>
-        <Slot/>
-      </AuthRedirect>
+        <NotificationProvider>
+          <AuthRedirect>
+            <Slot />
+          </AuthRedirect>
+        </NotificationProvider>
         <StatusBar style='auto' />
       </UserProvider>
     </ThemeProvider>

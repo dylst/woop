@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { SafeAreaView, View, Text, StyleSheet, RefreshControl, ScrollView, Pressable } from "react-native";
+import { SafeAreaView, View, Text, StyleSheet, RefreshControl, ScrollView, Pressable, Button } from "react-native";
 import { useNotificationContext } from "./context/NotificationContext";
 import { useUser } from "./context/UserContext";
 import { supabase } from "@/supabaseClient";
@@ -7,13 +7,16 @@ import { useRouter } from 'expo-router';
 import { NotificationCard } from "@/components/ui/NotificationCard";
 import { Ionicons } from "@expo/vector-icons";
 
+// Import for scheduling local notification when new one arrives
+import * as Notifications from "expo-notifications"
+
 interface Notification {
     id: string;
     title: string;
     description: string;
     created_at: string;
     notification_type: string;
-    sender_profile_id: string | null;
+    // sender_profile_id: string | null;
     food_item_id?: string | null;
     food_item?: {
         photos: string[] | null;
@@ -21,11 +24,11 @@ interface Notification {
 }
 
 export default function NotificationsScreen() {
-    // const { notifications } = useNotificationContext();
     const router = useRouter();
-
     const { user } = useUser();
     const loggedInProfileId = user?.id;
+
+    const { scheduleLocalNotification } = useNotificationContext();
 
     const [refreshing, setRefreshing] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -47,14 +50,53 @@ export default function NotificationsScreen() {
         if (error) {
             console.error("Error fetching notifications:", error);
         } else {
-            console.log("Fetched notifications data:", data)
+            // console.log("Fetched notifications data:", data)
             setNotifications(data as Notification[]);
         }
     };
 
     useEffect(() => {
+        // console.log("Fetching notifications for user:", loggedInProfileId);
         fetchNotifications();
     }, [loggedInProfileId]);
+
+
+    // useEffect(() => {
+    //     if (!loggedInProfileId) return;
+
+    //     console.log("Setting up realtime subscription for user:", loggedInProfileId);
+
+    //     const channel = supabase
+    //         .channel('notifications-channel')
+    //         .on(
+    //             'postgres_changes',
+    //             {
+    //                 event: 'INSERT',
+    //                 schema: 'public',
+    //                 table: 'notification',
+    //                 // filter: `receiver_profile_id=eq.${loggedInProfileId}`
+    //             },
+    //             (payload) => {
+    //                 console.log("Realtime payload received:", payload);
+    //                 const newNotification = payload.new as Notification;
+    //                 setNotifications(prev => [newNotification, ...prev]);
+
+    //                 scheduleLocalNotification({
+    //                         title: newNotification.title || 'New Notification',
+    //                         body: newNotification.description || '',
+    //                         data: { notificationId: newNotification.id }
+    //                 })
+    //             }
+    //         )
+    //         .subscribe();
+
+    //     // console.log("Realtime channel subscription:", channel);
+
+    //     return () => {
+    //         supabase.removeChannel(channel);
+    //         console.log("Realtime channel removed");
+    //     };
+    // }, [loggedInProfileId]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -63,6 +105,15 @@ export default function NotificationsScreen() {
 
     const handlePressFoodItem = (foodItemId: string) => {
         router.push(`/food/${foodItemId}`)
+    };
+
+    // Test function to manually schedule a local notification.
+    const handleTestLocalNotification = async () => {
+        await scheduleLocalNotification({
+            title: "Test Local Notification",
+            body: "This is a test local notification triggered manually.",
+            data: { test: true },
+        });
     };
 
     return (
@@ -83,7 +134,12 @@ export default function NotificationsScreen() {
                 </View>
                 <View style={styles.right}>
                     { /* balance out right side */}
+                    {/* Test button to manually trigger a local notification */}
+                    <Pressable onPress={handleTestLocalNotification}>
+                        <Text style={{ fontSize: 14, alignItems: 'center', textAlign: 'center', color: 'red' }}>Test Notification</Text>
+                    </Pressable>
                 </View>
+
             </View>
             <ScrollView
                 showsVerticalScrollIndicator={false}
