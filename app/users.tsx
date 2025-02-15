@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useRouter } from 'expo-router';
-import { useUser } from '../context/UserContext';
+import { useUser } from './context/UserContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -72,6 +72,11 @@ function Users() {
         setLoginError("There was an error logging")
         console.error(error.message)
       } else if (data && data.user) {
+        if (!data.user.email_confirmed_at) {
+          setLoginError("Please confirm your email address");
+          return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           console.log("User is authenticated:", session.user);
@@ -412,7 +417,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     marginTop: 120,
-    marginBottom: -30,
+    marginBottom: -60,
     zIndex: 1, // Ensure logo appears above ellipse
   },
   logoImage: {
@@ -429,7 +434,7 @@ const styles = StyleSheet.create({
   tabButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginVertical: 20,
+    marginBottom: 10,
     zIndex: 1,
   },
   tabButton: {
@@ -457,7 +462,7 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     position: 'relative',
-    marginBottom: 20,
+    marginBottom: 5,
   },
   inputIcon: {
     position: 'absolute',
