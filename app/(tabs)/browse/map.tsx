@@ -1,168 +1,206 @@
+import React, { useEffect, useState, useRef } from "react";
+import MapView, { Marker, PROVIDER_GOOGLE, Camera } from "react-native-maps";
 import {
-	View,
-	Text,
 	StyleSheet,
-	ImageBackground,
-	Dimensions,
-	TextInput,
-	Pressable,
+	View,
+	TouchableOpacity,
+	ActivityIndicator,
+	Text,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { mapService } from "@/app/api/services/mapService";
+import { Map } from "@/types/map.types";
 import { useRouter } from "expo-router";
-import MapView from '@teovilla/react-native-web-maps';
+import { Ionicons } from "@expo/vector-icons";
 
-
-export default function MapScreen() {
+const MapScreen = () => {
 	const router = useRouter();
+	const [markers, setMarkers] = useState<Map[] | null>(null);
+	const mapRef = useRef<MapView | null>(null); // ✅ Use ref to control the map
+
+	useEffect(() => {
+		async function fetchData() {
+			try {
+				const data = await mapService.fetchMarkerLongLang("Long Beach");
+				setMarkers(data);
+			} catch (error) {
+				console.error("Error fetching markers:", error);
+			}
+		}
+		fetchData();
+	}, []);
+
+	const initialRegion = {
+		latitude: 33.7701,
+		longitude: -118.1937,
+		latitudeDelta: 0.0922,
+		longitudeDelta: 0.0421,
+	};
+
+	// ✅ Function to Zoom In
+	const zoomIn = () => {
+		if (mapRef.current) {
+			mapRef.current.getCamera().then((camera: Camera) => {
+				mapRef.current?.animateCamera({
+					center: camera.center,
+					zoom: camera.zoom + 1, // 🔍 Zoom In
+				});
+			});
+		}
+	};
+
+	// ✅ Function to Zoom Out
+	const zoomOut = () => {
+		if (mapRef.current) {
+			mapRef.current.getCamera().then((camera: Camera) => {
+				mapRef.current?.animateCamera({
+					center: camera.center,
+					zoom: camera.zoom - 1, // 🔎 Zoom Out
+				});
+			});
+		}
+	};
 
 	return (
 		<View style={styles.container}>
+			{/* Back Button */}
+			<TouchableOpacity
+				onPress={() => router.back()}
+				style={styles.backButton}
+			>
+				<Ionicons
+					name='arrow-back'
+					size={24}
+					color='black'
+				/>
+			</TouchableOpacity>
 
-			<MapView
-				style={{ width: "100%", height: "100%" }}
-				provider="google"
-				googleMapsApiKey={process.env.EXPO_PUBLIC_GOOGLE_MAPS} as any // Quick TypeScript bypass
-				loadingFallback={
-					<View>
-						<Text>Loading Map...</Text>
-					</View>
-				}
-			/>
+			{/* Show loading indicator until markers are fetched */}
+			{!markers ? (
+				<View style={styles.loadingContainer}>
+					<ActivityIndicator
+						size='large'
+						color='#007AFF'
+					/>
+					<Text style={styles.loadingText}>Loading Map...</Text>
+				</View>
+			) : (
+				<>
+					<MapView
+						ref={mapRef} // ✅ Attach ref to MapView
+						provider={PROVIDER_GOOGLE}
+						style={styles.map}
+						initialRegion={initialRegion}
+						zoomEnabled={true}
+						zoomControlEnabled={false} // Hide built-in controls
+						scrollEnabled={true}
+						pitchEnabled={true}
+					>
+						{markers.map((marker, index) => (
+							<Marker
+								key={index}
+								title={marker.name}
+								coordinate={{
+									latitude: parseFloat(marker.latitude),
+									longitude: parseFloat(marker.longitude),
+								}}
+							/>
+						))}
+					</MapView>
 
-				{/* Search Bar */}
-				<View style={styles.searchContainer}>
-					<View style={styles.searchBar}>
+					{/* ✅ Zoom In Button */}
+					<TouchableOpacity
+						style={styles.zoomInButton}
+						onPress={zoomIn}
+					>
 						<Ionicons
-							name='search'
-							size={20}
-							color='#666'
+							name='add'
+							size={24}
+							color='black'
 						/>
-						<TextInput
-							placeholder='Search for restaurants, cuisines...'
-							style={styles.searchInput}
-							placeholderTextColor='#666'
-						/>
-					</View>
-				</View>
+					</TouchableOpacity>
 
-				{/* Popular Foods Bottom Sheet */}
-				<View style={styles.bottomSheet}>
-					<Text style={styles.bottomSheetTitle}>Popular Near You</Text>
-					<View style={styles.popularItems}>
-						<View style={styles.popularItem}>
-							<Text style={styles.itemTitle}>Pizza</Text>
-							<Text style={styles.itemSubtitle}>15+ places nearby</Text>
-						</View>
-						<View style={styles.popularItem}>
-							<Text style={styles.itemTitle}>Sushi</Text>
-							<Text style={styles.itemSubtitle}>8 places nearby</Text>
-						</View>
-					</View>
-				</View>
-			{/*</ImageBackground>*/}
+					{/* ✅ Zoom Out Button */}
+					<TouchableOpacity
+						style={styles.zoomOutButton}
+						onPress={zoomOut}
+					>
+						<Ionicons
+							name='remove'
+							size={24}
+							color='black'
+						/>
+					</TouchableOpacity>
+				</>
+			)}
 		</View>
 	);
-}
+};
 
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 	},
-	backgroundImage: {
+	map: {
 		flex: 1,
-		width: "100%",
-		height: "100%",
-		resizeMode: "cover", // Add this to ImageBackground component
 	},
-	searchContainer: {
-		padding: "4%",
-		marginTop: "10%",
-	},
-	searchBar: {
-		width: "92%",
-		alignSelf: "center",
-		backgroundColor: "white",
-		flexDirection: "row",
-		alignItems: "center",
-		padding: 12,
-		borderRadius: 8,
-		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
-		marginTop: "-5%",
-	},
-	searchInput: {
-		flex: 1,
-		marginLeft: 10,
-		fontSize: 16,
-		color: "#333",
-		backgroundColor: "white",
-	},
-	popularItems: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		justifyContent: "space-between",
-		padding: "2%",
-	},
-	popularItem: {
-		width: "48%",
-		marginBottom: "2%",
-	},
-	bottomSheet: {
-		position: "absolute",
-		bottom: 0,
-		left: 0,
-		right: 0,
-		backgroundColor: "white",
-		borderTopLeftRadius: 20,
-		borderTopRightRadius: 20,
-		padding: 20,
-		width: "100%",
-		maxHeight: "40%",
-		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: -4,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5,
-	},
-	bottomSheetTitle: {
-		fontSize: 20,
-		fontWeight: "bold",
-		marginBottom: 16,
-		paddingHorizontal: 4,
-	},
-	itemTitle: {
-		fontSize: 16,
-		fontWeight: "600",
-		marginBottom: 4,
-	},
-	itemSubtitle: {
-		fontSize: 14,
-		color: "#666",
-	},
+
 	backButton: {
 		position: "absolute",
 		top: 50,
 		left: 20,
 		backgroundColor: "white",
-		padding: 8,
+		padding: 10,
 		borderRadius: 20,
 		shadowColor: "#000",
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 3.84,
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.2,
+		shadowRadius: 3,
 		elevation: 5,
-		zIndex: 1,
+		zIndex: 10,
+	},
+
+	loadingContainer: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+		backgroundColor: "#f8f8f8",
+	},
+
+	loadingText: {
+		marginTop: 10,
+		fontSize: 16,
+		color: "#333",
+	},
+
+	zoomInButton: {
+		position: "absolute",
+		bottom: 135,
+		right: 20,
+		backgroundColor: "white",
+		padding: 10,
+		borderRadius: 50,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.2,
+		shadowRadius: 3,
+		elevation: 5,
+		zIndex: 10,
+	},
+
+	zoomOutButton: {
+		position: "absolute",
+		bottom: 80,
+		right: 20,
+		backgroundColor: "white",
+		padding: 10,
+		borderRadius: 50,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.2,
+		shadowRadius: 3,
+		elevation: 5,
+		zIndex: 10,
 	},
 });
+
+export default MapScreen;
