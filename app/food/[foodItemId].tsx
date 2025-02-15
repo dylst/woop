@@ -13,8 +13,13 @@ import { supabase } from '@/supabaseClient';
 import { Colors } from '@/constants/Colors';
 import { useUser } from '../context/UserContext';
 
+// to position back button within safe area view
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export default function FoodItemDetailPage() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const { user } = useUser();
   const { foodItemId } = useLocalSearchParams();
 
@@ -191,7 +196,7 @@ export default function FoodItemDetailPage() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Top Navigation */}
-      <View style={styles.topNav}>
+      <View style={[styles.topNav, {top: insets.top + 10}]}>
         <Pressable onPress={() => router.back()}>
           <Ionicons
             name='chevron-back'
