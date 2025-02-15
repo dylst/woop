@@ -40,3 +40,5 @@ app-example
 # Supabase
 supabaseClient.js
 .env
+
+ios/woop/Info.plist
