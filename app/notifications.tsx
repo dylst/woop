@@ -16,7 +16,7 @@ interface Notification {
     description: string;
     created_at: string;
     notification_type: string;
-    sender_profile_id: string | null;
+    // sender_profile_id: string | null;
     food_item_id?: string | null;
     food_item?: {
         photos: string[] | null;
@@ -27,6 +27,8 @@ export default function NotificationsScreen() {
     const router = useRouter();
     const { user } = useUser();
     const loggedInProfileId = user?.id;
+
+    const { scheduleLocalNotification } = useNotificationContext();
 
     const [refreshing, setRefreshing] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -48,47 +50,53 @@ export default function NotificationsScreen() {
         if (error) {
             console.error("Error fetching notifications:", error);
         } else {
-            console.log("Fetched notifications data:", data)
+            // console.log("Fetched notifications data:", data)
             setNotifications(data as Notification[]);
         }
     };
 
     useEffect(() => {
+        // console.log("Fetching notifications for user:", loggedInProfileId);
         fetchNotifications();
     }, [loggedInProfileId]);
 
-    useEffect(() => {
-        if (!loggedInProfileId) return;
 
-        const channel = supabase
-            .channel('notifications-channel')
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'notification',
-                    filter: `receiver_profile_id=eq.${loggedInProfileId}`
-                },
-                (payload) => {
-                    const newNotification = payload.new as Notification;
-                    setNotifications(prev => [newNotification, ...prev]);
+    // useEffect(() => {
+    //     if (!loggedInProfileId) return;
 
-                    Notifications.scheduleNotificationAsync({
-                        content: {
-                            title: newNotification.title || 'New Notification',
-                            body: newNotification.description || '',
-                        },
-                        trigger: null,
-                    })
-                }
-            )
-            .subscribe();
+    //     console.log("Setting up realtime subscription for user:", loggedInProfileId);
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [loggedInProfileId]);
+    //     const channel = supabase
+    //         .channel('notifications-channel')
+    //         .on(
+    //             'postgres_changes',
+    //             {
+    //                 event: 'INSERT',
+    //                 schema: 'public',
+    //                 table: 'notification',
+    //                 // filter: `receiver_profile_id=eq.${loggedInProfileId}`
+    //             },
+    //             (payload) => {
+    //                 console.log("Realtime payload received:", payload);
+    //                 const newNotification = payload.new as Notification;
+    //                 setNotifications(prev => [newNotification, ...prev]);
+
+    //                 scheduleLocalNotification({
+    //                         title: newNotification.title || 'New Notification',
+    //                         body: newNotification.description || '',
+    //                         data: { notificationId: newNotification.id }
+    //                 })
+    //             }
+    //         )
+    //         .subscribe();
+
+    //     // console.log("Realtime channel subscription:", channel);
+
+    //     return () => {
+    //         supabase.removeChannel(channel);
+    //         console.log("Realtime channel removed");
+    //     };
+    // }, [loggedInProfileId]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -97,6 +105,15 @@ export default function NotificationsScreen() {
 
     const handlePressFoodItem = (foodItemId: string) => {
         router.push(`/food/${foodItemId}`)
+    };
+
+    // Test function to manually schedule a local notification.
+    const handleTestLocalNotification = async () => {
+        await scheduleLocalNotification({
+            title: "Test Local Notification",
+            body: "This is a test local notification triggered manually.",
+            data: { test: true },
+        });
     };
 
     return (
@@ -117,6 +134,10 @@ export default function NotificationsScreen() {
                 </View>
                 <View style={styles.right}>
                     { /* balance out right side */}
+                    {/* Test button to manually trigger a local notification */}
+                    <Pressable onPress={handleTestLocalNotification}>
+                        <Text style={{ fontSize: 14, alignItems: 'center', textAlign: 'center', color: 'red' }}>Test Notification</Text>
+                    </Pressable>
                 </View>
 
             </View>

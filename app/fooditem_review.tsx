@@ -35,6 +35,10 @@ export default function AuthorModerationPage() {
         rating, 
         review_date, 
         profile_id,
+        fooditem (
+          food_name,
+          photos
+        ),
         profile:profile_id (username, first_name, last_name)
       `)
       .eq("food_item_id", String(foodItemId));
@@ -53,19 +57,19 @@ export default function AuthorModerationPage() {
 
   // Delete a review
   const handleDeleteReview = async (reviewId: number) => {
-    console.log(" ",reviewId);
-  
+    console.log(" ", reviewId);
+
     const { data, error } = await supabase
       .from("review")
       .delete()
       .eq("id", reviewId);
-  
+
     if (error) {
       console.error("❌ Error deleting review from Supabase:", error.message);
       return;
     }
-  
-  
+
+
     // Remove from state to update UI
     setReviews((prevReviews) => prevReviews.filter((review) => review.id !== reviewId));
   };
@@ -80,59 +84,61 @@ export default function AuthorModerationPage() {
       return;
     }
 
-    // Check if the like notification already exists
-    const { data: existingNotification, error: checkError } = await supabase
-      .from("notification")
-      .select("id")
-      .eq("notification_type", "liked")
-      .eq("sender_profile_id", userId)
-      .eq("review_id", review.id);
+    const { data: likeData, error: likeError } = await supabase
+      .from("review_likes")
+      .insert({
+        review_id: review.id,
+        sender_profile_id: userId,
+      });
 
-    if (checkError) {
-      console.error("Error checking for existing like notification:", checkError);
+    if (likeError) {
+      if (likeError.code === "23505") {
+        Alert.alert("Woops!", "You have already liked this review.");
+        return;
+      }
+      console.error("Error inserting review like:", likeError);
       return;
     }
-    if (existingNotification && existingNotification.length > 0) {
-      Alert.alert("Woops!", "You have already liked this review.");
-      return;
-    }
+
+    const titleText = "Food review liked!";
+    const foodName = review.fooditem?.food_name || "this food item";
+    const descriptionText = `Someone has liked your review for ${foodName}!`;
 
     const { data, error } = await supabase
       .from('notification')
       .insert({
         notification_type: "liked",
-        sender_profile_id: userId,
         receiver_profile_id: review.profile_id,
         food_item_id: foodItemId,
         review_id: review.id,
-        title: null,
-        description: null
+        title: titleText,
+        description: descriptionText
       });
 
-      if (error) {
-        if (error.code === "23505") {
-          Alert.alert("Woops!", "You have already liked this review.");
-          return;
-        }
-        console.error("Error sending like notifications:", error);
+    if (error) {
+      if (error.code === "23505") {
+        Alert.alert("Woops!", "You have already liked this review.");
         return;
       }
-      
-      console.log("Like notification sent:", data);
-      // Alert the user that they have liked the review.
-      Alert.alert("Review Liked!", "You have liked this review.");
+      console.error("Error sending like notifications:", error);
+      return;
+    }
+
+    console.log("Like notification sent:", data);
+    // Alert the user that they have liked the review.
+    Alert.alert("Review Liked!", "You have liked this review.");
   };
-  
-  
+
+
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.topNav}>
-        <Pressable 
-            onPress={() => router.back()}
-          >
-           <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton} />
-          </Pressable>
+        <Pressable
+          onPress={() => router.back()}
+        >
+          <Ionicons name="chevron-back" size={28} color="#333" style={styles.backButton} />
+        </Pressable>
       </View>
 
       <ScrollView style={styles.contentContainer}>
