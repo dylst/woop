@@ -33,7 +33,7 @@ export interface Notification {
     description: string;
     created_at: string;
     notification_type: string;
-    sender_profile_id: string | null;
+    // sender_profile_id: string | null;
     food_item_id?: string | null;
     // Joined from the "fooditem" table
     fooditem?: {
@@ -56,7 +56,7 @@ export function NotificationCard({
         description,
         created_at,
         notification_type,
-        sender_profile_id,
+        // sender_profile_id,
         food_item_id,
         fooditem,
     } = notification;
@@ -85,6 +85,11 @@ export function NotificationCard({
     return (
         <TouchableOpacity
             style={styles.card}
+            onPress={() => {
+                if (food_item_id && onPressFoodItem) {
+                    onPressFoodItem(food_item_id);
+                }
+            }}
         >
             { /* User image or announcement */}
             <View style={styles.leftSection}>
