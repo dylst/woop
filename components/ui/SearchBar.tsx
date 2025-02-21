@@ -19,6 +19,7 @@ const SearchBar = () => {
 				.select("id, food_name, restaurant_name, photos")  // Only fetch needed fields
 				.ilike("food_name", `%${keyword}%`)
 				.limit(20);  // Optimize query performance
+
 	
 			if (error) {
 				console.error("Supabase query error:", error);
@@ -43,12 +44,8 @@ const SearchBar = () => {
             const { data, error } = await supabase
                 .from("restaurant")
                 .select("*")
-                .or(
-                    `name.ilike.%${keyword}%, 
-                    city.ilike.%${keyword}%, 
-                    state.ilike.%${keyword}%`
-                );
-
+                .or(`name.ilike.%${keyword}%,city.ilike.%${keyword}%,state.ilike.%${keyword}%`);
+    
             if (error) throw error;
             return data || [];
         } catch (err) {
@@ -56,7 +53,7 @@ const SearchBar = () => {
             return [];
         }
     };
-
+    
     // Function to handle search
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
