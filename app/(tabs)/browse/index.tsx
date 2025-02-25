@@ -1,6 +1,4 @@
-//
-// TODO:
-// Use top bar for search and buttons
+import { Image } from "react-native";
 import TopBar from "@/components/ui/TopBar";
 import {
 	View,
@@ -28,70 +26,44 @@ export default function Browse() {
 
 	return (
 		<SafeAreaView style={styles.container}>
-
 			{/* Page Title */}
 			<View style={styles.topBarContainer}>
-				<TopBar type="back" title='search'/>
+				<TopBar
+					type='back'
+					title='search'
+				/>
 			</View>
 
-			{/* Buttons Row */}
 			<View style={styles.buttonContainer}>
 				<Pressable
 					style={styles.button}
 					onPress={() => router.push("/browse/cuisine")}
 				>
-					<Ionicons
-						name='restaurant-outline'
-						size={24}
-						color='white'
+					<Image
+						source={require("@/assets/images/cuisines.png")}
+						style={styles.buttonImage}
 					/>
-					<Text style={styles.buttonText}>Cuisine</Text>
 				</Pressable>
 				<Pressable
 					style={styles.button}
 					onPress={() => router.push("/browse/dietary")}
 				>
-					<Ionicons
-						name='nutrition-outline'
-						size={24}
-						color='white'
+					<Image
+						source={require("@/assets/images/Dietary.png")}
+						style={styles.buttonImage}
 					/>
-					<Text style={styles.buttonText}>Dietary</Text>
 				</Pressable>
 				<Pressable
 					style={styles.button}
-					onPress={() => {
-						console.log("Navigating to map...");
-						router.push("/browse/map");
-					}}
+					onPress={() => router.push("/browse/map")}
 				>
-					<Ionicons
-						name='location-outline'
-						size={24}
-						color='white'
+					<Image
+						source={require("@/assets/images/Location.png")}
+						style={styles.buttonImage}
 					/>
-					<Text style={styles.buttonText}>Location</Text>
 				</Pressable>
 			</View>
-
-			{/* History Section */}
-			<View style={styles.historyContainer}>
-				<Text style={styles.historyTitle}>History</Text>
-				<FlatList
-					data={historyItems}
-					keyExtractor={(item, index) => index.toString()}
-					renderItem={({ item }) => (
-						<View style={styles.historyItem}>
-							<Text style={styles.historyName}>{item.name}</Text>
-							<Ionicons
-								name='close'
-								size={20}
-								color='#666'
-							/>
-						</View>
-					)}
-				/>
-			</View>
+			<View style={styles.separator} />
 		</SafeAreaView>
 	);
 }
@@ -137,25 +109,7 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		color: "#333",
 	},
-	buttonContainer: {
-		flexDirection: "row",
-		justifyContent: "center",
-		gap: 50,
-		marginBottom: 20,
-		alignSelf: "center",
-		maxWidth: 1000,
-		width: "100%",
-		marginTop: 20,
-	},
-	button: {
-		backgroundColor: "#65C5E3",
-		paddingVertical: 10,
-		paddingHorizontal: 15,
-		borderRadius: 8,
-		alignItems: "center",
-		justifyContent: "center",
-		width: "25%",
-	},
+
 	buttonText: {
 		color: "white",
 		fontWeight: "600",
@@ -215,5 +169,33 @@ const styles = StyleSheet.create({
 		color: "#65C5E3",
 		marginTop: 4,
 		fontWeight: "bold",
+	},
+	separator: {
+		height: 4,
+		backgroundColor: "#89D5ED", // Using your app's blue color
+		width: "100%",
+		marginTop: 60, // Position it below the back button
+		opacity: 0.5, // Makes it slightly transparent
+		zIndex: 5,
+	},
+	buttonContainer: {
+		flexDirection: "row",
+		justifyContent: "space-around", // Even spacing
+		marginBottom: 20,
+		alignSelf: "center",
+		width: "90%", // Adjust width for responsiveness
+		marginTop: 20,
+	},
+	button: {
+		alignItems: "center",
+		justifyContent: "center",
+		flex: 1, // Makes buttons take equal width
+		marginHorizontal: 8, // Adds spacing between buttons
+		backgroundColor: "transparent", // Removes background
+	},
+	buttonImage: {
+		width: 60, // Adjust size for better visibility
+		height: 60,
+		resizeMode: "contain", // Prevents stretching
 	},
 });
