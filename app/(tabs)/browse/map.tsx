@@ -106,30 +106,31 @@ const MapScreen = () => {
 							/>
 						))}
 					</MapView>
+					<View style={styles.zoomButtonsContainer}>
+						<TouchableOpacity
+							style={styles.zoomInButton}
+							onPress={zoomIn}
+						>
+							<Ionicons
+								name='add'
+								size={24}
+								color='black'
+							/>
+						</TouchableOpacity>
 
+						{/* ✅ Zoom Out Button */}
+						<TouchableOpacity
+							style={styles.zoomOutButton}
+							onPress={zoomOut}
+						>
+							<Ionicons
+								name='remove'
+								size={24}
+								color='black'
+							/>
+						</TouchableOpacity>
+					</View>
 					{/* ✅ Zoom In Button */}
-					<TouchableOpacity
-						style={styles.zoomInButton}
-						onPress={zoomIn}
-					>
-						<Ionicons
-							name='add'
-							size={24}
-							color='black'
-						/>
-					</TouchableOpacity>
-
-					{/* ✅ Zoom Out Button */}
-					<TouchableOpacity
-						style={styles.zoomOutButton}
-						onPress={zoomOut}
-					>
-						<Ionicons
-							name='remove'
-							size={24}
-							color='black'
-						/>
-					</TouchableOpacity>
 				</>
 			)}
 		</View>
@@ -201,6 +202,11 @@ const styles = StyleSheet.create({
 		elevation: 5,
 		zIndex: 10,
 	},
+	zoomButtonsContainer: {
+		position: "absolute",
+		bottom: 20,
+		right: 20,
+	}
 });
 
 export default MapScreen;

@@ -6,6 +6,7 @@ import {
 	TextInput,
 	Image,
 	Platform,
+	TouchableOpacity
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -91,6 +92,17 @@ export default function Cuisine() {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
+			<TouchableOpacity
+				style={styles.backButton}
+				onPress={() => router.back()}
+			>
+				<Ionicons
+					name='arrow-back'
+					size={24}
+					color='#333'
+				/>
+				<Text style={styles.backButtonText}>Back</Text>
+			</TouchableOpacity>
 			<View style={styles.topBarContainer}>
 				<TopBar />
 			</View>
@@ -237,5 +249,16 @@ const styles = StyleSheet.create({
 		marginLeft: 8,
 		color: "#89D5ED",
 		fontWeight: "500",
+	},
+	backButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		padding: 10,
+		marginLeft: 10,
+	},
+	backButtonText: {
+		marginLeft: 8,
+		fontSize: 16,
+		color: "#333",
 	},
 });
