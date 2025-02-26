@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   Pressable,
   Image,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
@@ -12,9 +13,36 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/supabaseClient';
 import { Colors } from '@/constants/Colors';
 import { useUser } from '../context/UserContext';
+import { fetchRatings, RatingInfo } from '@/hooks/fetchHelper';
 
 // to position back button within safe area view
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+function renderStars(average: number, size: number = 12) {
+  const stars = [];
+  // Integer part
+  const floorVal = Math.floor(average);
+  // Decimal part
+  const decimal = average - floorVal;
+  // Half star
+  const hasHalf = decimal >= 0.5
+
+  // full star
+  for (let i = 0; i < floorVal && i < 5; i++) {
+    stars.push(<Ionicons key={`full-${i}`} name="star" size={size} color="#ffd700" style={{ marginRight: 2 }} />)
+  }
+
+  if (hasHalf && floorVal < 5) {
+    stars.push(<Ionicons key="half" name="star-half" size={size} color="#ffd700" style={{ marginRight: 2 }} />)
+  }
+
+  const noStars = floorVal + (hasHalf ? 1 : 0);
+  for (let i = noStars; i < 5; i++) {
+    stars.push(<Ionicons key={`empty-${i}`} name="star" size={size} color="#ccc" style={{ marginRight: 2 }} />)
+  }
+
+  return stars;
+}
 
 export default function FoodItemDetailPage() {
   const router = useRouter();
@@ -23,9 +51,14 @@ export default function FoodItemDetailPage() {
   const { user } = useUser();
   const { foodItemId } = useLocalSearchParams();
 
+  const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
+
   const [reviews, setReviews] = useState<any[]>([]);
+  const [ratingsBar, setRatingsBar] = useState<any[]>([]);
   const [isFavorite, setIsFavorites] = useState(false);
   const [itemData, setItemData] = useState<any>(null);
+
+  const [barContainerWidth, setBarContainerWidth] = useState<number>(0);
 
   // TESTING FETCHING ITEM FROM DATABASE
   // DUMMY DATA FOR RELATED FOOD ITEMS
@@ -33,6 +66,25 @@ export default function FoodItemDetailPage() {
   // const TEST_USER_ID = 10;
 
   const userId = user?.id;
+
+  const computeRatings = (reviews: any[]) => {
+    const counts: { [key: string]: number } = { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 };
+    reviews.forEach((review) => {
+      const ratingValue = Math.round(review.rating);
+      if (ratingValue >= 1 && ratingValue <= 5) {
+        counts[String(ratingValue)]++;
+      }
+    });
+
+    const total = reviews.length;
+    return [
+      { label: '5', percentage: total > 0 ? (counts['5'] / total) * 100 : 0, color: '#E64A19', count: counts['5'] },
+      { label: '4', percentage: total > 0 ? (counts['4'] / total) * 100 : 0, color: '#F57C00', count: counts['4'] },
+      { label: '3', percentage: total > 0 ? (counts['3'] / total) * 100 : 0, color: '#FFB300', count: counts['3'] },
+      { label: '2', percentage: total > 0 ? (counts['2'] / total) * 100 : 0, color: '#FFCA28', count: counts['2'] },
+      { label: '1', percentage: total > 0 ? (counts['1'] / total) * 100 : 0, color: '#FFD54F', count: counts['1'] },
+    ];
+  };
 
   const fetchFoodItem = async () => {
     if (!foodItemId) return;
@@ -50,30 +102,31 @@ export default function FoodItemDetailPage() {
     setItemData(data);
   };
 
-  // const fetchReviews = async () => {
-  //   if (!foodItemId) return;
+  const fetchReviews = async () => {
+    if (!foodItemId) return;
 
-  //   const { data, error } = await supabase
-  //     .from("review")
-  //     .select("rating, review_text, created_at, user_id")
-  //     .eq("food_item_id", foodItemId)
-  //     .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("review")
+      .select("rating")
+      .eq("food_item_id", foodItemId)
 
-  //   if (error) {
-  //     console.error("Error fetching reviews:", error);
-  //     return;
-  //   }
+    if (error) {
+      console.error("Error fetching reviews:", error);
+      return;
+    }
 
-  //   setReviews(data);
-  // };
+    setRatingsBar(data);
+    const computedRatings = computeRatings(data);
+    setRatingsBar(computedRatings);
+  };
 
-  const photoRatings = [
-    { label: '5', percentage: 80, color: '#E64A19', image: 'photo1.jpg' },
-    { label: '4', percentage: 30, color: '#F57C00', image: 'photo2.jpg' },
-    { label: '3', percentage: 15, color: '#FFB300', image: 'photo3.jpg' },
-    { label: '2', percentage: 10, color: '#FFCA28', image: 'photo4.jpg' },
-    { label: '1', percentage: 5, color: '#FFD54F', image: 'photo5.jpg' },
-  ];
+  // const photoRatings = [
+  //   { label: '5', percentage: 80, color: '#E64A19', image: 'photo1.jpg' },
+  //   { label: '4', percentage: 30, color: '#F57C00', image: 'photo2.jpg' },
+  //   { label: '3', percentage: 15, color: '#FFB300', image: 'photo3.jpg' },
+  //   { label: '2', percentage: 10, color: '#FFCA28', image: 'photo4.jpg' },
+  //   { label: '1', percentage: 5, color: '#FFD54F', image: 'photo5.jpg' },
+  // ];
 
   const handlePhotoClick = (image: string) => {
     console.log('Opening photo:', image); // Replace with a full-screen image viewer later
@@ -93,10 +146,33 @@ export default function FoodItemDetailPage() {
     }
   };
 
+  // fetch ratings from reviews
+  const loadRatings = async (itemIds: string[]) => {
+    try {
+      const ratings = await fetchRatings(itemIds);
+      setRatingMap(ratings);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   useEffect(() => {
     fetchFoodItem();
     checkIfFavorite();
   }, []);
+
+  // load ratings
+  useEffect(() => {
+    if (foodItemId) {
+      loadRatings([String(foodItemId)])
+    }
+  }, [foodItemId]);
+
+  useEffect(() => {
+    if (foodItemId) {
+      fetchReviews();
+    }
+  }, [foodItemId]);
 
   const handleFavoriteToggle = async () => {
     try {
@@ -193,153 +269,189 @@ export default function FoodItemDetailPage() {
       ? itemData.photos[0]
       : '';
 
+  const ratingInfo = ratingMap[String(foodItemId)];
+  const average = ratingInfo?.average || 0;
+  const count = ratingInfo?.count || 0;
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Navigation */}
-      <View style={[styles.topNav, {top: insets.top + 10}]}>
-        <Pressable onPress={() => router.back()}>
-          <Ionicons
-            name='chevron-back'
-            size={28}
-            color='#333'
-            style={styles.backButton}
-          />
-        </Pressable>
-      </View>
-
-      {/* Image Container */}
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: imageUrl }} style={styles.foodImage} />
-
-        {/* Overlay */}
-        <View style={styles.overlayContainer}>
-          <View style={styles.overlayContent}>
-            <Text style={styles.foodTitle}>
-              {itemData?.food_name || 'Food Name'}
-            </Text>
-            <Text style={styles.foodLocation}>
-              {itemData?.restaurant_name || 'Restaurant name'}
-            </Text>
-          </View>
-          {/* Add Item to Favorites */}
-          <Pressable style={styles.heartIcon} onPress={handleFavoriteToggle}>
+      <ScrollView>
+        {/* Top Navigation */}
+        <View style={[styles.topNav, { top: insets.top - 40 }]}>
+          <Pressable onPress={() => router.back()}>
             <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
+              name='chevron-back'
               size={28}
-              color={'#fff'}
+              color='#333'
+              style={styles.backButton}
             />
           </Pressable>
-          <View style={styles.ratingContainer}>
-            <Text style={styles.ratingText}>4.9</Text>
-            <Ionicons name='star' size={18} color='#FFD700' />
-          </View>
         </View>
-      </View>
 
-      {/* Food Category */}
-      <View style={styles.categoryContainer}>
-        <Text style={styles.categoryText}>
-          {itemData?.price_range || '$'}
-          {cuisineText || dietaryText ? ' • ' : ''}
-          {cuisineText}
-          {cuisineText && dietaryText ? ', ' : ''}
-          {dietaryText}
-        </Text>
-      </View>
+        {/* Image Container */}
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: imageUrl }} style={styles.foodImage} />
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtonsContainer}>
-        {actionButtons.map((button, index) => (
-          <Pressable
-            key={index}
-            style={styles.actionButton}
-            onPress={button.onPress}
-          >
-            <View style={styles.iconCircle}>
-              <Ionicons name={button.icon} size={24} color='#65C5E3' />
+          {/* Overlay */}
+          <View style={styles.overlayContainer}>
+            <View style={styles.overlayContent}>
+              <Text style={styles.foodTitle}>
+                {itemData?.food_name || 'Food Name'}
+              </Text>
+              <Text style={styles.foodLocation}>
+                {itemData?.restaurant_name || 'Restaurant name'}
+              </Text>
             </View>
-            <Text style={styles.buttonText}>{button.text}</Text>
-          </Pressable>
-        ))}
-      </View>
-
-            {/* Reviews & Photos Section */}
-            <View style={styles.reviewsPhotosContainer}>
-                {/* Reviews Section */}
-                <View style={styles.reviewsContainer}>
-                    <Text style={styles.sectionTitle}>Reviews</Text>
-                    <View style={styles.ratingRow}>
-                        <Text style={styles.boldText}>Overall Rating</Text>
-                        <View style={styles.starRow}>
-                            {[...Array(5)].map((_, index) => (
-                                <Ionicons key={index} name="star" size={16} color="#FFD700" />
-                            ))}
-                        </View>
-                        <Text style={styles.reviewCount}>3,304 reviews</Text>
-                    </View>
-
-                    {/* View Reviews Button */}
-                    <Pressable 
-                        onPress={() => router.push({ 
-                          pathname: "/fooditem_review", 
-                          params: { foodItemId: String(foodItemId) }  // Convert to string
-                        })} 
-                        style={styles.viewReviewsButton}
-                      >
-                        <Text style={styles.viewReviewsText}>View Reviews →</Text>
-                    </Pressable>
-                </View>
-
-                {/* Photos Section */}
-                <View style={styles.photosContainer}>
-                    <Text style={styles.sectionTitle}>Photos</Text>
-                    {photoRatings.map((item, index) => (
-                        <View key={index} style={styles.photoRow}>
-                            <Text style={styles.photoLabel}>{item.label}</Text>
-                            <Pressable onPress={() => handlePhotoClick(item.image)}>
-                                <View style={[styles.photoBar, { width: `${item.percentage}%`, backgroundColor: item.color }]} />
-                            </Pressable>
-                        </View>
-                    ))}
-                </View>
-      </View>
-
-      {/* Blue Divider */}
-      <View style={styles.blueDivider} />
-
-      {/* Related Food Items */}
-      <View style={styles.relatedContainer}>
-        <Text style={styles.sectionTitle}>Related Food Items</Text>
-        {relatedFood.map((item) => (
-          <View key={item.id} style={styles.foodItem}>
-            <Image source={item.image} style={styles.foodImageSmall} />
-            <View style={styles.foodDetails}>
-              <Text style={styles.foodName}>{item.name}</Text>
-              <Text style={styles.foodDescription}>{item.description}</Text>
-              <View style={styles.ratingRow}>
-                {[...Array(5)].map((_, i) => (
-                  <Ionicons
-                    key={i}
-                    name={i < item.rating ? 'star' : 'star-outline'}
-                    size={16}
-                    color={i < item.rating ? '#FFD700' : '#D3D3D3'}
-                  />
-                ))}
-                <Text style={styles.reviewCount}>({item.reviews})</Text>
-              </View>
-            </View>
-            <Pressable onPress={() => handleRelatedFavoriteToggle(item.id)}>
+            {/* Add Item to Favorites */}
+            <Pressable style={styles.heartIcon} onPress={handleFavoriteToggle}>
               <Ionicons
-                name={
-                  relatedFavorites.includes(item.id) ? 'heart' : 'heart-outline'
-                }
-                size={24}
-                color='#000'
+                name={isFavorite ? 'heart' : 'heart-outline'}
+                size={28}
+                color={'#fff'}
               />
             </Pressable>
+            <View style={styles.ratingContainer}>
+              <Text style={styles.ratingText}>
+                {ratingMap[String(foodItemId)]
+                  ? ratingMap[String(foodItemId)].average.toFixed(1)
+                  : '0.0'}
+              </Text>
+              <Ionicons name='star' size={18} color='#FFD700' />
+            </View>
           </View>
-        ))}
-      </View>
+        </View>
+
+        {/* Food Category */}
+        <View style={styles.categoryContainer}>
+          <Text style={styles.categoryText}>
+            {itemData?.price_range || '$'}
+            {cuisineText || dietaryText ? ' • ' : ''}
+            {cuisineText}
+            {cuisineText && dietaryText ? ', ' : ''}
+            {dietaryText}
+          </Text>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtonsContainer}>
+          {actionButtons.map((button, index) => (
+            <Pressable
+              key={index}
+              style={styles.actionButton}
+              onPress={button.onPress}
+            >
+              <View style={styles.iconCircle}>
+                <Ionicons name={button.icon} size={24} color='#65C5E3' />
+              </View>
+              <Text style={styles.buttonText}>{button.text}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Reviews & Photos Section */}
+        <View style={styles.reviewsPhotosContainer}>
+          {/* Reviews Section */}
+          <View style={styles.reviewsContainer}>
+            <Text style={styles.sectionTitle}>Reviews</Text>
+            <View style={styles.ratingColumn}>
+              <Text style={styles.boldText}>Overall Rating</Text>
+              <View style={styles.starRow}>
+                {renderStars(average, 24)}
+              </View>
+              <Text style={styles.reviewCount}>{count === 1 ? `1 review` : `${count} reviews`}</Text>
+            </View>
+
+            {/* View Reviews Button */}
+            <Pressable
+              onPress={() => router.push({
+                pathname: "/fooditem_review",
+                params: { foodItemId: String(foodItemId) }  // Convert to string
+              })}
+              style={styles.viewReviewsButton}
+            >
+              <Text style={styles.viewReviewsText}>View Reviews →</Text>
+            </Pressable>
+          </View>
+
+          {/* Photos Section */}
+          {/* <View style={styles.photosContainer}>
+            <Text style={styles.sectionTitle}>Photos</Text>
+            {ratingsBar.map((item, index) => (
+              <View key={index} style={styles.photoRow}>
+                <Text style={styles.photoLabel}>{item.label}</Text>
+                <Pressable onPress={() => handlePhotoClick(item.image)}>
+                  <View style={[styles.photoBar, { width: `${item.percentage}%`, backgroundColor: item.color }]} />
+                </Pressable>
+              </View>
+            ))}
+          </View> */}
+
+          {/* Ratings Distribution */}
+          <View style={styles.ratingsDistribution}>
+            {ratingsBar.map((item) => (
+              <View style={styles.ratingRow} key={item.label}>
+                <Text style={styles.ratingLabel}>{item.label}</Text>
+                <View style={styles.barContainer}>
+                  <View
+                    style={[
+                      styles.barFilled,
+                      {
+                        flex: item.percentage / 100,
+                        backgroundColor: item.color,
+                      },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.barEmpty,
+                      {
+                        flex: 1 - item.percentage / 100,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Blue Divider */}
+        <View style={styles.blueDivider} />
+
+        {/* Related Food Items */}
+        <View style={styles.relatedContainer}>
+          <Text style={styles.sectionTitle}>Related Food Items</Text>
+          {relatedFood.map((item) => (
+            <View key={item.id} style={styles.foodItem}>
+              <Image source={item.image} style={styles.foodImageSmall} />
+              <View style={styles.foodDetails}>
+                <Text style={styles.foodName}>{item.name}</Text>
+                <Text style={styles.foodDescription}>{item.description}</Text>
+                <View style={styles.ratingRow}>
+                  {[...Array(5)].map((_, i) => (
+                    <Ionicons
+                      key={i}
+                      name={i < item.rating ? 'star' : 'star-outline'}
+                      size={16}
+                      color={i < item.rating ? '#FFD700' : '#D3D3D3'}
+                    />
+                  ))}
+                  <Text style={styles.reviewCount}>({item.reviews})</Text>
+                </View>
+              </View>
+              <Pressable onPress={() => handleRelatedFavoriteToggle(item.id)}>
+                <Ionicons
+                  name={
+                    relatedFavorites.includes(item.id) ? 'heart' : 'heart-outline'
+                  }
+                  size={24}
+                  color='#000'
+                />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -495,7 +607,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  photosContainer: {
+  ratingsDistribution: {
     flex: 1,
   },
 
@@ -506,7 +618,6 @@ const styles = StyleSheet.create({
   },
 
   ratingColumn: {
-    flexDirection: 'column',
     marginBottom: 10,
   },
 
@@ -536,24 +647,32 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  photoRow: {
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 8,
   },
 
-  photoLabel: {
+  ratingLabel: {
     width: 20,
-    fontSize: 14,
+    marginRight: 8,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 
-  photoBar: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E64A19',
+  barContainer: {
     flex: 1,
-    marginLeft: 5,
+    flexDirection: 'row',
+    borderRadius: 4,
+    overflow: 'hidden',
+    height: 8,
+  },
+
+  barFilled: {
+    // dynamic color set inline
+  },
+  barEmpty: {
+    backgroundColor: '#eee',
   },
 
   blueDivider: {
@@ -596,13 +715,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
 
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
   reviewCount: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
     marginLeft: 5,
   },

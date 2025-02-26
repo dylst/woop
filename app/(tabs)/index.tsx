@@ -13,6 +13,7 @@ import FiltersHomeNav from '@/components/ui/FiltersHomeNav';
 import TopBar from '@/components/ui/TopBar';
 import { supabase } from '@/supabaseClient';
 import { ActivityIndicator } from 'react-native-paper';
+import { fetchRatings, RatingInfo } from '@/hooks/fetchHelper';
 
 
 const filtersItems = [
@@ -30,6 +31,8 @@ const filtersItems = [
 
 const HomePage = () => {
   const [featuredItems, setFeaturedItems] = useState<any[]>([]);
+  const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -60,9 +63,70 @@ const HomePage = () => {
     setLoading(false);
   };
 
+  // const fetchRatings = async (itemIds: string[]) => {
+  //   if (itemIds.length === 0) return;
+  //   setLoading(true);
+
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from('review')
+  //       .select('food_item_id, rating')
+  //       .in('food_item_id', itemIds);
+
+  //     if (error) {
+  //       console.error('Error fetching ratings:', error);
+  //       return;
+  //     }
+  //     if (!data) return;
+
+  //     const map: { [key: string]: { sum: number, count: number } } = {};
+
+  //     data.forEach((row) => {
+  //       if (!map[row.food_item_id]) {
+  //         map[row.food_item_id] = { sum: 0, count: 0 };
+  //       }
+  //       map[row.food_item_id].sum += row.rating;
+  //       map[row.food_item_id].count += 1;
+  //     });
+
+  //     const finalMap: { [key: string]: RatingInfo } = {};
+  //     for (const fid in map) {
+  //       const sum = map[fid].sum;
+  //       const count = map[fid].count;
+  //       finalMap[fid] = {
+  //         average: count === 0 ? 0 : sum / count,
+  //         count,
+  //       };
+  //     }
+
+  //     setRatingMap(finalMap);
+
+  //   } catch (error) {
+  //     console.log(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+
+    const loadRatings = async (itemIds: string[]) => {
+      try {
+        const ratings = await fetchRatings(itemIds);
+        setRatingMap(ratings);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
   useEffect(() => {
     fetchFeaturedItems();
   }, []);
+
+  useEffect(() => {
+    if (featuredItems.length > 0) {
+      const itemIds = featuredItems.map((item) => item.id);
+      loadRatings(itemIds);
+    }
+  }, [featuredItems]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -94,6 +158,7 @@ const HomePage = () => {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollViewPadding}>
             {featuredItems.map((item) => {
               const imageUrl = Array.isArray(item.photos) && item.photos.length > 0 ? item.photos[0] : '';
+              const averageRating = ratingMap[item.id]?.average.toFixed(1) || '0.0';
               return (
                 <FeaturedCard
                   key={item.id}
@@ -101,6 +166,7 @@ const HomePage = () => {
                   photos={{ uri: imageUrl }}
                   foodName={item.food_name}
                   restaurantName={item.restaurant_name}
+                  rating={averageRating}
                   style={styles.shadowProp}
                 />
               );

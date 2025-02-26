@@ -60,44 +60,6 @@ export default function NotificationsScreen() {
         fetchNotifications();
     }, [loggedInProfileId]);
 
-
-    // useEffect(() => {
-    //     if (!loggedInProfileId) return;
-
-    //     console.log("Setting up realtime subscription for user:", loggedInProfileId);
-
-    //     const channel = supabase
-    //         .channel('notifications-channel')
-    //         .on(
-    //             'postgres_changes',
-    //             {
-    //                 event: 'INSERT',
-    //                 schema: 'public',
-    //                 table: 'notification',
-    //                 // filter: `receiver_profile_id=eq.${loggedInProfileId}`
-    //             },
-    //             (payload) => {
-    //                 console.log("Realtime payload received:", payload);
-    //                 const newNotification = payload.new as Notification;
-    //                 setNotifications(prev => [newNotification, ...prev]);
-
-    //                 scheduleLocalNotification({
-    //                         title: newNotification.title || 'New Notification',
-    //                         body: newNotification.description || '',
-    //                         data: { notificationId: newNotification.id }
-    //                 })
-    //             }
-    //         )
-    //         .subscribe();
-
-    //     // console.log("Realtime channel subscription:", channel);
-
-    //     return () => {
-    //         supabase.removeChannel(channel);
-    //         console.log("Realtime channel removed");
-    //     };
-    // }, [loggedInProfileId]);
-
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchNotifications().finally(() => setRefreshing(false));

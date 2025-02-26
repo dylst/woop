@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
       },
       newBoxText: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontWeight: '800',
         paddingVertical: 16,
       },
 })
