@@ -65,7 +65,7 @@ function Users() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email: loginEmail.trim(),
         password: loginPassword
       })
       if (error) {

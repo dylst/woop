@@ -1,5 +1,6 @@
 import { SafeAreaView, View, Text, FlatList, StyleSheet, Image, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import TopBar from "@/components/ui/TopBar";
 
 export default function BrowseSearch() {
     const { query, results } = useLocalSearchParams();
@@ -9,6 +10,12 @@ export default function BrowseSearch() {
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.container}>
+            <View style={styles.topBarContainer}>
+				<TopBar
+					type='back'
+					title='search'
+				/>
+			</View>
                 <Text style={styles.searchTitle}>Results for "{query}"</Text>
 
                 {searchResults.length > 0 ? (
@@ -97,4 +104,9 @@ const styles = StyleSheet.create({
         color: "#999",
         marginTop: 20,
     },
+    topBarContainer: {
+		width: "100%",
+		alignSelf: "center",
+		marginBottom: 10,
+	},
 });

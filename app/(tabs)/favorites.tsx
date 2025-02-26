@@ -32,7 +32,7 @@ interface FavoriteItem {
 type SortMode = 'food_name_asc' | 'food_name_desc' |
   'restaurant_name_asc' | 'restaurant_name_desc' |
   'price_range_asc' | 'price_range_desc' |
-  'date_added_newest' | 'date_added_oldest';
+  'date_added_newest' | 'date_added_oldest' | 'rating_asc' | 'rating_desc';
 
 // Filtering: unionize both arrays
 function hasOverlap(itemTags: string[] = [], selectedTags: string[] = []) {
@@ -129,6 +129,8 @@ const favorites = () => {
     { label: 'Restaurant Name (Z-A)', value: 'restaurant_name_desc' },
     { label: '$ Price Range (Low to High)', value: 'price_range_asc' },
     { label: '$ Price Range (High to Low)', value: 'price_range_desc' },
+    { label: 'Rating (Low to High)', value: 'rating_asc'},
+    { label: 'Rating (High to Low)', value: 'rating_desc'},
   ]
 
   const fetchFavorites = async () => {
@@ -286,11 +288,13 @@ const favorites = () => {
       case 'food_name_asc':
       case 'restaurant_name_asc':
       case 'price_range_asc':
+      case 'rating_asc':
         return 'caret-up-circle-outline';
       case 'date_added_newest':
       case 'food_name_desc':
       case 'restaurant_name_desc':
       case 'price_range_desc':
+      case 'rating_desc':
         return 'caret-down-circle-outline';
       default:
         return 'caret-down-circle-outline';
@@ -343,6 +347,10 @@ const favorites = () => {
       filtered = filtered.sort((a, b) => (a.price_range?.length || 0) - (b.price_range?.length || 0));
     } else if (sortMode === 'price_range_desc') {
       filtered = filtered.sort((a, b) => (b.price_range?.length || 0) - (a.price_range?.length || 0));
+    } else if (sortMode === 'rating_desc') {
+      filtered = filtered.sort((a,b) => (ratingMap[b.food_item_id]?.average || 0 ) - (ratingMap[a.food_item_id]?.average || 0))
+    } else if (sortMode === 'rating_asc') {
+      filtered = filtered.sort((a,b) => (ratingMap[a.food_item_id]?.average || 0 ) - (ratingMap[b.food_item_id]?.average || 0))
     }
 
     return filtered;
@@ -694,5 +702,7 @@ const styles = StyleSheet.create({
     marginLeft: 3,
     fontSize: 10,
     color: '#999',
-  }
+  },
+  
+
 });
