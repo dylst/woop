@@ -75,11 +75,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 19,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
   },
   cardAddress: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '400',
     color: '#666',
     marginTop: 4,
@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
+    marginHorizontal: 6,
   },
   cardRating: {
     marginLeft: 4,

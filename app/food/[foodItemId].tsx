@@ -290,7 +290,13 @@ export default function FoodItemDetailPage() {
 
         {/* Image Container */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: imageUrl }} style={styles.foodImage} />
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.foodImage} />
+          ) : (
+            <View style={[styles.foodImage, styles.noImage]}>
+              <Ionicons name="images" size={108} color="fff" />
+            </View>
+          )}
 
           {/* Overlay */}
           <View style={styles.overlayContainer}>
@@ -306,7 +312,7 @@ export default function FoodItemDetailPage() {
             <Pressable style={styles.heartIcon} onPress={handleFavoriteToggle}>
               <Ionicons
                 name={isFavorite ? 'heart' : 'heart-outline'}
-                size={28}
+                size={36}
                 color={'#fff'}
               />
             </Pressable>
@@ -316,7 +322,7 @@ export default function FoodItemDetailPage() {
                   ? ratingMap[String(foodItemId)].average.toFixed(1)
                   : '0.0'}
               </Text>
-              <Ionicons name='star' size={18} color='#FFD700' />
+              <Ionicons name='star' size={28} color='#FFD700' />
             </View>
           </View>
         </View>
@@ -507,12 +513,18 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
 
+  noImage: {
+    backgroundColor: '#aaa',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   overlayContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent black for contrast
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black for contrast
     padding: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -526,12 +538,13 @@ const styles = StyleSheet.create({
   foodTitle: {
     color: 'white',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 
   foodLocation: {
     color: 'white',
     fontSize: 14,
+    fontWeight: '700',
   },
 
   heartIcon: {
@@ -541,15 +554,15 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Light background for contrast
+    backgroundColor: 'rgba(255, 255, 255, 0.65)', // Light background for contrast
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 20,
   },
 
   ratingText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '900',
     color: '#333',
     marginRight: 4,
   },
