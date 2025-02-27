@@ -19,7 +19,7 @@ interface FeaturedCardProps {
   foodName: string;
   restaurantName: string;
   style?: StyleProp<ViewStyle>;
-  // rating: number;
+  rating: string;
 }
 
 const FeaturedCard: React.FC<FeaturedCardProps> = ({
@@ -27,23 +27,24 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
   photos,
   foodName,
   restaurantName,
-  // onPress,
   style,
-  // rating
+  rating
 }) => {
 
   const navigateToFoodItem = useFoodItemNavigation();
   return (
     <TouchableOpacity style={[styles.card, style]}
-    onPress={() => navigateToFoodItem(id)}>
+      onPress={() => navigateToFoodItem(id)}>
       <Image source={photos} style={styles.cardImage} />
-      <View style={styles.cardDescription}>
-        <Text style={styles.cardTitle}>{foodName}</Text>
-        <Text style={styles.cardAddress}>{restaurantName}</Text>
-        {/* <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="gold" />
-                <Text style={styles.cardRating}>{rating}</Text>
-              </View> */}
+      <View style={styles.cardDescriptionRow}>
+        <View style={styles.cardDescription}>
+          <Text style={styles.cardTitle}>{foodName}</Text>
+          <Text style={styles.cardAddress}>{restaurantName}</Text>
+        </View>
+        <View style={styles.ratingContainer}>
+          <Ionicons name="star" size={24} color="gold" />
+          <Text style={styles.cardRating}>{rating}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   )
@@ -57,9 +58,15 @@ const styles = StyleSheet.create({
     marginRight: 16,
     elevation: 2,
   },
-  cardDescription: {
+  cardDescriptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 10,
     margin: 16,
+  },
+  cardDescription: {
+    marginVertical: 4,
   },
   cardImage: {
     width: '100%',
@@ -68,11 +75,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 19,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '700',
   },
   cardAddress: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '400',
     color: '#666',
     marginTop: 4,
   },
@@ -80,10 +88,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
+    marginHorizontal: 6,
   },
   cardRating: {
     marginLeft: 4,
-    fontSize: 14,
+    fontSize: 20,
+    fontWeight: '800',
     color: '#333',
   },
 })
