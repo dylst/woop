@@ -7,6 +7,7 @@ import {
 	Image,
 	Platform,
 	TouchableOpacity,
+	ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -93,7 +94,8 @@ export default function Dietary() {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
-			<TouchableOpacity
+			<ScrollView>
+				{/* <TouchableOpacity
 				style={styles.backButton}
 				onPress={() => router.back()}
 			>
@@ -103,23 +105,24 @@ export default function Dietary() {
 					color='#333'
 				/>
 				<Text style={styles.backButtonText}>Back</Text>
-			</TouchableOpacity>
-			<View style={styles.topBarContainer}>
-				<TopBar />
-			</View>
-			<View style={styles.container}>
-				{/* Search Bar */}
-
-				<View style={styles.gridContainer}>
-					{Object.values(dietaryTypes).map((dietary, index) => (
-						<BrowseCard
-							key={index}
-							browseCardName={dietary.name}
-							image={dietary.image}
-						/>
-					))}
+			</TouchableOpacity> */}
+				<View style={styles.topBarContainer}>
+					<TopBar type="back" title="Dietary"/>
 				</View>
-			</View>
+				<View style={styles.container}>
+					{/* Search Bar */}
+
+					<View style={styles.gridContainer}>
+						{Object.values(dietaryTypes).map((dietary, index) => (
+							<BrowseCard
+								key={index}
+								browseCardName={dietary.name}
+								image={dietary.image}
+							/>
+						))}
+					</View>
+				</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
@@ -132,7 +135,7 @@ const styles = StyleSheet.create({
 	},
 
 	topBarContainer: {
-		paddingHorizontal: 20,
+		// paddingHorizontal: 20,
 		width: "100%",
 		maxWidth: 800,
 		alignSelf: "center",

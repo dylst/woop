@@ -6,7 +6,8 @@ import {
 	TextInput,
 	Image,
 	Platform,
-	TouchableOpacity
+	TouchableOpacity,
+	ScrollView
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -92,7 +93,8 @@ export default function Cuisine() {
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
-			<TouchableOpacity
+			<ScrollView>
+				{/* <TouchableOpacity
 				style={styles.backButton}
 				onPress={() => router.back()}
 			>
@@ -102,12 +104,12 @@ export default function Cuisine() {
 					color='#333'
 				/>
 				<Text style={styles.backButtonText}>Back</Text>
-			</TouchableOpacity>
-			<View style={styles.topBarContainer}>
-				<TopBar />
-			</View>
-			<View style={styles.container}>
-				{/* <View style={styles.searchContainer}>
+			</TouchableOpacity> */}
+				<View style={styles.topBarContainer}>
+					<TopBar type="back" title="Cuisine"/>
+				</View>
+				<View style={styles.container}>
+					{/* <View style={styles.searchContainer}>
 					<Ionicons
 						name='search'
 						size={20}
@@ -122,16 +124,17 @@ export default function Cuisine() {
 					/>
 				</View> */}
 
-				<View style={styles.gridContainer}>
-					{Object.values(cuisineTypes).map((cuisine, index) => (
-						<BrowseCard
-							key={index}
-							browseCardName={cuisine.name}
-							image={cuisine.image}
-						/>
-					))}
+					<View style={styles.gridContainer}>
+						{Object.values(cuisineTypes).map((cuisine, index) => (
+							<BrowseCard
+								key={index}
+								browseCardName={cuisine.name}
+								image={cuisine.image}
+							/>
+						))}
+					</View>
 				</View>
-			</View>
+			</ScrollView>
 		</SafeAreaView>
 	);
 }
@@ -145,7 +148,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	topBarContainer: {
-		paddingHorizontal: 20,
 		width: "100%",
 		maxWidth: 800,
 		alignSelf: "center",

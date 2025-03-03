@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
 		backgroundColor: "transparent", // Removes background
 	},
 	buttonImage: {
-		width: 60, // Adjust size for better visibility
-		height: 60,
+		width: 100, // Adjust size for better visibility
+		height: 100,
 		resizeMode: "contain", // Prevents stretching
 	},
 });
