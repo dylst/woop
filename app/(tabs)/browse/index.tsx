@@ -31,6 +31,8 @@ export default function Browse() {
 				<TopBar
 					type='back'
 					title='search'
+					backType='replace'
+					replaceRoute='/'
 				/>
 			</View>
 

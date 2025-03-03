@@ -106,7 +106,7 @@ export default function Cuisine() {
 				<Text style={styles.backButtonText}>Back</Text>
 			</TouchableOpacity> */}
 				<View style={styles.topBarContainer}>
-					<TopBar type="back" title="Cuisine"/>
+					<TopBar type="back" backType="replace" replaceRoute="/browse" title="Cuisine"/>
 				</View>
 				<View style={styles.container}>
 					{/* <View style={styles.searchContainer}>

@@ -107,7 +107,7 @@ export default function Dietary() {
 				<Text style={styles.backButtonText}>Back</Text>
 			</TouchableOpacity> */}
 				<View style={styles.topBarContainer}>
-					<TopBar type="back" title="Dietary"/>
+					<TopBar type="back" backType="replace" replaceRoute="/browse" title="Dietary" />
 				</View>
 				<View style={styles.container}>
 					{/* Search Bar */}

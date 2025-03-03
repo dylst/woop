@@ -2,13 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '@/components/ui/SearchBar';
-import { useNavigation, useRouter } from 'expo-router';
+import { RelativePathString, useNavigation, useRouter } from 'expo-router';
 import { useUser } from '@/app/context/UserContext';
 import { supabase } from '@/supabaseClient';
 
 const TopBar = ({
   type = 'home',
   title = '',
+  backType = 'back',
+  replaceRoute = ''
 }) => {
   const router = useRouter();
 
@@ -63,7 +65,11 @@ const TopBar = ({
   }
 
   const handleBackPress = () => {
-    router.back();
+    if (backType === 'replace' && replaceRoute) {
+      router.replace(replaceRoute as RelativePathString);
+    } else {
+      router.back();
+    }
   };
 
   return (
