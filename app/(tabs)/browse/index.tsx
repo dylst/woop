@@ -1,201 +1,210 @@
-import { Image } from "react-native";
-import TopBar from "@/components/ui/TopBar";
+import { Image } from 'react-native';
+import TopBar from '@/components/ui/TopBar';
 import {
-	View,
-	Text,
-	StyleSheet,
-	SafeAreaView,
-	TextInput,
-	Pressable,
-	FlatList,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { useRouter } from "expo-router";
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Pressable,
+  TextInput,
+  ScrollView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+import { useSearchFiltersStore } from '@/store/searchFiltersStore';
+import FilterChip from '@/components/ui/FilterChip';
 
 export default function Browse() {
-	const [searchText, setSearchText] = useState("");
-	const router = useRouter();
+  const router = useRouter();
+  const [searchText, setSearchText] = useState('');
+  const {
+    selectedCuisines,
+    selectedDietary,
+    priceRange,
+    minRating,
+    maxDistance,
+    removeCuisine,
+    removeDietary,
+    setPriceRange,
+    setMinRating,
+    setMaxDistance,
+  } = useSearchFiltersStore();
 
-	const historyItems = [
-		{ name: "Beef Pho with Meatballs" },
-		{ name: "Spicy Chicken Wings" },
-		{ name: "Quesabirria Tacos" },
-		{ name: "Sushi" },
-	];
+  // Calculate if any filters are active
+  const hasActiveFilters =
+    selectedCuisines.length > 0 ||
+    selectedDietary.length > 0 ||
+    priceRange.length > 0 ||
+    minRating > 0 ||
+    maxDistance < 50;
 
-	return (
-		<SafeAreaView style={styles.container}>
-			{/* Page Title */}
-			<View style={styles.topBarContainer}>
-				<TopBar
-					type='back'
-					title='search'
-				/>
-			</View>
+  // Handle search submission
+  const handleSearch = () => {
+    if (searchText.trim()) {
+      router.push({
+        pathname: '/browse/search-results',
+        params: { query: searchText },
+      });
+    }
+  };
 
-			<View style={styles.buttonContainer}>
-				<Pressable
-					style={styles.button}
-					onPress={() => router.push("/browse/cuisine")}
-				>
-					<Image
-						source={require("@/assets/images/cuisines.png")}
-						style={styles.buttonImage}
-					/>
-				</Pressable>
-				<Pressable
-					style={styles.button}
-					onPress={() => router.push("/browse/dietary")}
-				>
-					<Image
-						source={require("@/assets/images/Dietary.png")}
-						style={styles.buttonImage}
-					/>
-				</Pressable>
-				<Pressable
-					style={styles.button}
-					onPress={() => router.push("/browse/map")}
-				>
-					<Image
-						source={require("@/assets/images/Location.png")}
-						style={styles.buttonImage}
-					/>
-				</Pressable>
-			</View>
-			<View style={styles.separator} />
-		</SafeAreaView>
-	);
+  // Navigate to filters screen
+  const goToFilters = () => {
+    router.push('/browse/filters');
+  };
+
+  // Handle removing a filter
+  const handleRemoveFilter = (type: string, value: string) => {
+    if (type === 'cuisine') {
+      removeCuisine(value);
+    } else if (type === 'dietary') {
+      removeDietary(value);
+    } else if (type === 'price') {
+      setPriceRange([]);
+    } else if (type === 'rating') {
+      setMinRating(0);
+    } else if (type === 'distance') {
+      setMaxDistance(50);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Page Title */}
+      <View style={styles.topBarContainer}>
+        <TopBar type='home' title='Browse' />
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name='search' size={20} color='#999' />
+        <TextInput
+          style={styles.searchInput}
+          placeholder='Search for food...'
+          value={searchText}
+          onChangeText={setSearchText}
+          returnKeyType='search'
+          onSubmitEditing={handleSearch}
+        />
+        <Pressable onPress={goToFilters} style={styles.filterButton}>
+          <Ionicons
+            name='options-outline'
+            size={22}
+            color={hasActiveFilters ? '#65C5E3' : '#666'}
+          />
+        </Pressable>
+      </View>
+
+      {/* Active Filters */}
+      {hasActiveFilters && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersScrollContainer}
+        >
+          {selectedCuisines.map((cuisine) => (
+            <FilterChip
+              key={`cuisine-${cuisine}`}
+              label={cuisine}
+              onRemove={() => handleRemoveFilter('cuisine', cuisine)}
+            />
+          ))}
+
+          {selectedDietary.map((diet) => (
+            <FilterChip
+              key={`dietary-${diet}`}
+              label={diet}
+              onRemove={() => handleRemoveFilter('dietary', diet)}
+            />
+          ))}
+
+          {priceRange.length > 0 && (
+            <FilterChip
+              label={`${'$'.repeat(priceRange[0])} - ${'$'.repeat(
+                priceRange[1]
+              )}`}
+              onRemove={() => handleRemoveFilter('price', '')}
+            />
+          )}
+
+          {minRating > 0 && (
+            <FilterChip
+              label={`${minRating.toFixed(1)}+ ⭐️`}
+              onRemove={() => handleRemoveFilter('rating', '')}
+            />
+          )}
+
+          {maxDistance < 50 && (
+            <FilterChip
+              label={`${maxDistance} miles max`}
+              onRemove={() => handleRemoveFilter('distance', '')}
+            />
+          )}
+        </ScrollView>
+      )}
+
+      <View style={styles.separator} />
+
+      {/* Content area */}
+      <View style={styles.contentContainer}>
+        <Text style={styles.sectionTitle}>Popular Categories</Text>
+        {/* Add your content here */}
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: "white",
-	},
-	topNav: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		paddingHorizontal: 20,
-		marginBottom: 10,
-	},
-	topBarContainer: {
-		width: "100%",
-		maxWidth: 800,
-		alignSelf: "center",
-		marginBottom: 10,
-	},
-	pageTitle: {
-		padding: 24,
-		fontSize: 24,
-		fontWeight: "bold",
-		color: "#333",
-	},
-	searchContainer: {
-		flexDirection: "row",
-		alignItems: "center",
-		backgroundColor: "#F1F1F1",
-		padding: 12,
-		borderRadius: 8,
-		marginBottom: 20,
-		width: "80%", //
-		maxWidth: 1200,
-		alignSelf: "center",
-	},
-	searchInput: {
-		marginLeft: 8,
-		flex: 1,
-		fontSize: 16,
-		color: "#333",
-	},
-
-	buttonText: {
-		color: "white",
-		fontWeight: "600",
-		marginTop: 4,
-	},
-	historyContainer: {
-		flex: 1,
-		marginBottom: 20,
-		maxWidth: 800,
-		alignItems: "center",
-		alignSelf: "center",
-		width: "90%",
-	},
-	historyTitle: {
-		fontSize: 24,
-		fontWeight: "bold",
-		color: "#333",
-		marginBottom: 20,
-		textAlign: "center",
-	},
-	historyItem: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-		padding: 20,
-		borderRadius: 12,
-		backgroundColor: "#F9F9F9",
-		marginBottom: 12,
-		borderColor: "#E0E0E0",
-		borderWidth: 1,
-		width: "100%",
-		maxWidth: 800,
-	},
-	historyName: {
-		fontSize: 18,
-		color: "#333",
-		fontWeight: "500",
-	},
-	bottomNav: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		paddingVertical: 12,
-		borderTopWidth: 1,
-		borderColor: "#E0E0E0",
-		backgroundColor: "white",
-	},
-	navItem: {
-		alignItems: "center",
-	},
-	navText: {
-		fontSize: 12,
-		color: "#666",
-		marginTop: 4,
-	},
-	navTextActive: {
-		fontSize: 12,
-		color: "#65C5E3",
-		marginTop: 4,
-		fontWeight: "bold",
-	},
-	separator: {
-		height: 4,
-		backgroundColor: "#89D5ED", // Using your app's blue color
-		width: "100%",
-		marginTop: 60, // Position it below the back button
-		opacity: 0.5, // Makes it slightly transparent
-		zIndex: 5,
-	},
-	buttonContainer: {
-		flexDirection: "row",
-		justifyContent: "space-around", // Even spacing
-		marginBottom: 20,
-		alignSelf: "center",
-		width: "90%", // Adjust width for responsiveness
-		marginTop: 20,
-	},
-	button: {
-		alignItems: "center",
-		justifyContent: "center",
-		flex: 1, // Makes buttons take equal width
-		marginHorizontal: 8, // Adds spacing between buttons
-		backgroundColor: "transparent", // Removes background
-	},
-	buttonImage: {
-		width: 60, // Adjust size for better visibility
-		height: 60,
-		resizeMode: "contain", // Prevents stretching
-	},
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  topBarContainer: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F1F1',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 30,
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#333',
+  },
+  filterButton: {
+    padding: 8,
+    marginLeft: 5,
+  },
+  filtersScrollContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+  },
+  separator: {
+    height: 4,
+    backgroundColor: '#89D5ED',
+    width: '100%',
+    opacity: 0.5,
+    zIndex: 5,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#333',
+  },
 });
