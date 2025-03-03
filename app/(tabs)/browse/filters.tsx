@@ -19,39 +19,38 @@ export default function Filters() {
     selectedCuisines,
     selectedDietary,
     priceRange,
-    minRating,
     maxDistance,
     setPriceRange,
-    setMinRating,
     setMaxDistance,
     resetFilters,
   } = useSearchFiltersStore();
 
   // Local state for UI interaction
-  const [localPriceMin, setLocalPriceMin] = useState<number>(
-    priceRange[0] || 1
+  const [selectedPrices, setSelectedPrices] = useState<number[]>(
+    priceRange.length ? [priceRange[0], priceRange[1]] : []
   );
-  const [localPriceMax, setLocalPriceMax] = useState<number>(
-    priceRange[1] || 4
-  );
-  const [localRating, setLocalRating] = useState<number>(minRating);
   const [localDistance, setLocalDistance] = useState<number>(maxDistance);
-  const [distanceModalVisible, setDistanceModalVisible] = useState(false);
 
   // Distance options
   const distanceOptions = [10, 20, 30, 40, 50];
 
   // Check if any changes have been made
   const hasChanges =
-    localPriceMin !== (priceRange[0] || 1) ||
-    localPriceMax !== (priceRange[1] || 4) ||
-    localRating !== minRating ||
+    selectedPrices.length !== (priceRange.length ? 2 : 0) ||
+    (priceRange.length &&
+      (selectedPrices[0] !== priceRange[0] ||
+        selectedPrices[1] !== priceRange[1])) ||
     localDistance !== maxDistance;
 
   // Apply filters and navigate back
   const applyFilters = () => {
-    setPriceRange([localPriceMin, localPriceMax]);
-    setMinRating(localRating);
+    if (selectedPrices.length === 0) {
+      setPriceRange([]);
+    } else {
+      const min = Math.min(...selectedPrices);
+      const max = Math.max(...selectedPrices);
+      setPriceRange([min, max]);
+    }
     setMaxDistance(localDistance);
     router.back();
   };
@@ -59,37 +58,26 @@ export default function Filters() {
   // Reset all filters to default values
   const handleResetFilters = () => {
     resetFilters();
-    setLocalPriceMin(1);
-    setLocalPriceMax(4);
-    setLocalRating(0);
+    setSelectedPrices([]);
     setLocalDistance(50);
   };
 
-  // Handle price button selection
-  const handlePriceMinSelect = (price: number) => {
-    if (price > localPriceMax) {
-      setLocalPriceMax(price);
-    }
-    setLocalPriceMin(price);
-  };
-
-  const handlePriceMaxSelect = (price: number) => {
-    if (price < localPriceMin) {
-      setLocalPriceMin(price);
-    }
-    setLocalPriceMax(price);
-  };
-
-  // Handle rating selection
-  const handleRatingSelect = (rating: number) => {
-    setLocalRating(rating);
+  // Handle toggling price range selection
+  const togglePriceSelection = (price: number) => {
+    setSelectedPrices((prev) => {
+      if (prev.includes(price)) {
+        return prev.filter((p) => p !== price);
+      } else {
+        return [...prev, price];
+      }
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <TopBar type='back' title='Filters' />
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollContainer}>
         {/* Category Buttons */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Categories</Text>
@@ -136,165 +124,70 @@ export default function Filters() {
         {/* Price Range Filter */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Price Range</Text>
+          <Text style={styles.sectionSubtitle}>
+            Select one or more price points
+          </Text>
 
-          <View style={styles.subSection}>
-            <Text style={styles.subSectionTitle}>Minimum Price</Text>
-            <View style={styles.priceButtons}>
-              {[1, 2, 3, 4].map((price) => (
-                <Pressable
-                  key={`min-${price}`}
-                  style={[
-                    styles.priceButton,
-                    localPriceMin === price && styles.selectedPriceButton,
-                  ]}
-                  onPress={() => handlePriceMinSelect(price)}
-                >
-                  <Text
-                    style={[
-                      styles.priceButtonText,
-                      localPriceMin === price && styles.selectedPriceButtonText,
-                    ]}
-                  >
-                    {'$'.repeat(price)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.subSection}>
-            <Text style={styles.subSectionTitle}>Maximum Price</Text>
-            <View style={styles.priceButtons}>
-              {[1, 2, 3, 4].map((price) => (
-                <Pressable
-                  key={`max-${price}`}
-                  style={[
-                    styles.priceButton,
-                    localPriceMax === price && styles.selectedPriceButton,
-                  ]}
-                  onPress={() => handlePriceMaxSelect(price)}
-                >
-                  <Text
-                    style={[
-                      styles.priceButtonText,
-                      localPriceMax === price && styles.selectedPriceButtonText,
-                    ]}
-                  >
-                    {'$'.repeat(price)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* Rating Filter */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Minimum Rating</Text>
-
-          <View style={styles.ratingButtons}>
-            {[0, 1, 2, 3, 4, 5].map((rating) => (
+          <View style={styles.priceButtons}>
+            {[1, 2, 3, 4].map((price) => (
               <Pressable
-                key={`rating-${rating}`}
+                key={`price-${price}`}
                 style={[
-                  styles.ratingButton,
-                  localRating === rating && styles.selectedRatingButton,
+                  styles.priceButton,
+                  selectedPrices.includes(price) && styles.selectedPriceButton,
                 ]}
-                onPress={() => handleRatingSelect(rating)}
+                onPress={() => togglePriceSelection(price)}
               >
                 <Text
                   style={[
-                    styles.ratingButtonText,
-                    localRating === rating && styles.selectedRatingButtonText,
+                    styles.priceButtonText,
+                    selectedPrices.includes(price) &&
+                      styles.selectedPriceButtonText,
                   ]}
                 >
-                  {rating === 0 ? 'Any' : `${rating}+`} {rating > 0 && '⭐'}
+                  {'$'.repeat(price)}
                 </Text>
               </Pressable>
             ))}
           </View>
+
+          {selectedPrices.length > 0 && (
+            <Text style={styles.selectionInfo}>
+              {selectedPrices.length === 1
+                ? `Selected: ${'$'.repeat(selectedPrices[0])}`
+                : `Range: ${'$'.repeat(
+                    Math.min(...selectedPrices)
+                  )} - ${'$'.repeat(Math.max(...selectedPrices))}`}
+            </Text>
+          )}
         </View>
 
         {/* Distance Filter */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Maximum Distance</Text>
 
-          <Pressable
-            style={styles.dropdownButton}
-            onPress={() => setDistanceModalVisible(true)}
-          >
-            <Text style={styles.dropdownButtonText}>
-              {localDistance === 50 ? 'Any distance' : `${localDistance} miles`}
-            </Text>
-            <Ionicons name='chevron-down' size={20} color='#666' />
-          </Pressable>
-
-          {/* Distance Selection Modal */}
-          <Modal
-            animationType='slide'
-            transparent={true}
-            visible={distanceModalVisible}
-            onRequestClose={() => setDistanceModalVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Select Maximum Distance</Text>
-
-                <ScrollView style={styles.modalScrollView}>
-                  <Pressable
-                    style={styles.modalOption}
-                    onPress={() => {
-                      setLocalDistance(50);
-                      setDistanceModalVisible(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.modalOptionText,
-                        localDistance === 50 && styles.selectedModalOptionText,
-                      ]}
-                    >
-                      Any distance
-                    </Text>
-                    {localDistance === 50 && (
-                      <Ionicons name='checkmark' size={20} color='#65C5E3' />
-                    )}
-                  </Pressable>
-
-                  {distanceOptions.slice(0, -1).map((distance) => (
-                    <Pressable
-                      key={`distance-${distance}`}
-                      style={styles.modalOption}
-                      onPress={() => {
-                        setLocalDistance(distance);
-                        setDistanceModalVisible(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.modalOptionText,
-                          localDistance === distance &&
-                            styles.selectedModalOptionText,
-                        ]}
-                      >
-                        {distance} miles
-                      </Text>
-                      {localDistance === distance && (
-                        <Ionicons name='checkmark' size={20} color='#65C5E3' />
-                      )}
-                    </Pressable>
-                  ))}
-                </ScrollView>
-
-                <Pressable
-                  style={styles.modalCancelButton}
-                  onPress={() => setDistanceModalVisible(false)}
+          <View style={styles.distanceButtons}>
+            {distanceOptions.map((distance) => (
+              <Pressable
+                key={`distance-${distance}`}
+                style={[
+                  styles.distanceButton,
+                  localDistance === distance && styles.selectedDistanceButton,
+                ]}
+                onPress={() => setLocalDistance(distance)}
+              >
+                <Text
+                  style={[
+                    styles.distanceButtonText,
+                    localDistance === distance &&
+                      styles.selectedDistanceButtonText,
+                  ]}
                 >
-                  <Text style={styles.modalCancelButtonText}>Cancel</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
+                  {distance === 50 ? 'Any' : `${distance} mi`}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </ScrollView>
 
@@ -321,7 +214,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  scrollView: {
+  scrollContainer: {
     flex: 1,
   },
   section: {
@@ -332,17 +225,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 15,
+    marginBottom: 8,
     color: '#333',
   },
-  subSection: {
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#666',
     marginBottom: 15,
   },
-  subSectionTitle: {
-    fontSize: 16,
+  selectionInfo: {
+    fontSize: 14,
+    color: '#65C5E3',
     fontWeight: '500',
-    marginBottom: 10,
-    color: '#666',
+    marginTop: 10,
+    textAlign: 'center',
   },
   categoryButtons: {
     flexDirection: 'row',
@@ -388,7 +284,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: '#F5F5F5',
     borderRadius: 8,
     marginHorizontal: 5,
@@ -404,13 +300,13 @@ const styles = StyleSheet.create({
   selectedPriceButtonText: {
     color: 'white',
   },
-  ratingButtons: {
+  distanceButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -5,
   },
-  ratingButton: {
-    width: '31%',
+  distanceButton: {
+    width: '18%',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
@@ -418,78 +314,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     margin: 5,
   },
-  selectedRatingButton: {
+  selectedDistanceButton: {
     backgroundColor: '#65C5E3',
   },
-  ratingButtonText: {
+  distanceButtonText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#666',
   },
-  selectedRatingButtonText: {
+  selectedDistanceButtonText: {
     color: 'white',
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-  },
-  dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '70%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 15,
-    color: '#333',
-    textAlign: 'center',
-  },
-  modalScrollView: {
-    marginBottom: 15,
-  },
-  modalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  modalOptionText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  selectedModalOptionText: {
-    color: '#65C5E3',
-    fontWeight: '500',
-  },
-  modalCancelButton: {
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#EEEEEE',
-  },
-  modalCancelButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FA6E59',
   },
   buttonsContainer: {
     flexDirection: 'row',
