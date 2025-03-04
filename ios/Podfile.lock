@@ -30,7 +30,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLinking (7.0.5):
     - ExpoModulesCore
-  - ExpoLocation (18.0.6):
+  - ExpoLocation (18.0.7):
     - ExpoModulesCore
   - ExpoModulesCore (2.2.1):
     - DoubleConversion
@@ -2197,7 +2197,7 @@ SPEC CHECKSUMS:
   ExpoImagePicker: 24e5ba8da111f74519b1e6dc556e0b438b2b8464
   ExpoKeepAwake: 62ff49bbc3bff90d8ee28329190f9ba371bf88e7
   ExpoLinking: 8d12bee174ba0cdf31239706578e29e74a417402
-  ExpoLocation: 350b114ad54777187cf83c88bb4713101cbab6cf
+  ExpoLocation: ab3b9fc6d87d05a13e7a254f2c42609031fe18b7
   ExpoModulesCore: ed4e8e620f35bf23cdd1ccb5c2e6d00cf52483fd
   ExpoSplashScreen: c64f3b577e1cb0b6a2f47d01c528ad7d80d9ae6a
   ExpoSymbols: f3002db15156cd4e505c77b6ea1df5c984db9965

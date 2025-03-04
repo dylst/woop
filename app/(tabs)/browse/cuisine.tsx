@@ -1,264 +1,223 @@
+import { useState, useEffect } from 'react';
 import {
-	View,
-	Text,
-	StyleSheet,
-	SafeAreaView,
-	TextInput,
-	Image,
-	Platform,
-	TouchableOpacity
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import TopBar from "@/components/ui/TopBar";
-interface BrowseCardProps {
-	browseCardName: string;
-	image: any;
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TextInput,
+  Pressable,
+  FlatList,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import TopBar from '@/components/ui/TopBar';
+import { useSearchFiltersStore } from '@/store/searchFiltersStore';
+
+// Define the data structure
+interface CuisineType {
+  id: string;
+  name: string;
 }
 
 export default function Cuisine() {
-	const [searchText, setSearchText] = useState("");
-	const router = useRouter();
+  const router = useRouter();
+  const { selectedCuisines, setCuisines } = useSearchFiltersStore();
 
-	const cuisineTypes = {
-		american: {
-			name: "American",
-			image: require("@/assets/images/food/american.jpg"),
-		},
-		chilean: {
-			name: "Chilean",
-			image: require("@/assets/images/food/Chilean.png"),
-		},
-		chinese: {
-			name: "Chinese",
-			image: require("@/assets/images/food/Chinese.png"),
-		},
-		filipino: {
-			name: "Filipino",
-			image: require("@/assets/images/food/Filipino.png"),
-		},
-		french: {
-			name: "French",
-			image: require("@/assets/images/food/French.png"),
-		},
-		greek: {
-			name: "Greek",
-			image: require("@/assets/images/food/Greek.png"),
-		},
-		indonesian: {
-			name: "Indonesian",
-			image: require("@/assets/images/food/Indonesian.png"),
-		},
-		japanese: {
-			name: "Japanese",
-			image: require("@/assets/images/food/Japanese.png"),
-		},
-		mediterranean: {
-			name: "Mediterranean",
-			image: require("@/assets/images/food/Mediterranean.png"),
-		},
-		mexican: {
-			name: "Mexican",
-			image: require("@/assets/images/food/Mexican.png"),
-		},
-		spanish: {
-			name: "Spanish",
-			image: require("@/assets/images/food/Spanish.png"),
-		},
-		taiwanese: {
-			name: "Taiwanese",
-			image: require("@/assets/images/food/Taiwanese.png"),
-		},
-		thai: {
-			name: "Thai",
-			image: require("@/assets/images/food/Thai.png"),
-		},
-		vietnamese: {
-			name: "Vietnamese",
-			image: require("@/assets/images/food/Vietnamese.png"),
-		},
-	};
+  // Local state for UI
+  const [searchText, setSearchText] = useState('');
+  const [selected, setSelected] = useState<string[]>(selectedCuisines);
+  const [hasChanges, setHasChanges] = useState(false);
 
-	const BrowseCard = ({ browseCardName, image }: BrowseCardProps) => (
-		<View style={styles.card}>
-			<Image
-				source={image}
-				style={styles.cardImage}
-			/>
-			<Text style={styles.cardText}>{browseCardName}</Text>
-		</View>
-	);
+  // Create our cuisine types data
+  const cuisineTypes: CuisineType[] = [
+    { id: 'american', name: 'American' },
+    { id: 'chinese', name: 'Chinese' },
+    { id: 'mexican', name: 'Mexican' },
+    { id: 'italian', name: 'Italian' },
+    { id: 'japanese', name: 'Japanese' },
+    { id: 'thai', name: 'Thai' },
+    { id: 'indian', name: 'Indian' },
+    { id: 'korean', name: 'Korean' },
+    { id: 'mediterranean', name: 'Mediterranean' },
+    { id: 'greek', name: 'Greek' },
+    { id: 'french', name: 'French' },
+    { id: 'spanish', name: 'Spanish' },
+    { id: 'vietnamese', name: 'Vietnamese' },
+    { id: 'turkish', name: 'Turkish' },
+    { id: 'lebanese', name: 'Lebanese' },
+    { id: 'caribbean', name: 'Caribbean' },
+  ];
 
-	return (
-		<SafeAreaView style={styles.safeArea}>
-			<TouchableOpacity
-				style={styles.backButton}
-				onPress={() => router.back()}
-			>
-				<Ionicons
-					name='arrow-back'
-					size={24}
-					color='#333'
-				/>
-				<Text style={styles.backButtonText}>Back</Text>
-			</TouchableOpacity>
-			<View style={styles.topBarContainer}>
-				<TopBar />
-			</View>
-			<View style={styles.container}>
-				{/* <View style={styles.searchContainer}>
-					<Ionicons
-						name='search'
-						size={20}
-						color='#89D5ED'
-					/>
-					<TextInput
-						style={styles.searchInput}
-						placeholder='Search cuisines...'
-						value={searchText}
-						onChangeText={setSearchText}
-						placeholderTextColor='#999'
-					/>
-				</View> */}
+  // Check if we have changes compared to the stored filters
+  useEffect(() => {
+    // Sort both arrays to ensure consistent comparison
+    const sortedSelected = [...selected].sort();
+    const sortedStored = [...selectedCuisines].sort();
 
-				<View style={styles.gridContainer}>
-					{Object.values(cuisineTypes).map((cuisine, index) => (
-						<BrowseCard
-							key={index}
-							browseCardName={cuisine.name}
-							image={cuisine.image}
-						/>
-					))}
-				</View>
-			</View>
-		</SafeAreaView>
-	);
+    // Compare length and contents
+    const isDifferent =
+      sortedSelected.length !== sortedStored.length ||
+      sortedSelected.some((item, index) => item !== sortedStored[index]);
+
+    setHasChanges(isDifferent);
+  }, [selected, selectedCuisines]);
+
+  // Filter cuisine types based on search text
+  const filteredCuisines = cuisineTypes.filter((cuisine) =>
+    cuisine.name.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  // Handle selection/deselection of a cuisine
+  const toggleCuisine = (id: string) => {
+    setSelected((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  // Save selected cuisines to store
+  const saveSelections = () => {
+    setCuisines(selected);
+    router.back();
+  };
+
+  // Render each cuisine item
+  const renderCuisineItem = ({ item }: { item: CuisineType }) => {
+    const isSelected = selected.includes(item.id);
+
+    return (
+      <Pressable
+        style={[
+          styles.cuisineButton,
+          isSelected && styles.selectedCuisineButton,
+        ]}
+        onPress={() => toggleCuisine(item.id)}
+      >
+        <Text
+          style={[
+            styles.cuisineButtonText,
+            isSelected && styles.selectedCuisineButtonText,
+          ]}
+        >
+          {item.name}
+        </Text>
+        {isSelected && (
+          <Ionicons
+            name='checkmark'
+            size={18}
+            color='#FFFFFF'
+            style={styles.checkIcon}
+          />
+        )}
+      </Pressable>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <TopBar type='back' title='Cuisines' />
+
+      <FlatList
+        data={filteredCuisines}
+        renderItem={renderCuisineItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        numColumns={2}
+      />
+
+      <View style={styles.buttonContainer}>
+        <Pressable
+          style={[styles.button, styles.cancelButton]}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.button,
+            styles.saveButton,
+            !hasChanges && styles.disabledButton,
+          ]}
+          onPress={saveSelections}
+          disabled={!hasChanges}
+        >
+          <Text style={styles.saveButtonText}>Save</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-	safeArea: {
-		flex: 1,
-		backgroundColor: "white",
-	},
-	container: {
-		flex: 1,
-	},
-	topBarContainer: {
-		paddingHorizontal: 20,
-		width: "100%",
-		maxWidth: 800,
-		alignSelf: "center",
-		marginBottom: 10,
-	},
-	searchContainer: {
-		flexDirection: "row",
-		alignItems: "center",
-		width: "90%", // Control width
-		borderWidth: 1,
-		borderColor: "#89D5ED",
-		borderRadius: 8,
-		paddingHorizontal: 10,
-		marginTop: 20, // Add margin from top
-		marginBottom: 20, // Add margin before grid
-	},
-	searchIcon: {
-		marginRight: 10,
-	},
-	searchInput: {
-		marginLeft: 8,
-		flex: 1,
-		fontSize: 16,
-		color: "#333",
-	},
-	inputSearch: {
-		flex: 1,
-		height: 40,
-		fontSize: 16,
-		...Platform.select({
-			ios: {
-				// iOS specific styles
-				shadowColor: "transparent",
-			},
-			android: {
-				// Android specific styles
-				elevation: 0,
-			},
-		}),
-	},
-
-	cardText: {
-		flexWrap: "wrap", // Allow text to wrap
-		fontSize: 14, // Smaller font size
-	},
-	gridContainer: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		justifyContent: "space-between",
-		padding: 16,
-	},
-	card: {
-		width: "48%",
-		marginBottom: 16,
-		borderRadius: 20,
-		backgroundColor: "white",
-		elevation: 2,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		flexDirection: "row",
-		alignItems: "center",
-		padding: 8,
-	},
-	cardImage: {
-		width: 50, // Fixed width for thumbnail
-		height: 50, // Fixed height for thumbnail
-		borderRadius: 8, // Rounded corners
-		marginRight: 8, // Space between image and text
-	},
-
-	custineTitleText: {
-		marginTop: 20,
-		fontSize: 24,
-		fontWeight: "bold",
-		marginBottom: 20,
-	},
-
-	titleAndDropDownContainer: {},
-
-	headerContainer: {
-		width: "90%",
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-	},
-	mapButton: {
-		flexDirection: "row",
-		alignItems: "center",
-		backgroundColor: "white",
-		padding: 12,
-		borderRadius: 8,
-		borderWidth: 1,
-		borderColor: "#89D5ED",
-		alignSelf: "flex-end",
-		marginRight: 20,
-		marginBottom: 10,
-	},
-	mapButtonText: {
-		marginLeft: 8,
-		color: "#89D5ED",
-		fontWeight: "500",
-	},
-	backButton: {
-		flexDirection: "row",
-		alignItems: "center",
-		padding: 10,
-		marginLeft: 10,
-	},
-	backButtonText: {
-		marginLeft: 8,
-		fontSize: 16,
-		color: "#333",
-	},
+  container: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  listContainer: {
+    padding: 15,
+  },
+  cuisineButton: {
+    flex: 1,
+    margin: 5,
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  selectedCuisineButton: {
+    backgroundColor: '#65C5E3',
+  },
+  cuisineButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  selectedCuisineButtonText: {
+    color: 'white',
+  },
+  checkIcon: {
+    marginLeft: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+    marginBottom: 50,
+  },
+  button: {
+    flex: 1,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    marginHorizontal: 8,
+  },
+  saveButton: {
+    backgroundColor: '#65C5E3',
+  },
+  cancelButton: {
+    backgroundColor: '#F5F5F5',
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
