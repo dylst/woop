@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import TopBar from '@/components/ui/TopBar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Chip, Button } from 'react-native-paper';
 import { supabase } from '@/supabaseClient';
 import * as Location from 'expo-location';
@@ -180,9 +180,9 @@ export default function BrowseSearch() {
     query,
   ]);
 
-  const goToFilters = () => {
+  const goToFilters = useCallback(() => {
     router.push('/browse/filters');
-  };
+  }, [router]);
 
   // Create a map to store ratings for display
   const [ratingsMap, setRatingsMap] = useState<{
@@ -250,8 +250,17 @@ export default function BrowseSearch() {
     priceRange.length > 0 ||
     maxDistance < 50;
 
+  // Memoize the TopBar component to prevent re-renders
+  const MemoizedTopBar = useMemo(() => {
+    return (
+      <View style={styles.topBarContainer}>
+        <TopBar type='back' title='Search Results' />
+      </View>
+    );
+  }, []); // Empty dependency array means this only renders once
+
   // Render active filters as horizontal scrollable chips
-  const renderActiveFilters = () => {
+  const renderActiveFilters = useCallback(() => {
     if (!hasActiveFilters) return null;
 
     return (
@@ -312,17 +321,27 @@ export default function BrowseSearch() {
         </Pressable>
       </ScrollView>
     );
-  };
+  }, [
+    selectedCuisines,
+    selectedDietary,
+    priceRange,
+    maxDistance,
+    hasActiveFilters,
+    goToFilters,
+  ]);
+
+  // Memoize the search title to prevent re-renders
+  const SearchTitle = useMemo(() => {
+    return <Text style={styles.searchTitle}>Results for "{query || ''}"</Text>;
+  }, [query]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.topBarContainer}>
-          <TopBar type='back' title='Search Results' />
-        </View>
+        {MemoizedTopBar}
 
         <View style={styles.headerContainer}>
-          <Text style={styles.searchTitle}>Results for "{query || ''}"</Text>
+          {SearchTitle}
           {!hasActiveFilters && (
             <Button
               mode='contained'

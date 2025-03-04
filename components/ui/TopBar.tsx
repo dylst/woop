@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,15 @@ const TopBar = ({ type = 'home', title = '' }) => {
   const userId = user?.id;
 
   const [userData, setUserData] = useState<any>(null);
+  // Store a stable random index that won't change on re-renders
+  const randomIndexRef = useRef(0);
+
+  // Initialize the random index only once
+  useEffect(() => {
+    randomIndexRef.current = Math.floor(
+      Math.random() * greetingTemplates.length
+    );
+  }, []);
 
   const fetchProfile = async () => {
     if (!userId) return;
@@ -58,11 +67,13 @@ const TopBar = ({ type = 'home', title = '' }) => {
     'Woop!',
   ];
 
-  // randomize greeting on each page load
+  // Use the stable random index with useMemo
   const greeting = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * greetingTemplates.length);
-    return greetingTemplates[randomIndex].replace('{name}', name);
-  }, [greetingTemplates, name]);
+    return greetingTemplates[randomIndexRef.current].replace(
+      '{name}',
+      name || ''
+    );
+  }, [name]);
 
   const handleNavigationPress = () => {
     router.push(`/notifications`);
