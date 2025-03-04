@@ -80,11 +80,7 @@ const TopBar = ({ type = 'home', title = '' }) => {
   };
 
   const handleBackPress = () => {
-    if (backType === 'replace' && replaceRoute) {
-      router.replace(replaceRoute as RelativePathString);
-    } else {
       router.back();
-    }
   };
 
   return (
