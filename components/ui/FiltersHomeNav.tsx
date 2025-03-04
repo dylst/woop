@@ -8,25 +8,25 @@ import {
     ViewStyle,
     StyleSheet,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Route, useRouter } from 'expo-router';
 
 interface FiltersHomeProps {
     imageSource: ImageSourcePropType | { uri: string };
     title: string;
     style?: StyleProp<ViewStyle>;
-    // routePath?: string;
+    routePath?: Route;
 }
 
 const FiltersHomeNav: React.FC<FiltersHomeProps> = ({
     imageSource,
     title,
     style,
-    // routePath = '/browse',
+    routePath = '/browse',
 }) => {
     const router = useRouter();
 
     const handlePress = () => {
-      router.push("/browse");
+      router.push(routePath);
     };
 
     return (
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
       },
       newBoxText: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontWeight: '800',
         paddingVertical: 16,
       },
 })

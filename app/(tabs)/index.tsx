@@ -7,12 +7,13 @@ import {
   ScrollView,
   RefreshControl
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import FeaturedCard from '@/components/ui/FeaturedCard';
 import FiltersHomeNav from '@/components/ui/FiltersHomeNav';
 import TopBar from '@/components/ui/TopBar';
 import { supabase } from '@/supabaseClient';
 import { ActivityIndicator } from 'react-native-paper';
+import { fetchRatings, RatingInfo } from '@/hooks/fetchHelper';
+import { Route } from 'expo-router';
 
 
 const filtersItems = [
@@ -20,49 +21,125 @@ const filtersItems = [
     id: '1',
     title: 'Cuisine',
     imageSource: require('@/assets/images/try_something_new_cuisine.png'),
+    routePath: '/browse/cuisine' as Route,
   },
   {
     id: '2',
     title: 'Dietary',
     imageSource: require('@/assets/images/try_something_new_dietary.png'),
+    routePath: '/browse/dietary' as Route,
   }
 ]
 
 const HomePage = () => {
   const [featuredItems, setFeaturedItems] = useState<any[]>([]);
+  const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
+
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const shuffleFeaturedItems = <T,>(array: T[]): T[] => {
-    const newArray = array.slice();
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]]
-    }
-    return newArray;
-  }
+  // Randomized featured items with random food items from database
+  // const shuffleFeaturedItems = <T,>(array: T[]): T[] => {
+  //   const newArray = array.slice();
+  //   for (let i = newArray.length - 1; i > 0; i--) {
+  //     const j = Math.floor(Math.random() * (i + 1));
+  //     [newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+  //   }
+  //   return newArray;
+  // }
 
   const fetchFeaturedItems = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('fooditem')
+      .from('featured_items')
       .select(`
-        id,
+        food_item_id,
         food_name,
         restaurant_name,
-        photos`);
+        average_rating,
+        review_count,
+        fooditem:food_item_id (photos)`)
+      .order('average_rating', { ascending: false })
+      .limit(5);
+
     if (error) {
       console.error("Error fetching food items:", error);
     } else if (data) {
-      const randomFive = shuffleFeaturedItems(data).slice(0, 5);
-      setFeaturedItems(randomFive);
+      // const randomFive = shuffleFeaturedItems(data).slice(0, 5); // shuffle the featured items
+      setFeaturedItems(data);
     }
     setLoading(false);
   };
 
+  // const fetchRatings = async (itemIds: string[]) => {
+  //   if (itemIds.length === 0) return;
+  //   setLoading(true);
+
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from('review')
+  //       .select('food_item_id, rating')
+  //       .in('food_item_id', itemIds);
+
+  //     if (error) {
+  //       console.error('Error fetching ratings:', error);
+  //       return;
+  //     }
+  //     if (!data) return;
+
+  //     const map: { [key: string]: { sum: number, count: number } } = {};
+
+  //     data.forEach((row) => {
+  //       if (!map[row.food_item_id]) {
+  //         map[row.food_item_id] = { sum: 0, count: 0 };
+  //       }
+  //       map[row.food_item_id].sum += row.rating;
+  //       map[row.food_item_id].count += 1;
+  //     });
+
+  //     const finalMap: { [key: string]: RatingInfo } = {};
+  //     for (const fid in map) {
+  //       const sum = map[fid].sum;
+  //       const count = map[fid].count;
+  //       finalMap[fid] = {
+  //         average: count === 0 ? 0 : sum / count,
+  //         count,
+  //       };
+  //     }
+
+  //     setRatingMap(finalMap);
+
+  //   } catch (error) {
+  //     console.log(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+
+  const loadRatings = async (itemIds: string[]) => {
+    try {
+      const ratings = await fetchRatings(itemIds);
+      setRatingMap(ratings);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   useEffect(() => {
     fetchFeaturedItems();
   }, []);
+
+  useEffect(() => {
+    if (featuredItems.length > 0) {
+      const itemIds = featuredItems
+        .map((item) => item.id)
+        .filter((id) => id !== undefined && id !== null);
+
+      if (itemIds.length > 0) {
+        loadRatings(itemIds);
+      }
+    }
+  }, [featuredItems]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -92,15 +169,17 @@ const HomePage = () => {
 
         <View style={styles.newSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollViewPadding}>
-            {featuredItems.map((item) => {
-              const imageUrl = Array.isArray(item.photos) && item.photos.length > 0 ? item.photos[0] : '';
+            {featuredItems.map((item, index) => {
+              const imageUrl = item.fooditem?.photos?.[0] ?? '';
+              const averageRating = item.average_rating?.toFixed(1) || '0.0';
               return (
                 <FeaturedCard
-                  key={item.id}
-                  id={item.id}
+                  key={item.food_item_id}
+                  id={item.food_item_id}
                   photos={{ uri: imageUrl }}
                   foodName={item.food_name}
                   restaurantName={item.restaurant_name}
+                  rating={averageRating}
                   style={styles.shadowProp}
                 />
               );
@@ -117,6 +196,7 @@ const HomePage = () => {
               key={item.id}
               imageSource={item.imageSource}
               title={item.title}
+              routePath={item.routePath}
               style={styles.shadowProp}
             />
           ))}
@@ -142,7 +222,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginVertical: 10,
     paddingHorizontal: 20,
   },
