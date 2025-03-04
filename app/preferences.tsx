@@ -8,6 +8,7 @@ import {
   Pressable,
   Switch,
   Image,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -17,6 +18,7 @@ import { useState, useEffect } from 'react';
 // import supabase in a future implementation
 import { supabase } from '@/supabaseClient';
 import { useUser } from './context/UserContext';
+import * as Notifications from 'expo-notifications';
 
 // Add this interface for food items
 interface FoodItem {
@@ -98,6 +100,8 @@ const PreferencesScreen = () => {
     setHasChanges(true);
   };
 
+  // enable or disable notifications
+
   const toggleNotification = (type: 'push' | 'email') => {
     setPreferences((prev) => ({
       ...prev,
@@ -107,6 +111,50 @@ const PreferencesScreen = () => {
       },
     }));
     setHasChanges(true);
+  };
+
+  // push notifications
+  const handlePushToggle = async (value: boolean) => {
+    // update local state first
+    toggleNotification('push'); // toggles value in state
+    if (!userId) return;
+    if (value) {
+      // enable push notifications
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        Alert.alert('Push notifications not granted.')
+        return;
+      }
+
+      const tokenData = await Notifications.getExpoPushTokenAsync();
+      const token = tokenData.data;
+
+      // update user profile with expo_push_token
+      const { error } = await supabase
+        .from('profile')
+        .update({ expo_push_token: token })
+        .eq('id', userId);
+      
+      if (error) {
+        console.error('Error updating push token:', error);
+      }
+    } else {
+      // disable push notifications: clear token from backend
+      const { error } = await supabase
+        .from('profile')
+        .update({ expo_push_token: null })
+        .eq('id', userId);
+      
+      if (error) {
+        console.error('Error clearing push token:', error);
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -281,7 +329,7 @@ const PreferencesScreen = () => {
                 }}
                 thumbColor={'#fff'}
                 ios_backgroundColor='#e2e2e2'
-                onValueChange={() => toggleNotification('push')}
+                onValueChange={handlePushToggle}
                 value={preferences.notifications.push}
               />
             </View>
