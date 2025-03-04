@@ -9,6 +9,8 @@ interface FilterOptions {
     latitude: number;
     longitude: number;
   };
+  selectedCuisines?: string[];
+  selectedDietary?: string[];
 }
 
 export const searchFoodItems = async (
@@ -44,7 +46,7 @@ export const searchFoodItems = async (
 
     // Since we can't use SQL for searching within array elements through Supabase API,
     // we'll filter the results in JavaScript to include items where array elements match
-    const allResults = (data || []).filter((item) => {
+    let allResults = (data || []).filter((item) => {
       // First check if this item was already included in the text search results
       const matchesText =
         (item.food_name &&
@@ -73,49 +75,32 @@ export const searchFoodItems = async (
       return allResults;
     }
 
-    // Apply price range filter
-    let filteredResults = allResults;
-    if (filters.priceRange && filters.priceRange.length > 0) {
-      filteredResults = filteredResults.filter((item) =>
-        filters.priceRange!.includes(item.price_range)
-      );
+    // Apply cuisine and dietary filters
+    if (filters.selectedCuisines && filters.selectedCuisines.length > 0) {
+      allResults = allResults.filter((item) => {
+        if (!item.cuisine_type || !Array.isArray(item.cuisine_type))
+          return false;
+        return filters.selectedCuisines!.some((cuisine) =>
+          item.cuisine_type.includes(cuisine)
+        );
+      });
     }
 
-    // If we need to filter by rating, fetch ratings for these items
-    if (filters.minRating && filters.minRating > 0) {
-      // Extract food item IDs for rating lookup
-      const foodIds = filteredResults.map((item) => item.id);
+    if (filters.selectedDietary && filters.selectedDietary.length > 0) {
+      allResults = allResults.filter((item) => {
+        if (!item.dietary_tags || !Array.isArray(item.dietary_tags))
+          return false;
+        return filters.selectedDietary!.some((tag) =>
+          item.dietary_tags.includes(tag)
+        );
+      });
+    }
 
-      if (foodIds.length === 0) {
-        return [];
-      }
-
-      // Fetch ratings for these items
-      const { data: ratingsData, error: ratingsError } = await supabase
-        .from('review')
-        .select('food_item_id, rating')
-        .in('food_item_id', foodIds);
-
-      if (ratingsError) {
-        console.error('Error fetching ratings:', ratingsError);
-      } else if (ratingsData) {
-        // Calculate average ratings
-        const ratingsMap: { [key: string]: { sum: number; count: number } } =
-          {};
-        ratingsData.forEach((review) => {
-          if (!ratingsMap[review.food_item_id]) {
-            ratingsMap[review.food_item_id] = { sum: 0, count: 0 };
-          }
-          ratingsMap[review.food_item_id].sum += review.rating;
-          ratingsMap[review.food_item_id].count += 1;
-        });
-
-        // Filter by minimum rating
-        filteredResults = filteredResults.filter((item) => {
-          const rating = ratingsMap[item.id];
-          return rating && rating.sum / rating.count >= filters.minRating!;
-        });
-      }
+    // Apply price range filter
+    if (filters.priceRange && filters.priceRange.length > 0) {
+      allResults = allResults.filter((item) =>
+        filters.priceRange!.includes(item.price_range)
+      );
     }
 
     // If we need to filter by distance, fetch restaurant locations
@@ -126,7 +111,7 @@ export const searchFoodItems = async (
     ) {
       // Extract unique restaurant names using an object as a map
       const restaurantNamesMap: { [key: string]: boolean } = {};
-      filteredResults.forEach((item) => {
+      allResults.forEach((item) => {
         if (item.restaurant_name) {
           restaurantNamesMap[item.restaurant_name] = true;
         }
@@ -158,7 +143,7 @@ export const searchFoodItems = async (
         });
 
         // Filter by distance
-        filteredResults = filteredResults.filter((item) => {
+        allResults = allResults.filter((item) => {
           const restaurant = restaurantMap[item.restaurant_name];
           if (!restaurant || !restaurant.latitude || !restaurant.longitude) {
             return false; // Skip if no location data
@@ -176,7 +161,7 @@ export const searchFoodItems = async (
       }
     }
 
-    return filteredResults;
+    return allResults;
   } catch (err) {
     console.error('Unexpected error:', err);
     return [];

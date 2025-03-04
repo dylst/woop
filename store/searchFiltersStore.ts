@@ -5,14 +5,12 @@ interface SearchFiltersState {
   selectedCuisines: string[];
   selectedDietary: string[];
   priceRange: number[];
-  minRating: number;
   maxDistance: number;
 
   // Actions
   setCuisines: (cuisines: string[]) => void;
   setDietary: (dietary: string[]) => void;
   setPriceRange: (range: number[]) => void;
-  setMinRating: (rating: number) => void;
   setMaxDistance: (distance: number) => void;
   resetFilters: () => void;
 
@@ -35,14 +33,12 @@ export const useSearchFiltersStore = create<SearchFiltersState>(
     selectedCuisines: [],
     selectedDietary: [],
     priceRange: [],
-    minRating: 0,
     maxDistance: 50, // Default to 50km/miles
 
     // Set actions
     setCuisines: (cuisines: string[]) => set({ selectedCuisines: cuisines }),
     setDietary: (dietary: string[]) => set({ selectedDietary: dietary }),
     setPriceRange: (range: number[]) => set({ priceRange: range }),
-    setMinRating: (rating: number) => set({ minRating: rating }),
     setMaxDistance: (distance: number) => set({ maxDistance: distance }),
 
     // Reset all filters
@@ -51,7 +47,6 @@ export const useSearchFiltersStore = create<SearchFiltersState>(
         selectedCuisines: [],
         selectedDietary: [],
         priceRange: [],
-        minRating: 0,
         maxDistance: 50,
       }),
 

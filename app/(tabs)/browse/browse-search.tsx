@@ -12,16 +12,55 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import TopBar from '@/components/ui/TopBar';
 import { useState, useEffect } from 'react';
-import { Slider } from '@miblanchard/react-native-slider';
 import { Chip, Button } from 'react-native-paper';
 import { supabase } from '@/supabaseClient';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { searchFoodItems, calculateDistance } from '@/app/api/search';
+import { useSearchFiltersStore } from '@/store/searchFiltersStore';
+
+// Maps for cuisine and dietary display names
+const cuisineDisplayNames: Record<string, string> = {
+  american: 'American',
+  chinese: 'Chinese',
+  mexican: 'Mexican',
+  italian: 'Italian',
+  japanese: 'Japanese',
+  thai: 'Thai',
+  indian: 'Indian',
+  korean: 'Korean',
+  mediterranean: 'Mediterranean',
+  greek: 'Greek',
+  french: 'French',
+  spanish: 'Spanish',
+  vietnamese: 'Vietnamese',
+  turkish: 'Turkish',
+  lebanese: 'Lebanese',
+  caribbean: 'Caribbean',
+};
+
+const dietaryDisplayNames: Record<string, string> = {
+  glutenFree: 'Gluten Free',
+  halal: 'Halal',
+  vegan: 'Vegan',
+  vegetarian: 'Vegetarian',
+  keto: 'Keto',
+  dairyFree: 'Dairy Free',
+  nutFree: 'Nut Free',
+  organic: 'Organic',
+  soyFree: 'Soy Free',
+  sugarFree: 'Sugar Free',
+  paleo: 'Paleo',
+  pescatarian: 'Pescatarian',
+};
 
 export default function BrowseSearch() {
-  const { query, results, priceRange, minRating, maxDistance } =
-    useLocalSearchParams();
+  const { query, results } = useLocalSearchParams();
+  const router = useRouter();
+
+  // Access filters from store
+  const { selectedCuisines, selectedDietary, priceRange, maxDistance } =
+    useSearchFiltersStore();
 
   // Safely parse initial results with error handling
   const [initialResults, setInitialResults] = useState<any[]>(() => {
@@ -38,22 +77,12 @@ export default function BrowseSearch() {
   });
 
   const [showFilters, setShowFilters] = useState(false);
-  const [filterPriceRange, setFilterPriceRange] = useState<string[]>(
-    priceRange && typeof priceRange === 'string' ? priceRange.split(',') : []
-  );
-  const [filterMinRating, setFilterMinRating] = useState<number>(
-    minRating && !isNaN(Number(minRating)) ? Number(minRating) : 0
-  );
-  const [filterMaxDistance, setFilterMaxDistance] = useState<number>(
-    maxDistance && !isNaN(Number(maxDistance)) ? Number(maxDistance) : 10 // Default to 10 miles
-  );
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
   const [filteredResults, setFilteredResults] = useState<any[]>(initialResults);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   // Initial search if query exists but no results were passed
   useEffect(() => {
@@ -97,39 +126,43 @@ export default function BrowseSearch() {
     })();
   }, []);
 
-  // Apply filters when they change
+  // Apply filters when they change or when initial results change
   useEffect(() => {
     const applyFilters = async () => {
-      // Only apply filters if we have at least one filter active
-      if (
-        (filterPriceRange.length > 0 ||
-          filterMinRating > 0 ||
-          filterMaxDistance < 10) &&
-        query
-      ) {
+      // Only apply filters if we have initial results and a query
+      if (initialResults.length > 0 && query) {
         setLoading(true);
         try {
-          // Use the searchFoodItems function with filters
-          const filtered = await searchFoodItems(query as string, {
-            priceRange:
-              filterPriceRange.length > 0
-                ? filterPriceRange.map(Number)
-                : undefined,
-            minRating: filterMinRating > 0 ? filterMinRating : undefined,
-            maxDistance: filterMaxDistance > 0 ? filterMaxDistance : undefined,
-            userLocation: userLocation || undefined,
-          });
+          // Check if any filters are active
+          const hasActiveFilters =
+            (priceRange && priceRange.length > 0) ||
+            (maxDistance && maxDistance < 50) ||
+            (selectedCuisines && selectedCuisines.length > 0) ||
+            (selectedDietary && selectedDietary.length > 0);
 
-          setFilteredResults(filtered);
+          if (hasActiveFilters) {
+            // Use the searchFoodItems function with filters from store
+            const filtered = await searchFoodItems(query as string, {
+              priceRange: priceRange.length > 0 ? priceRange : undefined,
+              maxDistance: maxDistance < 50 ? maxDistance : undefined,
+              userLocation: userLocation || undefined,
+              selectedCuisines:
+                selectedCuisines.length > 0 ? selectedCuisines : undefined,
+              selectedDietary:
+                selectedDietary.length > 0 ? selectedDietary : undefined,
+            });
+
+            setFilteredResults(filtered);
+          } else {
+            // If no filters are active, use initial results
+            setFilteredResults(initialResults);
+          }
         } catch (error) {
           console.error('Error applying filters:', error);
           setFilteredResults(initialResults);
         } finally {
           setLoading(false);
         }
-      } else if (initialResults.length > 0) {
-        // If no filters but we have initial results, use them
-        setFilteredResults(initialResults);
       }
     };
 
@@ -138,41 +171,17 @@ export default function BrowseSearch() {
       applyFilters();
     }
   }, [
-    filterPriceRange,
-    filterMinRating,
-    filterMaxDistance,
+    priceRange,
+    maxDistance,
+    selectedCuisines,
+    selectedDietary,
     userLocation,
-    query,
     initialResults,
+    query,
   ]);
 
-  const handleApplyFilters = () => {
-    setShowFilters(false);
-
-    // Only update URL params if we have results to filter
-    if (query) {
-      // Update URL params to reflect current filters
-      router.setParams({
-        query: query as string,
-        priceRange: filterPriceRange.join(','),
-        minRating: filterMinRating.toString(),
-        maxDistance: filterMaxDistance.toString(),
-      });
-    }
-  };
-
-  const resetFilters = () => {
-    setFilterPriceRange([]);
-    setFilterMinRating(0);
-    setFilterMaxDistance(10);
-  };
-
-  const togglePriceFilter = (price: string) => {
-    if (filterPriceRange.includes(price)) {
-      setFilterPriceRange(filterPriceRange.filter((p) => p !== price));
-    } else {
-      setFilterPriceRange([...filterPriceRange, price]);
-    }
+  const goToFilters = () => {
+    router.push('/browse/filters');
   };
 
   // Create a map to store ratings for display
@@ -234,6 +243,76 @@ export default function BrowseSearch() {
     fetchRatings();
   }, [filteredResults]);
 
+  // Check if any filters are active
+  const hasActiveFilters =
+    selectedCuisines.length > 0 ||
+    selectedDietary.length > 0 ||
+    priceRange.length > 0 ||
+    maxDistance < 50;
+
+  // Render active filters as horizontal scrollable chips
+  const renderActiveFilters = () => {
+    if (!hasActiveFilters) return null;
+
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersChipContainer}
+      >
+        {selectedCuisines.map((cuisine) => (
+          <Chip
+            key={`cuisine-${cuisine}`}
+            style={styles.filterChip}
+            textStyle={styles.filterChipText}
+            mode='flat'
+          >
+            {cuisineDisplayNames[cuisine] || cuisine}
+          </Chip>
+        ))}
+
+        {selectedDietary.map((diet) => (
+          <Chip
+            key={`diet-${diet}`}
+            style={styles.filterChip}
+            textStyle={styles.filterChipText}
+            mode='flat'
+          >
+            {dietaryDisplayNames[diet] || diet}
+          </Chip>
+        ))}
+
+        {priceRange.length > 0 && (
+          <Chip
+            style={styles.filterChip}
+            textStyle={styles.filterChipText}
+            mode='flat'
+          >
+            {priceRange.length === 1
+              ? `${'$'.repeat(priceRange[0])}`
+              : `${'$'.repeat(Math.min(...priceRange))}-${'$'.repeat(
+                  Math.max(...priceRange)
+                )}`}
+          </Chip>
+        )}
+
+        {maxDistance < 50 && (
+          <Chip
+            style={styles.filterChip}
+            textStyle={styles.filterChipText}
+            mode='flat'
+          >
+            {`${maxDistance} mi`}
+          </Chip>
+        )}
+
+        <Pressable onPress={goToFilters} style={styles.editFiltersButton}>
+          <Text style={styles.editFiltersText}>Edit Filters</Text>
+        </Pressable>
+      </ScrollView>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -243,133 +322,46 @@ export default function BrowseSearch() {
 
         <View style={styles.headerContainer}>
           <Text style={styles.searchTitle}>Results for "{query || ''}"</Text>
-          <Button
-            mode='contained'
-            onPress={() => setShowFilters(!showFilters)}
-            style={styles.filterButton}
-            icon='filter-variant'
-            loading={loading}
-            disabled={loading}
-          >
-            {showFilters ? 'Hide Filters' : 'Filters'}
-          </Button>
+          {!hasActiveFilters && (
+            <Button
+              mode='contained'
+              onPress={goToFilters}
+              style={styles.filterButton}
+              icon='filter-variant'
+            >
+              Filters
+            </Button>
+          )}
         </View>
 
-        {loading && (
+        {/* Active Filters Display */}
+        {renderActiveFilters()}
+
+        {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size='large' color='#65C5E3' />
             <Text style={styles.loadingText}>Loading results...</Text>
           </View>
-        )}
-
-        {!loading && filteredResults.length === 0 && (
+        ) : filteredResults.length === 0 ? (
           <View style={styles.noResultsContainer}>
-            <Ionicons name='search-outline' size={48} color='#CCCCCC' />
+            <Ionicons name='search-outline' size={60} color='#CCC' />
             <Text style={styles.noResultsText}>No results found</Text>
-            <Text style={styles.noResultsSubtext}>
-              Try adjusting your filters or search for something else
+            <Text style={styles.noResultsSubText}>
+              Try adjusting your search or filters
             </Text>
           </View>
-        )}
-
-        {showFilters && (
-          <ScrollView style={styles.filtersContainer}>
-            <Text style={styles.filterSectionTitle}>Price Range</Text>
-            <View style={styles.priceFilters}>
-              {['1', '2', '3', '4'].map((price) => (
-                <Chip
-                  key={price}
-                  selected={filterPriceRange.includes(price)}
-                  onPress={() => togglePriceFilter(price)}
-                  style={[
-                    styles.priceChip,
-                    filterPriceRange.includes(price) && styles.selectedChip,
-                  ]}
-                  textStyle={
-                    filterPriceRange.includes(price)
-                      ? styles.selectedChipText
-                      : {}
-                  }
-                >
-                  {'$'.repeat(Number(price))}
-                </Chip>
-              ))}
-            </View>
-
-            <Text style={styles.filterSectionTitle}>
-              Minimum Rating: {filterMinRating.toFixed(1)}
-            </Text>
-            <View style={styles.ratingSliderContainer}>
-              <View style={styles.sliderLabels}>
-                <Text>0</Text>
-                <Text>5</Text>
-              </View>
-              <Slider
-                value={filterMinRating}
-                onValueChange={(values) =>
-                  setFilterMinRating(Number(values[0]))
-                }
-                minimumValue={0}
-                maximumValue={5}
-                step={0.5}
-                minimumTrackTintColor='#65C5E3'
-                maximumTrackTintColor='#D3D3D3'
-                thumbTintColor='#65C5E3'
-              />
-            </View>
-
-            <Text style={styles.filterSectionTitle}>
-              Maximum Distance: {filterMaxDistance} miles
-            </Text>
-            <View style={styles.distanceSliderContainer}>
-              <View style={styles.sliderLabels}>
-                <Text>1</Text>
-                <Text>50</Text>
-              </View>
-              <Slider
-                value={filterMaxDistance}
-                onValueChange={(values) =>
-                  setFilterMaxDistance(Number(values[0]))
-                }
-                minimumValue={1}
-                maximumValue={50}
-                step={1}
-                minimumTrackTintColor='#65C5E3'
-                maximumTrackTintColor='#D3D3D3'
-                thumbTintColor='#65C5E3'
-              />
-            </View>
-
-            <View style={styles.filterActions}>
-              <Button
-                mode='outlined'
-                onPress={resetFilters}
-                style={styles.resetButton}
-              >
-                Reset
-              </Button>
-              <Button
-                mode='contained'
-                onPress={handleApplyFilters}
-                style={styles.applyButton}
-              >
-                Apply Filters
-              </Button>
-            </View>
-          </ScrollView>
-        )}
-
-        {!loading && filteredResults.length > 0 && (
+        ) : (
           <FlatList
             data={filteredResults}
-            keyExtractor={(item, index) => `${item?.id || 'item'}-${index}`}
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <Pressable
                 style={styles.resultItem}
                 onPress={() => {
-                  if (item?.id) {
-                    router.push(`/food/${item.id}`);
-                  }
+                  router.push({
+                    pathname: '/food/[foodItemId]',
+                    params: { foodItemId: item.id },
+                  });
                 }}
               >
                 <Image
@@ -422,83 +414,94 @@ const styles = StyleSheet.create({
   },
   topBarContainer: {
     width: '100%',
-    zIndex: 10,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    marginBottom: 10,
   },
   searchTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
+    fontWeight: 'bold',
+    color: '#333',
   },
   filterButton: {
     backgroundColor: '#65C5E3',
   },
-  filtersContainer: {
-    padding: 20,
-    backgroundColor: '#F9F9F9',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  filterSectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-    marginTop: 15,
-  },
-  priceFilters: {
+  filtersChipContainer: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 15,
+    alignItems: 'center',
   },
-  priceChip: {
-    marginHorizontal: 5,
+  filterChip: {
+    marginRight: 8,
+    backgroundColor: '#EDF8FC',
+    height: 32,
   },
-  selectedChip: {
+  filterChipText: {
+    fontSize: 12,
+    color: '#333',
+  },
+  editFiltersButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: '#65C5E3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 32,
   },
-  selectedChipText: {
+  editFiltersText: {
     color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
   },
-  ratingSliderContainer: {
-    marginBottom: 20,
+  filtersContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
-  distanceSliderContainer: {
-    marginBottom: 20,
+  filtersText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  filterActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  loadingText: {
     marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
-  resetButton: {
+  noResultsContainer: {
     flex: 1,
-    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  applyButton: {
-    flex: 2,
-    backgroundColor: '#65C5E3',
+  noResultsText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 20,
   },
-  resultsList: {
-    flex: 1,
-  },
-  resultsContent: {
-    padding: 10,
+  noResultsSubText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
   },
   resultItem: {
     flexDirection: 'row',
     padding: 15,
     backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
     borderRadius: 8,
     marginBottom: 10,
     shadowColor: '#000',
@@ -521,11 +524,12 @@ const styles = StyleSheet.create({
   foodName: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#333',
   },
   restaurantName: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
+    marginTop: 5,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -546,32 +550,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 5,
   },
-  loadingContainer: {
+  resultsList: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  noResultsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-  },
-  noResultsText: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 15,
-    color: '#333',
-  },
-  noResultsSubtext: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 5,
+  resultsContent: {
+    padding: 10,
   },
 });

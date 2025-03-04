@@ -57,12 +57,10 @@ export default function Browse() {
     selectedCuisines,
     selectedDietary,
     priceRange,
-    minRating,
     maxDistance,
     removeCuisine,
     removeDietary,
     setPriceRange,
-    setMinRating,
     setMaxDistance,
   } = useSearchFiltersStore();
 
@@ -71,7 +69,6 @@ export default function Browse() {
     selectedCuisines.length > 0 ||
     selectedDietary.length > 0 ||
     priceRange.length > 0 ||
-    minRating > 0 ||
     maxDistance < 50;
 
   // Handle search submission
@@ -97,8 +94,6 @@ export default function Browse() {
       removeDietary(value);
     } else if (type === 'price') {
       setPriceRange([]);
-    } else if (type === 'rating') {
-      setMinRating(0);
     } else if (type === 'distance') {
       setMaxDistance(50);
     }
@@ -182,13 +177,6 @@ export default function Browse() {
             <FilterChip
               label={`Price: ${formatPriceRange()}`}
               onRemove={() => handleRemoveFilter('price', '')}
-            />
-          )}
-
-          {minRating > 0 && (
-            <FilterChip
-              label={`${minRating}+ ⭐️`}
-              onRemove={() => handleRemoveFilter('rating', '')}
             />
           )}
 

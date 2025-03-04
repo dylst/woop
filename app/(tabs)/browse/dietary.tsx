@@ -134,11 +134,26 @@ export default function Dietary() {
         numColumns={2}
       />
 
-      {hasChanges && (
-        <Pressable style={styles.saveButton} onPress={saveSelections}>
+      <View style={styles.buttonContainer}>
+        <Pressable
+          style={[styles.button, styles.cancelButton]}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            styles.button,
+            styles.saveButton,
+            !hasChanges && styles.disabledButton,
+          ]}
+          onPress={saveSelections}
+          disabled={!hasChanges}
+        >
           <Text style={styles.saveButtonText}>Save</Text>
         </Pressable>
-      )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -189,14 +204,38 @@ const styles = StyleSheet.create({
   checkIcon: {
     marginLeft: 5,
   },
-  saveButton: {
-    backgroundColor: '#65C5E3',
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE',
+  },
+  button: {
+    flex: 1,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 8,
+    marginHorizontal: 8,
+  },
+  saveButton: {
+    backgroundColor: '#65C5E3',
+  },
+  cancelButton: {
+    backgroundColor: '#F5F5F5',
+  },
+  disabledButton: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.7,
   },
   saveButtonText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButtonText: {
+    color: '#333',
     fontSize: 16,
     fontWeight: 'bold',
   },

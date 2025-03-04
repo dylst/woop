@@ -26,10 +26,14 @@ export default function Filters() {
   } = useSearchFiltersStore();
 
   // Local state for UI interaction
-  const [selectedPrices, setSelectedPrices] = useState<number[]>(
-    priceRange.length ? priceRange : []
-  );
-  const [localDistance, setLocalDistance] = useState<number>(maxDistance);
+  const [selectedPrices, setSelectedPrices] = useState<number[]>([]);
+  const [localDistance, setLocalDistance] = useState<number>(50);
+
+  // Initialize local state from store when component mounts
+  useEffect(() => {
+    setSelectedPrices(priceRange);
+    setLocalDistance(maxDistance);
+  }, [priceRange, maxDistance]);
 
   // Distance options
   const distanceOptions = [10, 20, 30, 40, 50];
@@ -54,9 +58,8 @@ export default function Filters() {
 
   // Save filters without navigating
   const saveFilters = () => {
-    // Sort the selected prices to ensure consistent min/max
-    const sortedPrices = [...selectedPrices].sort((a, b) => a - b);
-    setPriceRange(sortedPrices);
+    // Save to store
+    setPriceRange(selectedPrices);
     setMaxDistance(localDistance);
   };
 
@@ -206,22 +209,22 @@ export default function Filters() {
             ))}
           </View>
         </View>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonsContainer}>
+          <Pressable style={styles.resetButton} onPress={handleResetFilters}>
+            <Text style={styles.resetButtonText}>Reset All</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.applyButton, !hasChanges && styles.disabledButton]}
+            onPress={applyFilters}
+            disabled={!hasChanges}
+          >
+            <Text style={styles.applyButtonText}>Save Filters</Text>
+          </Pressable>
+        </View>
       </ScrollView>
-
-      {/* Action Buttons */}
-      <View style={styles.buttonsContainer}>
-        <Pressable style={styles.resetButton} onPress={handleResetFilters}>
-          <Text style={styles.resetButtonText}>Reset All</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.applyButton, !hasChanges && styles.disabledButton]}
-          onPress={applyFilters}
-          disabled={!hasChanges}
-        >
-          <Text style={styles.applyButtonText}>Save Filters</Text>
-        </Pressable>
-      </View>
     </SafeAreaView>
   );
 }
@@ -250,16 +253,10 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 15,
   },
-  selectionInfo: {
-    fontSize: 14,
-    color: '#65C5E3',
-    fontWeight: '500',
-    marginTop: 10,
-    textAlign: 'center',
-  },
   categoryButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 10,
   },
   categoryButton: {
     flex: 1,
@@ -296,12 +293,13 @@ const styles = StyleSheet.create({
   priceButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 10,
   },
   priceButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    padding: 15,
     backgroundColor: '#F5F5F5',
     borderRadius: 8,
     marginHorizontal: 5,
@@ -312,24 +310,30 @@ const styles = StyleSheet.create({
   priceButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#666',
+    color: '#333',
   },
   selectedPriceButtonText: {
     color: 'white',
   },
+  selectionInfo: {
+    marginTop: 15,
+    textAlign: 'center',
+    color: '#555',
+    fontStyle: 'italic',
+  },
   distanceButtons: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -5,
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
   distanceButton: {
-    width: '18%',
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    padding: 15,
     backgroundColor: '#F5F5F5',
     borderRadius: 8,
-    margin: 5,
+    marginHorizontal: 5,
   },
   selectedDistanceButton: {
     backgroundColor: '#65C5E3',
@@ -337,7 +341,7 @@ const styles = StyleSheet.create({
   distanceButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
+    color: '#333',
   },
   selectedDistanceButtonText: {
     color: 'white',
@@ -346,29 +350,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#EEEEEE',
+    padding: 15,
   },
   resetButton: {
     flex: 1,
+    padding: 15,
+    marginRight: 10,
+    backgroundColor: '#F1F1F1',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRightWidth: 1,
-    borderRightColor: '#EEEEEE',
+    borderRadius: 8,
   },
   resetButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#666',
+    color: '#333',
   },
   applyButton: {
     flex: 2,
+    padding: 15,
+    backgroundColor: '#65C5E3',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    backgroundColor: '#65C5E3',
+    borderRadius: 8,
   },
   disabledButton: {
-    backgroundColor: '#A8D4E5',
+    backgroundColor: '#CCCCCC',
   },
   applyButtonText: {
     fontSize: 16,
