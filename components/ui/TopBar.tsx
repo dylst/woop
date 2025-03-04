@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '@/components/ui/SearchBar';
-import { useNavigation, useRouter } from 'expo-router';
+import { RelativePathString, useNavigation, useRouter } from 'expo-router';
 import { useUser } from '@/app/context/UserContext';
 import { supabase } from '@/supabaseClient';
 
@@ -80,7 +80,7 @@ const TopBar = ({ type = 'home', title = '' }) => {
   };
 
   const handleBackPress = () => {
-    router.back();
+      router.back();
   };
 
   return (
