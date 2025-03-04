@@ -128,7 +128,7 @@ const MapScreen = () => {
 										<View style={styles.mapMarkerContainer}>
 											<Text style={styles.mapMarkerTitle}>{marker.name}</Text>
 											<Text style={styles.mapMarkerDescription}>
-												{`${marker.addressLin ?? ''}, ${marker.city ?? ''}, ${marker.state ?? ''}, ${zipcodeString}`}
+												{`${marker.addressLin ?? ''}, ${marker.city ?? ''}, ${marker.state ?? ''} ${zipcodeString}`}
 											</Text>
 											{formattedHours.length > 0 ? (
 												formattedHours.map((block, i) => (
