@@ -13,6 +13,13 @@ interface FilterOptions {
   selectedDietary?: string[];
 }
 
+/**
+ * Converts a numeric price range (1-4) to a literal dollar sign string ("$" to "$$$$")
+ */
+const convertPriceToSymbol = (price: number): string => {
+  return '$'.repeat(price);
+};
+
 export const searchFoodItems = async (
   keyword: string,
   filters?: FilterOptions
@@ -36,8 +43,25 @@ export const searchFoodItems = async (
       // Use ilike for text fields
       .or(
         `food_name.ilike.${likePattern},description.ilike.${likePattern},restaurant_name.ilike.${likePattern}`
-      )
-      .limit(100);
+      );
+
+    // Apply price range filter directly in query if provided
+    if (filters?.priceRange && filters.priceRange.length > 0) {
+      // Convert numeric price ranges to literal "$" strings
+      const priceSymbols = filters.priceRange.map((price) =>
+        convertPriceToSymbol(price)
+      );
+      console.log(
+        'Applying price range filter directly in query with symbols:',
+        priceSymbols
+      );
+
+      // Use the .in() operator for the price_range column
+      query = query.in('price_range', priceSymbols);
+    }
+
+    // Apply limit to query
+    query = query.limit(100);
 
     // Execute the query
     const { data, error } = await query;
@@ -209,29 +233,8 @@ export const searchFoodItems = async (
       );
     }
 
-    // Apply price range filter
-    if (filters.priceRange && filters.priceRange.length > 0) {
-      // OR logic for price - any selected price point is acceptable
-      const beforeCount = allResults.length;
-      console.log('APPLYING PRICE FILTER:');
-      console.log('Selected price ranges:', filters.priceRange);
-
-      allResults = allResults.filter((item) => {
-        if (item.price_range === null || item.price_range === undefined) {
-          console.log(`Item ${item.id} has no price range, skipping`);
-          return false;
-        }
-
-        const matches = filters.priceRange!.includes(item.price_range);
-        console.log(
-          `Item ${item.id} price ${item.price_range} match: ${matches}`
-        );
-        return matches;
-      });
-      console.log(
-        `After price filter: ${beforeCount} -> ${allResults.length} results`
-      );
-    }
+    // We've already applied price range filter in the initial query
+    console.log('Price range filter was applied directly in database query');
 
     // If we've filtered out all results, let's debug why
     if (allResults.length === 0 && initialFilteredResults.length > 0) {
