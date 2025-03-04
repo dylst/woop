@@ -27,7 +27,7 @@ export default function Filters() {
 
   // Local state for UI interaction
   const [selectedPrices, setSelectedPrices] = useState<number[]>(
-    priceRange.length ? [priceRange[0], priceRange[1]] : []
+    priceRange.length ? priceRange : []
   );
   const [localDistance, setLocalDistance] = useState<number>(maxDistance);
 
@@ -36,23 +36,28 @@ export default function Filters() {
 
   // Check if any changes have been made
   const hasChanges =
-    selectedPrices.length !== (priceRange.length ? 2 : 0) ||
-    (priceRange.length &&
-      (selectedPrices[0] !== priceRange[0] ||
-        selectedPrices[1] !== priceRange[1])) ||
-    localDistance !== maxDistance;
+    !arraysEqual(selectedPrices, priceRange) || localDistance !== maxDistance;
+
+  // Helper function to compare arrays
+  function arraysEqual(a: number[], b: number[]): boolean {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort((x, y) => x - y);
+    const sortedB = [...b].sort((x, y) => x - y);
+    return sortedA.every((val, idx) => val === sortedB[idx]);
+  }
 
   // Apply filters and navigate back
   const applyFilters = () => {
-    if (selectedPrices.length === 0) {
-      setPriceRange([]);
-    } else {
-      const min = Math.min(...selectedPrices);
-      const max = Math.max(...selectedPrices);
-      setPriceRange([min, max]);
-    }
-    setMaxDistance(localDistance);
+    saveFilters();
     router.back();
+  };
+
+  // Save filters without navigating
+  const saveFilters = () => {
+    // Sort the selected prices to ensure consistent min/max
+    const sortedPrices = [...selectedPrices].sort((a, b) => a - b);
+    setPriceRange(sortedPrices);
+    setMaxDistance(localDistance);
   };
 
   // Reset all filters to default values
@@ -85,7 +90,11 @@ export default function Filters() {
           <View style={styles.categoryButtons}>
             <Pressable
               style={styles.categoryButton}
-              onPress={() => router.push('/browse/cuisine')}
+              onPress={() => {
+                // Save current filters before navigating
+                saveFilters();
+                router.push('/browse/cuisine');
+              }}
             >
               <Ionicons name='restaurant-outline' size={24} color='#333' />
               <Text style={styles.categoryButtonText}>Cuisines</Text>
@@ -100,7 +109,11 @@ export default function Filters() {
 
             <Pressable
               style={styles.categoryButton}
-              onPress={() => router.push('/browse/dietary')}
+              onPress={() => {
+                // Save current filters before navigating
+                saveFilters();
+                router.push('/browse/dietary');
+              }}
             >
               <Ionicons name='nutrition-outline' size={24} color='#333' />
               <Text style={styles.categoryButtonText}>Dietary</Text>
@@ -113,7 +126,11 @@ export default function Filters() {
 
             <Pressable
               style={styles.categoryButton}
-              onPress={() => router.push('/browse/map')}
+              onPress={() => {
+                // Save current filters before navigating
+                saveFilters();
+                router.push('/browse/map');
+              }}
             >
               <Ionicons name='map-outline' size={24} color='#333' />
               <Text style={styles.categoryButtonText}>View Map</Text>
@@ -202,7 +219,7 @@ export default function Filters() {
           onPress={applyFilters}
           disabled={!hasChanges}
         >
-          <Text style={styles.applyButtonText}>Apply Filters</Text>
+          <Text style={styles.applyButtonText}>Save Filters</Text>
         </Pressable>
       </View>
     </SafeAreaView>

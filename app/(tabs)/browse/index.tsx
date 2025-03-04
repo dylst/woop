@@ -15,6 +15,41 @@ import { useRouter } from 'expo-router';
 import { useSearchFiltersStore } from '@/store/searchFiltersStore';
 import FilterChip from '@/components/ui/FilterChip';
 
+// Maps for cuisine and dietary display names
+const cuisineDisplayNames: Record<string, string> = {
+  american: 'American',
+  chinese: 'Chinese',
+  mexican: 'Mexican',
+  italian: 'Italian',
+  japanese: 'Japanese',
+  thai: 'Thai',
+  indian: 'Indian',
+  korean: 'Korean',
+  mediterranean: 'Mediterranean',
+  greek: 'Greek',
+  french: 'French',
+  spanish: 'Spanish',
+  vietnamese: 'Vietnamese',
+  turkish: 'Turkish',
+  lebanese: 'Lebanese',
+  caribbean: 'Caribbean',
+};
+
+const dietaryDisplayNames: Record<string, string> = {
+  glutenFree: 'Gluten Free',
+  halal: 'Halal',
+  vegan: 'Vegan',
+  vegetarian: 'Vegetarian',
+  keto: 'Keto',
+  dairyFree: 'Dairy Free',
+  nutFree: 'Nut Free',
+  organic: 'Organic',
+  soyFree: 'Soy Free',
+  sugarFree: 'Sugar Free',
+  paleo: 'Paleo',
+  pescatarian: 'Pescatarian',
+};
+
 export default function Browse() {
   const router = useRouter();
   const [searchText, setSearchText] = useState('');
@@ -43,7 +78,7 @@ export default function Browse() {
   const handleSearch = () => {
     if (searchText.trim()) {
       router.push({
-        pathname: '/browse/search-results',
+        pathname: '/browse/browse-search',
         params: { query: searchText },
       });
     }
@@ -69,6 +104,29 @@ export default function Browse() {
     }
   };
 
+  // Format price range for display
+  const formatPriceRange = () => {
+    if (priceRange.length === 0) return '';
+
+    // If only one price point is selected
+    if (priceRange.length === 1) {
+      return `${'$'.repeat(priceRange[0])}`;
+    }
+
+    // Sort the price range
+    const sortedPrices = [...priceRange].sort((a, b) => a - b);
+    const min = sortedPrices[0];
+    const max = sortedPrices[sortedPrices.length - 1];
+
+    // If min and max are the same
+    if (min === max) {
+      return `${'$'.repeat(min)}`;
+    }
+
+    // Return the range
+    return `${'$'.repeat(min)} - ${'$'.repeat(max)}`;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Page Title */}
@@ -86,6 +144,7 @@ export default function Browse() {
           onChangeText={setSearchText}
           returnKeyType='search'
           onSubmitEditing={handleSearch}
+          autoCapitalize='none'
         />
         <Pressable onPress={goToFilters} style={styles.filterButton}>
           <Ionicons
@@ -106,7 +165,7 @@ export default function Browse() {
           {selectedCuisines.map((cuisine) => (
             <FilterChip
               key={`cuisine-${cuisine}`}
-              label={cuisine}
+              label={cuisineDisplayNames[cuisine] || cuisine}
               onRemove={() => handleRemoveFilter('cuisine', cuisine)}
             />
           ))}
@@ -114,30 +173,28 @@ export default function Browse() {
           {selectedDietary.map((diet) => (
             <FilterChip
               key={`dietary-${diet}`}
-              label={diet}
+              label={dietaryDisplayNames[diet] || diet}
               onRemove={() => handleRemoveFilter('dietary', diet)}
             />
           ))}
 
           {priceRange.length > 0 && (
             <FilterChip
-              label={`${'$'.repeat(priceRange[0])} - ${'$'.repeat(
-                priceRange[1]
-              )}`}
+              label={`Price: ${formatPriceRange()}`}
               onRemove={() => handleRemoveFilter('price', '')}
             />
           )}
 
           {minRating > 0 && (
             <FilterChip
-              label={`${minRating.toFixed(1)}+ ⭐️`}
+              label={`${minRating}+ ⭐️`}
               onRemove={() => handleRemoveFilter('rating', '')}
             />
           )}
 
           {maxDistance < 50 && (
             <FilterChip
-              label={`${maxDistance} miles max`}
+              label={`Within ${maxDistance} mi`}
               onRemove={() => handleRemoveFilter('distance', '')}
             />
           )}
@@ -149,7 +206,44 @@ export default function Browse() {
       {/* Content area */}
       <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>Popular Categories</Text>
-        {/* Add your content here */}
+
+        <View style={styles.categoryButtonsContainer}>
+          <Pressable
+            style={styles.categoryButton}
+            onPress={() => router.push('/browse/cuisine')}
+          >
+            <Ionicons name='restaurant-outline' size={24} color='#333' />
+            <Text style={styles.categoryButtonText}>Cuisines</Text>
+            {selectedCuisines.length > 0 && (
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>{selectedCuisines.length}</Text>
+              </View>
+            )}
+          </Pressable>
+
+          <Pressable
+            style={styles.categoryButton}
+            onPress={() => router.push('/browse/dietary')}
+          >
+            <Ionicons name='nutrition-outline' size={24} color='#333' />
+            <Text style={styles.categoryButtonText}>Dietary</Text>
+            {selectedDietary.length > 0 && (
+              <View style={styles.badgeContainer}>
+                <Text style={styles.badgeText}>{selectedDietary.length}</Text>
+              </View>
+            )}
+          </Pressable>
+
+          <Pressable style={styles.categoryButton} onPress={goToFilters}>
+            <Ionicons name='options-outline' size={24} color='#333' />
+            <Text style={styles.categoryButtonText}>All Filters</Text>
+            {hasActiveFilters && (
+              <View style={styles.badgeContainer}>
+                <Ionicons name='checkmark' size={12} color='white' />
+              </View>
+            )}
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -206,5 +300,42 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 15,
     color: '#333',
+  },
+  categoryButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  categoryButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    marginHorizontal: 5,
+    position: 'relative',
+  },
+  categoryButtonText: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#FA6E59',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

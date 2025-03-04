@@ -22,26 +22,59 @@ import { searchFoodItems, calculateDistance } from '@/app/api/search';
 export default function BrowseSearch() {
   const { query, results, priceRange, minRating, maxDistance } =
     useLocalSearchParams();
-  const [initialResults, setInitialResults] = useState(
-    JSON.parse(results as string)
-  );
+
+  // Safely parse initial results with error handling
+  const [initialResults, setInitialResults] = useState<any[]>(() => {
+    try {
+      // Only parse if results is a valid string
+      if (typeof results === 'string' && results.trim()) {
+        return JSON.parse(results);
+      }
+      return []; // Default to empty array if results is not valid
+    } catch (error) {
+      console.error('Error parsing results:', error);
+      return []; // Return empty array on parse error
+    }
+  });
+
   const [showFilters, setShowFilters] = useState(false);
   const [filterPriceRange, setFilterPriceRange] = useState<string[]>(
-    priceRange ? (priceRange as string).split(',') : []
+    priceRange && typeof priceRange === 'string' ? priceRange.split(',') : []
   );
   const [filterMinRating, setFilterMinRating] = useState<number>(
-    minRating ? Number(minRating) : 0
+    minRating && !isNaN(Number(minRating)) ? Number(minRating) : 0
   );
   const [filterMaxDistance, setFilterMaxDistance] = useState<number>(
-    maxDistance ? Number(maxDistance) : 10 // Default to 10 miles
+    maxDistance && !isNaN(Number(maxDistance)) ? Number(maxDistance) : 10 // Default to 10 miles
   );
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [filteredResults, setFilteredResults] = useState(initialResults);
+  const [filteredResults, setFilteredResults] = useState<any[]>(initialResults);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // Initial search if query exists but no results were passed
+  useEffect(() => {
+    const performInitialSearch = async () => {
+      // Only run this effect if we have a query but no initialResults
+      if (query && initialResults.length === 0) {
+        setLoading(true);
+        try {
+          const searchResults = await searchFoodItems(query as string);
+          setInitialResults(searchResults);
+          setFilteredResults(searchResults);
+        } catch (error) {
+          console.error('Error performing initial search:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    performInitialSearch();
+  }, [query, initialResults.length]);
 
   // Get user's location
   useEffect(() => {
@@ -94,13 +127,16 @@ export default function BrowseSearch() {
         } finally {
           setLoading(false);
         }
-      } else {
-        // If no filters, use initial results
+      } else if (initialResults.length > 0) {
+        // If no filters but we have initial results, use them
         setFilteredResults(initialResults);
       }
     };
 
-    applyFilters();
+    // Only call applyFilters if we have a query
+    if (query) {
+      applyFilters();
+    }
   }, [
     filterPriceRange,
     filterMinRating,
@@ -113,14 +149,16 @@ export default function BrowseSearch() {
   const handleApplyFilters = () => {
     setShowFilters(false);
 
-    // Update URL params to reflect current filters
-    router.setParams({
-      query: query as string,
-      results: results as string,
-      priceRange: filterPriceRange.join(','),
-      minRating: filterMinRating.toString(),
-      maxDistance: filterMaxDistance.toString(),
-    });
+    // Only update URL params if we have results to filter
+    if (query) {
+      // Update URL params to reflect current filters
+      router.setParams({
+        query: query as string,
+        priceRange: filterPriceRange.join(','),
+        minRating: filterMinRating.toString(),
+        maxDistance: filterMaxDistance.toString(),
+      });
+    }
   };
 
   const resetFilters = () => {
@@ -145,11 +183,11 @@ export default function BrowseSearch() {
   // Fetch ratings for display
   useEffect(() => {
     const fetchRatings = async () => {
-      if (!filteredResults.length) return;
+      if (!filteredResults || !filteredResults.length) return;
 
       // Get all food item IDs
       const foodIds = filteredResults
-        .filter((item: any) => item.id)
+        .filter((item: any) => item && item.id)
         .map((item: any) => item.id);
 
       if (!foodIds.length) return;
@@ -200,11 +238,11 @@ export default function BrowseSearch() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.topBarContainer}>
-          <TopBar type='back' title='search' />
+          <TopBar type='back' title='Search Results' />
         </View>
 
         <View style={styles.headerContainer}>
-          <Text style={styles.searchTitle}>Results for "{query}"</Text>
+          <Text style={styles.searchTitle}>Results for "{query || ''}"</Text>
           <Button
             mode='contained'
             onPress={() => setShowFilters(!showFilters)}
@@ -217,11 +255,28 @@ export default function BrowseSearch() {
           </Button>
         </View>
 
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size='large' color='#65C5E3' />
+            <Text style={styles.loadingText}>Loading results...</Text>
+          </View>
+        )}
+
+        {!loading && filteredResults.length === 0 && (
+          <View style={styles.noResultsContainer}>
+            <Ionicons name='search-outline' size={48} color='#CCCCCC' />
+            <Text style={styles.noResultsText}>No results found</Text>
+            <Text style={styles.noResultsSubtext}>
+              Try adjusting your filters or search for something else
+            </Text>
+          </View>
+        )}
+
         {showFilters && (
           <ScrollView style={styles.filtersContainer}>
             <Text style={styles.filterSectionTitle}>Price Range</Text>
             <View style={styles.priceFilters}>
-              {['$', '$$', '$$$', '$$$$'].map((price) => (
+              {['1', '2', '3', '4'].map((price) => (
                 <Chip
                   key={price}
                   selected={filterPriceRange.includes(price)}
@@ -236,7 +291,7 @@ export default function BrowseSearch() {
                       : {}
                   }
                 >
-                  {price}
+                  {'$'.repeat(Number(price))}
                 </Chip>
               ))}
             </View>
@@ -251,55 +306,41 @@ export default function BrowseSearch() {
               </View>
               <Slider
                 value={filterMinRating}
-                onValueChange={(value: number | number[]) =>
-                  setFilterMinRating(Array.isArray(value) ? value[0] : value)
+                onValueChange={(values) =>
+                  setFilterMinRating(Number(values[0]))
                 }
                 minimumValue={0}
                 maximumValue={5}
                 step={0.5}
-                trackClickable={true}
+                minimumTrackTintColor='#65C5E3'
+                maximumTrackTintColor='#D3D3D3'
+                thumbTintColor='#65C5E3'
               />
-              <View style={styles.starsContainer}>
-                {Array(5)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Ionicons
-                      key={i}
-                      name={
-                        i < Math.floor(filterMinRating)
-                          ? 'star'
-                          : i < filterMinRating
-                          ? 'star-half'
-                          : 'star-outline'
-                      }
-                      size={24}
-                      color='#FFD700'
-                    />
-                  ))}
-              </View>
             </View>
 
             <Text style={styles.filterSectionTitle}>
-              Maximum Distance: {filterMaxDistance.toFixed(1)} miles
+              Maximum Distance: {filterMaxDistance} miles
             </Text>
             <View style={styles.distanceSliderContainer}>
               <View style={styles.sliderLabels}>
-                <Text>0</Text>
+                <Text>1</Text>
                 <Text>50</Text>
               </View>
               <Slider
                 value={filterMaxDistance}
-                onValueChange={(value: number | number[]) =>
-                  setFilterMaxDistance(Array.isArray(value) ? value[0] : value)
+                onValueChange={(values) =>
+                  setFilterMaxDistance(Number(values[0]))
                 }
-                minimumValue={0.5}
+                minimumValue={1}
                 maximumValue={50}
-                step={0.5}
-                trackClickable={true}
+                step={1}
+                minimumTrackTintColor='#65C5E3'
+                maximumTrackTintColor='#D3D3D3'
+                thumbTintColor='#65C5E3'
               />
             </View>
 
-            <View style={styles.filterButtonsContainer}>
+            <View style={styles.filterActions}>
               <Button
                 mode='outlined'
                 onPress={resetFilters}
@@ -311,8 +352,6 @@ export default function BrowseSearch() {
                 mode='contained'
                 onPress={handleApplyFilters}
                 style={styles.applyButton}
-                loading={loading}
-                disabled={loading}
               >
                 Apply Filters
               </Button>
@@ -320,82 +359,53 @@ export default function BrowseSearch() {
           </ScrollView>
         )}
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size='large' color='#65C5E3' />
-            <Text style={styles.loadingText}>Filtering results...</Text>
-          </View>
-        ) : filteredResults.length > 0 ? (
+        {!loading && filteredResults.length > 0 && (
           <FlatList
             data={filteredResults}
-            keyExtractor={(item) =>
-              item.id?.toString() || Math.random().toString()
-            }
+            keyExtractor={(item, index) => `${item?.id || 'item'}-${index}`}
             renderItem={({ item }) => (
               <Pressable
                 style={styles.resultItem}
-                onPress={() => router.push(`/food/${item.id}`)}
+                onPress={() => {
+                  if (item?.id) {
+                    router.push(`/food/${item.id}`);
+                  }
+                }}
               >
-                {item.photos && item.photos.length > 0 && (
-                  <Image
-                    source={{ uri: item.photos[0] }}
-                    style={styles.resultImage}
-                  />
-                )}
-                <View style={styles.resultTextContainer}>
-                  <Text style={styles.resultTitle}>{item.food_name}</Text>
-                  {item.restaurant_name && (
-                    <Text style={styles.subtitle}>{item.restaurant_name}</Text>
-                  )}
-                  <View style={styles.detailsRow}>
-                    {item.price_range && (
-                      <Text style={styles.price}>{item.price_range}</Text>
-                    )}
-                    {ratingsMap[item.id] && (
-                      <View style={styles.ratingContainer}>
-                        <Text style={styles.ratingText}>
-                          {ratingsMap[item.id].average.toFixed(1)}
-                        </Text>
-                        <Ionicons name='star' size={16} color='#FFD700' />
+                <Image
+                  source={{
+                    uri: item.photos?.[0] || 'https://via.placeholder.com/100',
+                  }}
+                  style={styles.foodImage}
+                />
+                <View style={styles.resultInfo}>
+                  <Text style={styles.foodName}>{item.food_name}</Text>
+                  <Text style={styles.restaurantName}>
+                    {item.restaurant_name}
+                  </Text>
+
+                  {ratingsMap[item.id] && (
+                    <View style={styles.ratingContainer}>
+                      <Text style={styles.ratingText}>
+                        {ratingsMap[item.id].average.toFixed(1)} ⭐
                         <Text style={styles.ratingCount}>
                           ({ratingsMap[item.id].count})
                         </Text>
-                      </View>
-                    )}
-                    {userLocation && item.restaurant_distance && (
-                      <Text style={styles.distance}>
-                        {item.restaurant_distance.toFixed(1)} mi
                       </Text>
-                    )}
-                  </View>
-                  {item.cuisine_type && (
-                    <Text style={styles.subtitle}>
-                      Cuisine:{' '}
-                      {typeof item.cuisine_type === 'string'
-                        ? item.cuisine_type
-                        : Array.isArray(item.cuisine_type)
-                        ? item.cuisine_type.join(', ')
-                        : ''}
-                    </Text>
+                    </View>
                   )}
-                  {item.dietary_tags && (
-                    <Text style={styles.subtitle}>
-                      Dietary:{' '}
-                      {typeof item.dietary_tags === 'string'
-                        ? item.dietary_tags
-                        : Array.isArray(item.dietary_tags)
-                        ? item.dietary_tags.join(', ')
-                        : ''}
+
+                  {item.price_range && (
+                    <Text style={styles.priceText}>
+                      {'$'.repeat(item.price_range)}
                     </Text>
                   )}
                 </View>
               </Pressable>
             )}
+            style={styles.resultsList}
+            contentContainerStyle={styles.resultsContent}
           />
-        ) : (
-          <Text style={styles.noResultsText}>
-            No results found matching your filters.
-          </Text>
         )}
       </View>
     </SafeAreaView>
@@ -409,147 +419,132 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    backgroundColor: 'white',
   },
   topBarContainer: {
     width: '100%',
-    alignSelf: 'center',
-    marginBottom: 10,
+    zIndex: 10,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   searchTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     flex: 1,
   },
   filterButton: {
-    borderRadius: 20,
     backgroundColor: '#65C5E3',
   },
   filtersContainer: {
-    backgroundColor: '#f5f5f5',
-    padding: 16,
-    borderRadius: 8,
-    marginVertical: 8,
+    padding: 20,
+    backgroundColor: '#F9F9F9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
   },
   filterSectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 8,
+    fontWeight: '600',
+    marginBottom: 10,
+    marginTop: 15,
   },
   priceFilters: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 12,
+    justifyContent: 'space-around',
+    marginBottom: 15,
   },
   priceChip: {
-    margin: 4,
-    backgroundColor: '#fff',
+    marginHorizontal: 5,
   },
   selectedChip: {
     backgroundColor: '#65C5E3',
   },
   selectedChipText: {
-    color: '#fff',
+    color: 'white',
   },
   ratingSliderContainer: {
-    marginBottom: 12,
+    marginBottom: 20,
   },
   distanceSliderContainer: {
-    marginBottom: 12,
+    marginBottom: 20,
   },
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
+    marginBottom: 5,
   },
-  starsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  filterButtonsContainer: {
+  filterActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 10,
   },
   resetButton: {
     flex: 1,
-    marginRight: 8,
-    borderColor: '#65C5E3',
+    marginRight: 10,
   },
   applyButton: {
-    flex: 1,
-    marginLeft: 8,
+    flex: 2,
     backgroundColor: '#65C5E3',
+  },
+  resultsList: {
+    flex: 1,
+  },
+  resultsContent: {
+    padding: 10,
   },
   resultItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  resultImage: {
-    width: 60,
-    height: 60,
+    padding: 15,
+    backgroundColor: 'white',
     borderRadius: 8,
-    marginRight: 12,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  resultTextContainer: {
+  foodImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+  },
+  resultInfo: {
     flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
+    marginLeft: 15,
+    justifyContent: 'space-between',
   },
-  resultTitle: {
-    fontSize: 18,
-    fontWeight: '500',
+  foodName: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  subtitle: {
+  restaurantName: {
     fontSize: 14,
     color: '#666',
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 4,
-  },
-  price: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginRight: 10,
+    marginTop: 2,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 10,
+    marginTop: 5,
   },
   ratingText: {
     fontSize: 14,
-    marginRight: 2,
+    fontWeight: '500',
   },
   ratingCount: {
     fontSize: 12,
-    color: '#666',
-    marginLeft: 2,
+    color: '#777',
   },
-  distance: {
+  priceText: {
     fontSize: 14,
-    color: '#666',
-  },
-  noResultsText: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#999',
-    marginTop: 20,
+    color: '#65C5E3',
+    fontWeight: '500',
+    marginTop: 5,
   },
   loadingContainer: {
     flex: 1,
@@ -559,6 +554,24 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#65C5E3',
+    color: '#666',
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  noResultsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 15,
+    color: '#333',
+  },
+  noResultsSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 5,
   },
 });
