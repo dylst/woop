@@ -1,4 +1,4 @@
-import { Image } from 'react-native';
+import { Image, ActivityIndicator } from 'react-native';
 import TopBar from '@/components/ui/TopBar';
 import {
   View,
@@ -10,10 +10,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { useSearchFiltersStore } from '@/store/searchFiltersStore';
 import FilterChip from '@/components/ui/FilterChip';
+import { searchFoodItems } from '@/app/api/search';
+import { debounce } from '@/utils/debounce';
 
 // Maps for cuisine and dietary display names
 const cuisineDisplayNames: Record<string, string> = {
@@ -53,6 +55,9 @@ const dietaryDisplayNames: Record<string, string> = {
 export default function Browse() {
   const router = useRouter();
   const [searchText, setSearchText] = useState('');
+  const [predictiveResults, setPredictiveResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   const {
     selectedCuisines,
     selectedDietary,
@@ -71,6 +76,39 @@ export default function Browse() {
     priceRange.length > 0 ||
     maxDistance < 50;
 
+  // Create a debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (text: string) => {
+      if (text.length >= 2) {
+        setIsSearching(true);
+        try {
+          const results = await searchFoodItems(text, undefined, true);
+          setPredictiveResults(results.slice(0, 5)); // Limit to 5 suggestions
+        } catch (error) {
+          console.error('Error in predictive search:', error);
+          setPredictiveResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setPredictiveResults([]);
+      }
+    }, 300), // 300ms delay
+    []
+  );
+
+  // Handle search text changes
+  const handleSearchTextChange = (text: string) => {
+    setSearchText(text);
+    debouncedSearch(text);
+  };
+
+  // Clear predictive results when search is submitted
+  const handleSearchSubmit = () => {
+    setPredictiveResults([]);
+    handleSearch();
+  };
+
   // Handle search submission
   const handleSearch = () => {
     if (searchText.trim()) {
@@ -79,6 +117,16 @@ export default function Browse() {
         params: { query: searchText },
       });
     }
+  };
+
+  // Handle selecting a predictive result
+  const handleSelectPredictiveResult = (item: any) => {
+    setSearchText(item.food_name);
+    setPredictiveResults([]);
+    router.push({
+      pathname: '/browse/browse-search',
+      params: { query: item.food_name },
+    });
   };
 
   // Navigate to filters screen
@@ -129,25 +177,77 @@ export default function Browse() {
         <TopBar type='home' title='Browse' />
       </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name='search' size={20} color='#999' />
-        <TextInput
-          style={styles.searchInput}
-          placeholder='Search for food...'
-          value={searchText}
-          onChangeText={setSearchText}
-          returnKeyType='search'
-          onSubmitEditing={handleSearch}
-          autoCapitalize='none'
-        />
-        <Pressable onPress={goToFilters} style={styles.filterButton}>
-          <Ionicons
-            name='options-outline'
-            size={22}
-            color={hasActiveFilters ? '#65C5E3' : '#666'}
+      {/* Search Bar and Predictive Results Container */}
+      <View style={styles.searchAndResultsContainer}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name='search' size={20} color='#999' />
+          <TextInput
+            style={styles.searchInput}
+            placeholder='Search for food...'
+            value={searchText}
+            onChangeText={handleSearchTextChange}
+            returnKeyType='search'
+            onSubmitEditing={handleSearchSubmit}
+            autoCapitalize='none'
           />
-        </Pressable>
+          <Pressable onPress={goToFilters} style={styles.filterButton}>
+            <Ionicons
+              name='options-outline'
+              size={22}
+              color={hasActiveFilters ? '#65C5E3' : '#666'}
+            />
+          </Pressable>
+        </View>
+
+        {/* Predictive Search Results */}
+        {(predictiveResults.length > 0 || isSearching) && (
+          <View style={styles.predictiveResultsContainer}>
+            {isSearching ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size='small' color='#65C5E3' />
+              </View>
+            ) : (
+              predictiveResults.map((item) => (
+                <Pressable
+                  key={item.id}
+                  style={styles.predictiveResultItem}
+                  onPress={() => handleSelectPredictiveResult(item)}
+                >
+                  <View style={styles.predictiveResultContent}>
+                    {item.photos && item.photos[0] ? (
+                      <Image
+                        source={{ uri: item.photos[0] }}
+                        style={styles.predictiveResultImage}
+                      />
+                    ) : (
+                      <View style={styles.predictiveResultImagePlaceholder}>
+                        <Ionicons
+                          name='fast-food-outline'
+                          size={16}
+                          color='#999'
+                        />
+                      </View>
+                    )}
+                    <View style={styles.predictiveResultTextContainer}>
+                      <Text style={styles.predictiveFoodName}>
+                        {item.food_name}
+                      </Text>
+                      <Text style={styles.predictiveRestaurantName}>
+                        {item.restaurant_name}
+                      </Text>
+                    </View>
+                    {item.price_range && (
+                      <Text style={styles.predictivePriceText}>
+                        {item.price_range}
+                      </Text>
+                    )}
+                  </View>
+                </Pressable>
+              ))
+            )}
+          </View>
+        )}
       </View>
 
       {/* Active Filters */}
@@ -156,7 +256,10 @@ export default function Browse() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersScrollContainer}
-          style={styles.filtersScroll}
+          style={[
+            styles.filtersScroll,
+            { marginTop: predictiveResults.length > 0 ? 60 : 0 },
+          ]}
         >
           {selectedCuisines.map((cuisine) => (
             <FilterChip
@@ -249,6 +352,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 10,
   },
+  searchAndResultsContainer: {
+    position: 'relative',
+    width: '100%',
+    zIndex: 110,
+    marginBottom: 15,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -261,6 +370,9 @@ const styles = StyleSheet.create({
     borderColor: '#c2effd',
     borderStyle: 'solid',
     borderWidth: 1,
+    zIndex: 110,
+    width: '95%',
+    alignSelf: 'center',
   },
   searchInput: {
     flex: 1,
@@ -276,10 +388,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 4,
     marginBottom: 0,
+    zIndex: 90, // Ensure below search bar but above other content
   },
   filtersScroll: {
     flexGrow: 0,
     marginBottom: 10,
+    zIndex: 0, // Ensure below predictive results
   },
   separator: {
     height: 4,
@@ -335,5 +449,73 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  predictiveResultsContainer: {
+    position: 'absolute',
+    top: '100%', // Position right below the search container
+    left: 10,
+    right: 10,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 100,
+    maxHeight: 300,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    marginTop: 5, // Add some space between search bar and results
+  },
+  predictiveResultItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  predictiveResultContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  predictiveResultImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+    backgroundColor: '#f5f5f5',
+  },
+  predictiveResultImagePlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  predictiveResultTextContainer: {
+    flex: 1,
+  },
+  predictiveFoodName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  predictiveRestaurantName: {
+    fontSize: 12,
+    color: '#666',
+  },
+  predictivePriceText: {
+    fontSize: 12,
+    color: '#65C5E3',
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  loadingContainer: {
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

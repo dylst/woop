@@ -22,9 +22,43 @@ const convertPriceToSymbol = (price: number): string => {
 
 export const searchFoodItems = async (
   keyword: string,
-  filters?: FilterOptions
+  filters?: FilterOptions,
+  predictive: boolean = false
 ) => {
   try {
+    // For predictive search, we want a faster, simplified query
+    if (predictive) {
+      console.log('Performing predictive search for:', keyword);
+
+      // Only search if we have at least 2 characters
+      if (keyword.length < 2) {
+        return [];
+      }
+
+      const sanitizedKeyword = keyword.replace(/[%_]/g, '');
+      const likePattern = `%${sanitizedKeyword}%`;
+
+      // Simpler query for predictive search - only select necessary fields
+      let query = supabase
+        .from('fooditem')
+        .select('id, food_name, restaurant_name, photos, price_range')
+        .or(
+          `food_name.ilike.${likePattern},restaurant_name.ilike.${likePattern}`
+        )
+        .limit(10); // Smaller limit for faster results
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error in predictive search:', error);
+        return [];
+      }
+
+      console.log(`Predictive search returned ${data?.length || 0} results`);
+      return data || [];
+    }
+
+    // Original full search implementation
     console.log('-------- SEARCH DEBUG START --------');
     console.log('Search called with keyword:', keyword);
     console.log('Filters applied:', JSON.stringify(filters, null, 2));
