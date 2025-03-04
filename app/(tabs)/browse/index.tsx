@@ -12,17 +12,53 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
-
+import { Restaurant } from "@/types/restaurant.types";
+import restaurantService from "@/app/api/services/restaurantService";
+import { supabase } from "@/supabaseClient";
 export default function Browse() {
 	const [searchText, setSearchText] = useState("");
 	const router = useRouter();
+	const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+	async function handleClick() {
+		try {
+			// 1. Fetch data from your restaurantService
+			const data: Restaurant[] = await restaurantService.getRestaurantByZipCode(
+				"90815",
+				6
+			);
 
-	const historyItems = [
-		{ name: "Beef Pho with Meatballs" },
-		{ name: "Spicy Chicken Wings" },
-		{ name: "Quesabirria Tacos" },
-		{ name: "Sushi" },
-	];
+			console.log("Fetched Data:", data);
+
+			const formattedData = data.map((restaurant) => ({
+				name: restaurant.restaurantName,
+				addressLin: restaurant.address,
+				city: restaurant.stateName,
+				state: restaurant.stateName,
+				zipcode: parseInt(restaurant.zipCode.substring(0, 5)),
+				webUrl: restaurant.webUrl,
+				hours: restaurant.hoursInterval,
+				cuisineType: restaurant.cuisineType,
+				idRestaurant: restaurant.id,
+				latitude: restaurant.latitude,
+				longitude: restaurant.longitude,
+			}));
+
+			console.log("Formatted Data:", formattedData);
+			const { data: insertedData, error } = await supabase
+				.from("restaurant")
+				.upsert(formattedData, {
+					onConflict: "idRestaurant"
+				});
+
+			if (error) {
+				console.error("Supabase insert error:", error);
+			} else {
+				console.log("Successfully inserted into Supabase:", insertedData);
+			}
+		} catch (error) {
+			console.error("Error inserting to Supabase:", error);
+		}
+	}
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -62,6 +98,9 @@ export default function Browse() {
 						style={styles.buttonImage}
 					/>
 				</Pressable>
+				{/* <Pressable onPress={handleClick}>
+					<Text>Button</Text>
+				</Pressable> */}
 			</View>
 			<View style={styles.separator} />
 		</SafeAreaView>

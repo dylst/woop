@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import MapView, { Marker, PROVIDER_GOOGLE, Camera } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import {
 	StyleSheet,
 	View,
@@ -11,11 +11,14 @@ import { mapService } from "@/app/api/services/mapService";
 import { Map } from "@/types/map.types";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import type { Camera } from "react-native-maps";
+
+
 
 const MapScreen = () => {
 	const router = useRouter();
 	const [markers, setMarkers] = useState<Map[] | null>(null);
-	const mapRef = useRef<MapView | null>(null); // ✅ Use ref to control the map
+	const mapRef = useRef<MapView | null>(null); 
 
 	useEffect(() => {
 		async function fetchData() {
@@ -42,7 +45,7 @@ const MapScreen = () => {
 			mapRef.current.getCamera().then((camera: Camera) => {
 				mapRef.current?.animateCamera({
 					center: camera.center,
-					zoom: camera.zoom + 1, // 🔍 Zoom In
+					zoom: (camera.zoom ?? 15) + 1, // 🔍 Zoom In
 				});
 			});
 		}
@@ -54,7 +57,7 @@ const MapScreen = () => {
 			mapRef.current.getCamera().then((camera: Camera) => {
 				mapRef.current?.animateCamera({
 					center: camera.center,
-					zoom: camera.zoom - 1, // 🔎 Zoom Out
+					zoom: (camera.zoom ?? 15) - 1, // 🔎 Zoom Out
 				});
 			});
 		}
@@ -106,6 +109,7 @@ const MapScreen = () => {
 							/>
 						))}
 					</MapView>
+					
 					<View style={styles.zoomButtonsContainer}>
 						<TouchableOpacity
 							style={styles.zoomInButton}
