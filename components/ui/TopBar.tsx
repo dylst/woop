@@ -1,15 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Pressable,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '@/components/ui/SearchBar';
 import { useNavigation, useRouter } from 'expo-router';
 import { useUser } from '@/app/context/UserContext';
 import { supabase } from '@/supabaseClient';
 
-const TopBar = ({
-  type = 'home',
-  title = '',
-}) => {
+const TopBar = ({ type = 'home', title = '' }) => {
   const router = useRouter();
 
   const { user } = useUser();
@@ -21,20 +25,22 @@ const TopBar = ({
     if (!userId) return;
     const { data, error } = await supabase
       .from('profile')
-      .select(`
+      .select(
+        `
         username,
         first_name,
-        avatar`)
+        avatar`
+      )
       .eq('id', userId)
       .maybeSingle();
 
     if (error) {
-      console.log("Error fetching profile:", error);
+      console.log('Error fetching profile:', error);
       return;
     }
 
     setUserData(data);
-  }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -44,12 +50,12 @@ const TopBar = ({
 
   // list of greetings
   const greetingTemplates = [
-    "Hey there,\n{name}!",
-    "What are you feeling,\n{name}?",
-    "Did you eat yet,\n{name}?",
-    "Review a food,\n{name}!",
+    'Hey there,\n{name}!',
+    'What are you feeling,\n{name}?',
+    'Did you eat yet,\n{name}?',
+    'Review a food,\n{name}!',
     "What's up,\n{name}?",
-    "Woop!"
+    'Woop!',
   ];
 
   // randomize greeting on each page load
@@ -60,7 +66,7 @@ const TopBar = ({
 
   const handleNavigationPress = () => {
     router.push(`/notifications`);
-  }
+  };
 
   const handleBackPress = () => {
     router.back();
@@ -72,15 +78,16 @@ const TopBar = ({
         {type === 'home' ? (
           <Text style={styles.greeting}>{greeting}</Text>
         ) : (
-          <TouchableOpacity style={styles.backContainer} onPress={handleBackPress}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
+          <TouchableOpacity
+            style={styles.backContainer}
+            onPress={handleBackPress}
+          >
+            <Ionicons name='chevron-back' size={24} color='#000' />
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
         )}
         <View style={styles.titleContainer}>
-          {type !== 'home' && (
-            <Text style={styles.title}>{title}</Text>
-          )}
+          {type !== 'home' && <Text style={styles.title}>{title}</Text>}
         </View>
 
         <TouchableOpacity style={styles.topBarIcons}>
@@ -88,14 +95,12 @@ const TopBar = ({
             <Ionicons name='notifications' size={24} color='#000' />
           </Pressable>
           <Pressable onPress={() => router.push('/profile')}>
-            <Image
-              source={{ uri: userData?.avatar }}
-              style={styles.avatar}
-            />
+            <Image source={{ uri: userData?.avatar }} style={styles.avatar} />
           </Pressable>
         </TouchableOpacity>
       </View>
-      <SearchBar />
+      {/* Search Bar that was visibile on every screen */}
+      {/* <SearchBar /> */}
     </View>
   );
 };
@@ -141,7 +146,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginLeft: 1,
     paddingBottom: 2,
-  }
+  },
 });
 
 export default TopBar;
