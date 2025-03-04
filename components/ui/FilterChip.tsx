@@ -11,7 +11,7 @@ export default function FilterChip({ label, onRemove }: FilterChipProps) {
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <Pressable style={styles.removeButton} onPress={onRemove}>
-        <Ionicons name='close-circle' size={18} color='#888' />
+        <Ionicons name='close-circle' size={16} color='#888' />
       </Pressable>
     </View>
   );
@@ -23,12 +23,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F0F9FC',
     borderRadius: 20,
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 12,
     marginRight: 8,
-    marginBottom: 8,
+    marginBottom: 4,
     borderWidth: 1,
     borderColor: '#D5E8F0',
+    height: 50,
   },
   label: {
     fontSize: 14,
@@ -36,6 +37,6 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   removeButton: {
-    padding: 2,
+    padding: 1,
   },
 });

@@ -120,16 +120,6 @@ export default function Cuisine() {
     <SafeAreaView style={styles.container}>
       <TopBar type='back' title='Cuisines' />
 
-      <View style={styles.searchContainer}>
-        <Ionicons name='search' size={20} color='#999' />
-        <TextInput
-          style={styles.searchInput}
-          placeholder='Search cuisines'
-          value={searchText}
-          onChangeText={setSearchText}
-        />
-      </View>
-
       <FlatList
         data={filteredCuisines}
         renderItem={renderCuisineItem}
@@ -167,20 +157,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F1F1',
-    margin: 20,
-    padding: 12,
-    borderRadius: 8,
-  },
-  searchInput: {
-    marginLeft: 8,
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-  },
   listContainer: {
     padding: 15,
   },
@@ -214,6 +190,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#EEEEEE',
+    marginBottom: 50,
   },
   button: {
     flex: 1,

@@ -156,6 +156,7 @@ export default function Browse() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersScrollContainer}
+          style={styles.filtersScroll}
         >
           {selectedCuisines.map((cuisine) => (
             <FilterChip
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 30,
-    marginHorizontal: 20,
+    marginHorizontal: 10,
     marginBottom: 10,
     borderColor: '#c2effd',
     borderStyle: 'solid',
@@ -273,7 +274,12 @@ const styles = StyleSheet.create({
   },
   filtersScrollContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 15,
+    paddingVertical: 4,
+    marginBottom: 0,
+  },
+  filtersScroll: {
+    flexGrow: 0,
+    marginBottom: 10,
   },
   separator: {
     height: 4,
@@ -281,6 +287,7 @@ const styles = StyleSheet.create({
     width: '100%',
     opacity: 0.5,
     zIndex: 5,
+    marginTop: -4,
   },
   contentContainer: {
     flex: 1,
