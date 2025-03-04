@@ -36,12 +36,10 @@ export default function SearchResults() {
     selectedCuisines,
     selectedDietary,
     priceRange,
-    minRating,
     maxDistance,
     removeCuisine,
     removeDietary,
     setPriceRange,
-    setMinRating,
     setMaxDistance,
   } = useSearchFiltersStore();
 
@@ -74,7 +72,6 @@ export default function SearchResults() {
           priceRange: priceRange.length
             ? [priceRange[0], priceRange[1]]
             : undefined,
-          minRating: minRating > 0 ? minRating : undefined,
           maxDistance: maxDistance < 50 ? maxDistance : undefined,
           userLocation: userLocation
             ? {
@@ -97,7 +94,6 @@ export default function SearchResults() {
     selectedCuisines,
     selectedDietary,
     priceRange,
-    minRating,
     maxDistance,
     userLocation,
   ]);
@@ -110,8 +106,6 @@ export default function SearchResults() {
       removeDietary(value);
     } else if (type === 'price') {
       setPriceRange([]);
-    } else if (type === 'rating') {
-      setMinRating(0);
     } else if (type === 'distance') {
       setMaxDistance(50);
     }
@@ -188,13 +182,6 @@ export default function SearchResults() {
                 priceRange[1]
               )}`}
               onRemove={() => handleRemoveFilter('price', '')}
-            />
-          )}
-
-          {minRating > 0 && (
-            <FilterChip
-              label={`${minRating.toFixed(1)}+ ⭐️`}
-              onRemove={() => handleRemoveFilter('rating', '')}
             />
           )}
 

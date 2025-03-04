@@ -18,6 +18,10 @@ export const searchFoodItems = async (
   filters?: FilterOptions
 ) => {
   try {
+    console.log('-------- SEARCH DEBUG START --------');
+    console.log('Search called with keyword:', keyword);
+    console.log('Filters applied:', JSON.stringify(filters, null, 2));
+
     // Sanitize the keyword to prevent SQL injection
     const sanitizedKeyword = keyword.replace(/[%_]/g, '');
     const likePattern = `%${sanitizedKeyword}%`;
@@ -44,6 +48,21 @@ export const searchFoodItems = async (
       return [];
     }
 
+    console.log(`Initial search returned ${data?.length || 0} results`);
+
+    // Log a sample of the initial results
+    if (data && data.length > 0) {
+      console.log('Sample of first result:');
+      const sample = data[0];
+      console.log({
+        id: sample.id,
+        food_name: sample.food_name,
+        cuisine_type: sample.cuisine_type,
+        dietary_tags: sample.dietary_tags,
+        price_range: sample.price_range,
+      });
+    }
+
     // Since we can't use SQL for searching within array elements through Supabase API,
     // we'll filter the results in JavaScript to include items where array elements match
     let allResults = (data || []).filter((item) => {
@@ -59,51 +78,178 @@ export const searchFoodItems = async (
       if (matchesText) return true;
 
       // Check arrays (cuisine_type and dietary_tags)
-      const matchesCuisine = item.cuisine_type?.some((cuisine: string) =>
+      // First ensure arrays exist and are properly formatted
+      const cuisineArray = Array.isArray(item.cuisine_type)
+        ? item.cuisine_type
+        : typeof item.cuisine_type === 'string'
+        ? [item.cuisine_type]
+        : [];
+
+      const dietaryArray = Array.isArray(item.dietary_tags)
+        ? item.dietary_tags
+        : typeof item.dietary_tags === 'string'
+        ? [item.dietary_tags]
+        : [];
+
+      const matchesCuisine = cuisineArray.some((cuisine: string) =>
         cuisine.toLowerCase().includes(lowerKeyword)
       );
 
-      const matchesDietary = item.dietary_tags?.some((tag: string) =>
+      const matchesDietary = dietaryArray.some((tag: string) =>
         tag.toLowerCase().includes(lowerKeyword)
       );
 
       return matchesCuisine || matchesDietary;
     });
 
+    console.log(`After text search filtering: ${allResults.length} results`);
+
     // If no filters, just return the results
     if (!filters || Object.keys(filters).length === 0) {
+      console.log('No filters applied, returning all results');
+      console.log('-------- SEARCH DEBUG END --------');
       return allResults;
     }
 
+    // Make a copy of initial results for debugging
+    const initialFilteredResults = [...allResults];
+
     // Apply cuisine and dietary filters
     if (filters.selectedCuisines && filters.selectedCuisines.length > 0) {
+      // OR logic for cuisines - any selected cuisine type is acceptable
+      const beforeCount = allResults.length;
+      console.log('APPLYING CUISINE FILTER:');
+      console.log('Selected cuisines:', filters.selectedCuisines);
+
+      // Log some sample cuisine data from results
+      const cuisineSamples = allResults.slice(0, 3).map((item) => ({
+        id: item.id,
+        cuisine_type: Array.isArray(item.cuisine_type)
+          ? item.cuisine_type
+          : typeof item.cuisine_type === 'string'
+          ? [item.cuisine_type]
+          : [],
+      }));
+      console.log('Sample cuisine data from results:', cuisineSamples);
+
       allResults = allResults.filter((item) => {
-        if (!item.cuisine_type || !Array.isArray(item.cuisine_type))
-          return false;
-        return filters.selectedCuisines!.some((cuisine) =>
-          item.cuisine_type.includes(cuisine)
+        // Ensure cuisine_type is always an array and normalize values for comparison
+        const cuisineArray = Array.isArray(item.cuisine_type)
+          ? item.cuisine_type.map((c: string) => c.toLowerCase().trim())
+          : typeof item.cuisine_type === 'string'
+          ? [item.cuisine_type.toLowerCase().trim()]
+          : [];
+
+        // Log the actual cuisine types for this item
+        console.log(`Item ${item.id} cuisine types:`, cuisineArray);
+
+        // Check if ANY of the selected cuisines match the item's cuisine types (case insensitive)
+        const normalizedSelectedCuisines = filters.selectedCuisines!.map((c) =>
+          c.toLowerCase().trim()
         );
+
+        const matches = normalizedSelectedCuisines.some(
+          (cuisine) =>
+            cuisineArray.includes(cuisine) ||
+            cuisineArray.some((c) => c.includes(cuisine) || cuisine.includes(c))
+        );
+
+        console.log(`Item ${item.id} cuisine match: ${matches}`);
+        return matches;
       });
+      console.log(
+        `After cuisine filter: ${beforeCount} -> ${allResults.length} results`
+      );
     }
 
     if (filters.selectedDietary && filters.selectedDietary.length > 0) {
+      // AND logic for dietary - all selected dietary restrictions must be met
+      const beforeCount = allResults.length;
+      console.log('APPLYING DIETARY FILTER:');
+      console.log('Selected dietary tags:', filters.selectedDietary);
+
+      // Log some sample dietary data from results
+      const dietarySamples = allResults.slice(0, 3).map((item) => ({
+        id: item.id,
+        dietary_tags: Array.isArray(item.dietary_tags)
+          ? item.dietary_tags
+          : typeof item.dietary_tags === 'string'
+          ? [item.dietary_tags]
+          : [],
+      }));
+      console.log('Sample dietary data from results:', dietarySamples);
+
       allResults = allResults.filter((item) => {
-        if (!item.dietary_tags || !Array.isArray(item.dietary_tags))
-          return false;
-        return filters.selectedDietary!.some((tag) =>
-          item.dietary_tags.includes(tag)
+        // Ensure dietary_tags is always an array and normalize values
+        const dietaryArray = Array.isArray(item.dietary_tags)
+          ? item.dietary_tags.map((t: string) => t.toLowerCase().trim())
+          : typeof item.dietary_tags === 'string'
+          ? [item.dietary_tags.toLowerCase().trim()]
+          : [];
+
+        // Log the actual dietary tags for this item
+        console.log(`Item ${item.id} dietary tags:`, dietaryArray);
+
+        // Check if ALL of the selected dietary tags are included in the item's dietary tags (case insensitive)
+        const normalizedSelectedDietary = filters.selectedDietary!.map((t) =>
+          t.toLowerCase().trim()
         );
+
+        const matches = normalizedSelectedDietary.every(
+          (tag) =>
+            dietaryArray.includes(tag) ||
+            dietaryArray.some((t) => t.includes(tag) || tag.includes(t))
+        );
+
+        console.log(`Item ${item.id} dietary match: ${matches}`);
+        return matches;
       });
+      console.log(
+        `After dietary filter: ${beforeCount} -> ${allResults.length} results`
+      );
     }
 
     // Apply price range filter
     if (filters.priceRange && filters.priceRange.length > 0) {
-      allResults = allResults.filter((item) =>
-        filters.priceRange!.includes(item.price_range)
+      // OR logic for price - any selected price point is acceptable
+      const beforeCount = allResults.length;
+      console.log('APPLYING PRICE FILTER:');
+      console.log('Selected price ranges:', filters.priceRange);
+
+      allResults = allResults.filter((item) => {
+        if (item.price_range === null || item.price_range === undefined) {
+          console.log(`Item ${item.id} has no price range, skipping`);
+          return false;
+        }
+
+        const matches = filters.priceRange!.includes(item.price_range);
+        console.log(
+          `Item ${item.id} price ${item.price_range} match: ${matches}`
+        );
+        return matches;
+      });
+      console.log(
+        `After price filter: ${beforeCount} -> ${allResults.length} results`
       );
     }
 
-    // If we need to filter by distance, fetch restaurant locations
+    // If we've filtered out all results, let's debug why
+    if (allResults.length === 0 && initialFilteredResults.length > 0) {
+      console.log('ALL RESULTS WERE FILTERED OUT. EXAMINING INITIAL RESULTS:');
+      initialFilteredResults.forEach((item, index) => {
+        if (index < 5) {
+          // Limit to first 5 for brevity
+          console.log(`Item ${item.id}:`, {
+            food_name: item.food_name,
+            cuisine_type: item.cuisine_type,
+            dietary_tags: item.dietary_tags,
+            price_range: item.price_range,
+          });
+        }
+      });
+    }
+
+    // Distance filtering (unchanged)
     if (
       filters.maxDistance &&
       filters.maxDistance > 0 &&
@@ -119,6 +265,8 @@ export const searchFoodItems = async (
       const restaurantNames = Object.keys(restaurantNamesMap);
 
       if (restaurantNames.length === 0) {
+        console.log('No restaurant names found for distance filtering');
+        console.log('-------- SEARCH DEBUG END --------');
         return [];
       }
 
@@ -143,9 +291,14 @@ export const searchFoodItems = async (
         });
 
         // Filter by distance
+        const beforeCount = allResults.length;
+        console.log('APPLYING DISTANCE FILTER:');
+        console.log('Max distance:', filters.maxDistance);
+
         allResults = allResults.filter((item) => {
           const restaurant = restaurantMap[item.restaurant_name];
           if (!restaurant || !restaurant.latitude || !restaurant.longitude) {
+            console.log(`Item ${item.id} has no location data, skipping`);
             return false; // Skip if no location data
           }
 
@@ -156,14 +309,26 @@ export const searchFoodItems = async (
             parseFloat(restaurant.longitude)
           );
 
-          return distance <= filters.maxDistance!;
+          const matches = distance <= filters.maxDistance!;
+          console.log(
+            `Item ${item.id} distance ${distance.toFixed(
+              1
+            )} miles match: ${matches}`
+          );
+          return matches;
         });
+        console.log(
+          `After distance filter: ${beforeCount} -> ${allResults.length} results`
+        );
       }
     }
 
+    console.log(`Final search results count: ${allResults.length}`);
+    console.log('-------- SEARCH DEBUG END --------');
     return allResults;
   } catch (err) {
     console.error('Unexpected error:', err);
+    console.log('-------- SEARCH DEBUG END (ERROR) --------');
     return [];
   }
 };

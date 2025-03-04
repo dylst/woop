@@ -259,6 +259,7 @@ export default function BrowseSearch() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersChipContainer}
+        style={styles.filtersChipScroll}
       >
         {selectedCuisines.map((cuisine) => (
           <Chip
@@ -328,6 +329,7 @@ export default function BrowseSearch() {
               onPress={goToFilters}
               style={styles.filterButton}
               icon='filter-variant'
+              labelStyle={styles.filterButtonLabel}
             >
               Filters
             </Button>
@@ -337,68 +339,71 @@ export default function BrowseSearch() {
         {/* Active Filters Display */}
         {renderActiveFilters()}
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size='large' color='#65C5E3' />
-            <Text style={styles.loadingText}>Loading results...</Text>
-          </View>
-        ) : filteredResults.length === 0 ? (
-          <View style={styles.noResultsContainer}>
-            <Ionicons name='search-outline' size={60} color='#CCC' />
-            <Text style={styles.noResultsText}>No results found</Text>
-            <Text style={styles.noResultsSubText}>
-              Try adjusting your search or filters
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filteredResults}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <Pressable
-                style={styles.resultItem}
-                onPress={() => {
-                  router.push({
-                    pathname: '/food/[foodItemId]',
-                    params: { foodItemId: item.id },
-                  });
-                }}
-              >
-                <Image
-                  source={{
-                    uri: item.photos?.[0] || 'https://via.placeholder.com/100',
+        <View style={styles.resultsWrapper}>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size='large' color='#65C5E3' />
+              <Text style={styles.loadingText}>Loading results...</Text>
+            </View>
+          ) : filteredResults.length === 0 ? (
+            <View style={styles.noResultsContainer}>
+              <Ionicons name='search-outline' size={60} color='#CCC' />
+              <Text style={styles.noResultsText}>No results found</Text>
+              <Text style={styles.noResultsSubText}>
+                Try adjusting your search or filters
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredResults}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.resultItem}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/food/[foodItemId]',
+                      params: { foodItemId: item.id },
+                    });
                   }}
-                  style={styles.foodImage}
-                />
-                <View style={styles.resultInfo}>
-                  <Text style={styles.foodName}>{item.food_name}</Text>
-                  <Text style={styles.restaurantName}>
-                    {item.restaurant_name}
-                  </Text>
-
-                  {ratingsMap[item.id] && (
-                    <View style={styles.ratingContainer}>
-                      <Text style={styles.ratingText}>
-                        {ratingsMap[item.id].average.toFixed(1)} ⭐
-                        <Text style={styles.ratingCount}>
-                          ({ratingsMap[item.id].count})
-                        </Text>
-                      </Text>
-                    </View>
-                  )}
-
-                  {item.price_range && (
-                    <Text style={styles.priceText}>
-                      {'$'.repeat(item.price_range)}
+                >
+                  <Image
+                    source={{
+                      uri:
+                        item.photos?.[0] || 'https://via.placeholder.com/100',
+                    }}
+                    style={styles.foodImage}
+                  />
+                  <View style={styles.resultInfo}>
+                    <Text style={styles.foodName}>{item.food_name}</Text>
+                    <Text style={styles.restaurantName}>
+                      {item.restaurant_name}
                     </Text>
-                  )}
-                </View>
-              </Pressable>
-            )}
-            style={styles.resultsList}
-            contentContainerStyle={styles.resultsContent}
-          />
-        )}
+
+                    {ratingsMap[item.id] && (
+                      <View style={styles.ratingContainer}>
+                        <Text style={styles.ratingText}>
+                          {ratingsMap[item.id].average.toFixed(1)} ⭐
+                          <Text style={styles.ratingCount}>
+                            ({ratingsMap[item.id].count})
+                          </Text>
+                        </Text>
+                      </View>
+                    )}
+
+                    {item.price_range && (
+                      <Text style={styles.priceText}>
+                        {'$'.repeat(item.price_range)}
+                      </Text>
+                    )}
+                  </View>
+                </Pressable>
+              )}
+              style={styles.resultsList}
+              contentContainerStyle={styles.resultsContent}
+            />
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -414,32 +419,44 @@ const styles = StyleSheet.create({
   },
   topBarContainer: {
     width: '100%',
+    marginBottom: 5,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    marginBottom: 6,
+    height: 40,
   },
   searchTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
   },
   filterButton: {
     backgroundColor: '#65C5E3',
+    height: 32,
+    justifyContent: 'center',
+  },
+  filterButtonLabel: {
+    fontSize: 12,
+    marginVertical: 0,
   },
   filtersChipContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  filtersChipScroll: {
+    flexGrow: 0,
+    marginBottom: 6,
   },
   filterChip: {
     marginRight: 8,
     backgroundColor: '#EDF8FC',
-    height: 32,
+    height: 28,
   },
   filterChipText: {
     fontSize: 12,
@@ -447,26 +464,21 @@ const styles = StyleSheet.create({
   },
   editFiltersButton: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 4,
+    borderRadius: 14,
     backgroundColor: '#65C5E3',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 32,
+    height: 28,
   },
   editFiltersText: {
     color: 'white',
     fontSize: 12,
     fontWeight: '500',
   },
-  filtersContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-  },
-  filtersText: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
+  resultsWrapper: {
+    flex: 1,
+    marginTop: 2,
   },
   loadingContainer: {
     flex: 1,
@@ -498,12 +510,12 @@ const styles = StyleSheet.create({
   },
   resultItem: {
     flexDirection: 'row',
-    padding: 15,
+    padding: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#EEEEEE',
     borderRadius: 8,
-    marginBottom: 10,
+    marginBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -518,7 +530,7 @@ const styles = StyleSheet.create({
   },
   resultInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: 12,
     justifyContent: 'space-between',
   },
   foodName: {
@@ -529,12 +541,12 @@ const styles = StyleSheet.create({
   restaurantName: {
     fontSize: 14,
     color: '#666',
-    marginTop: 5,
+    marginTop: 2,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
+    marginTop: 2,
   },
   ratingText: {
     fontSize: 14,
@@ -548,12 +560,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#65C5E3',
     fontWeight: '500',
-    marginTop: 5,
+    marginTop: 2,
   },
   resultsList: {
     flex: 1,
   },
   resultsContent: {
-    padding: 10,
+    padding: 8,
   },
 });
