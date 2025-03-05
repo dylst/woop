@@ -8,6 +8,14 @@ import { useUser } from './context/UserContext';
 
 const screenHeight = Dimensions.get('window').height;
 
+// List of words to check against (this list can be expanded or replaced by a more robust solution)
+const bannedWords = ['fuck', 'Fuck', 'Shit', 'shit', 'bitch' , 'Bitch'];
+
+function containsInappropriateContent(text: string) {
+  const lowerText = text.toLowerCase();
+  return bannedWords.some(word => lowerText.includes(word));
+}
+
 export default function AddReviewScreen() {
   const params = useLocalSearchParams();
   const { user } = useUser();
@@ -20,6 +28,12 @@ export default function AddReviewScreen() {
   const handlePostReview = async () => {
     if (!reviewText || rating === 0) {
       alert("Please provide a rating and review text.");
+      return;
+    }
+
+    // Check for inappropriate content
+    if (containsInappropriateContent(reviewText)) {
+      alert("Your review contains inappropriate language. Please modify your review.");
       return;
     }
 
