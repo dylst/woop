@@ -81,7 +81,8 @@ export default function SearchResults() {
             : undefined,
         });
 
-        setResults(filteredResults);
+        // Type assertion to ensure results match FoodItem interface
+        setResults(filteredResults as FoodItem[]);
       } catch (error) {
         console.error('Error fetching filtered results:', error);
       } finally {

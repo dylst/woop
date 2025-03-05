@@ -16,8 +16,14 @@ export const mapService = {
 			const responseData =
 				data?.map((map) => ({
 					name: map.name,
+					addressLin: map.addressLin,
+					city: map.city,
+					state: map.state,
+					zipcode: map.zipcode,
+					hours: map.hours,
 					longitude: map.longitude,
 					latitude: map.latitude,
+					webUrl: map.webUrl,
 				})) || [];
 
 			console.log(responseData);

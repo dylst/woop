@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, Callout, PROVIDER_GOOGLE, Camera } from "react-native-maps";
 import {
 	StyleSheet,
 	View,
@@ -11,9 +11,14 @@ import { mapService } from "@/app/api/services/mapService";
 import { Map } from "@/types/map.types";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import type { Camera } from "react-native-maps";
+import { Colors } from "@/constants/Colors";
 
+const formatHours = (hours?: string): string[] => {
+	if (!hours || typeof hours !== "string") return [];
 
+	const safeHours = hours.length > 200 ? hours.substring(0, 200) : hours;
+	return safeHours.split(" | ").map(line => line.trim());
+}
 
 const MapScreen = () => {
 	const router = useRouter();
@@ -43,9 +48,10 @@ const MapScreen = () => {
 	const zoomIn = () => {
 		if (mapRef.current) {
 			mapRef.current.getCamera().then((camera: Camera) => {
+				const currentZoom = camera.zoom ?? 15;
 				mapRef.current?.animateCamera({
 					center: camera.center,
-					zoom: (camera.zoom ?? 15) + 1, // 🔍 Zoom In
+					zoom: currentZoom + 1, // 🔍 Zoom In
 				});
 			});
 		}
@@ -55,9 +61,10 @@ const MapScreen = () => {
 	const zoomOut = () => {
 		if (mapRef.current) {
 			mapRef.current.getCamera().then((camera: Camera) => {
+				const currentZoom = camera.zoom ?? 15;
 				mapRef.current?.animateCamera({
 					center: camera.center,
-					zoom: (camera.zoom ?? 15) - 1, // 🔎 Zoom Out
+					zoom: currentZoom - 1, // 🔎 Zoom Out
 				});
 			});
 		}
@@ -98,16 +105,47 @@ const MapScreen = () => {
 						scrollEnabled={true}
 						pitchEnabled={true}
 					>
-						{markers.map((marker, index) => (
-							<Marker
-								key={index}
-								title={marker.name}
-								coordinate={{
-									latitude: parseFloat(marker.latitude),
-									longitude: parseFloat(marker.longitude),
-								}}
-							/>
-						))}
+						{markers.map((marker, index) => {
+							const formattedHours = formatHours(marker.hours);
+
+							const zipcodeString = marker.zipcode != null && Number.isSafeInteger(marker.zipcode)
+								? marker.zipcode.toString()
+								: '';
+
+							const websiteUrl = marker.webUrl;
+
+							return (
+								<Marker
+									key={index}
+									// title={marker.name}
+									// description={marker.addressLin}
+									coordinate={{
+										latitude: parseFloat(marker.latitude),
+										longitude: parseFloat(marker.longitude),
+									}}
+								>
+									<Callout>
+										<View style={styles.mapMarkerContainer}>
+											<Text style={styles.mapMarkerTitle}>{marker.name}</Text>
+											<Text style={styles.mapMarkerDescription}>
+												{`${marker.addressLin ?? ''}, ${marker.city ?? ''}, ${marker.state ?? ''} ${zipcodeString}`}
+											</Text>
+											{formattedHours.length > 0 ? (
+												formattedHours.map((block, i) => (
+													<Text key={i} style={styles.hoursText}>{block}</Text>
+												))
+											) : (
+												<Text style={styles.hoursText}>Hours not available</Text>
+											)}
+											{websiteUrl ? (
+												<Text style={styles.urlText}>{websiteUrl}</Text>
+											) : ('')}
+										</View>
+									</Callout>
+								</Marker>
+							)
+						}
+						)}
 					</MapView>
 					
 					<View style={styles.zoomButtonsContainer}>
@@ -210,6 +248,35 @@ const styles = StyleSheet.create({
 		position: "absolute",
 		bottom: 20,
 		right: 20,
+	},
+
+	mapMarkerContainer: {
+		width: 250,
+		padding: 6,
+	},
+
+	mapMarkerTitle: {
+		fontSize: 18,
+		fontWeight: '700',
+		color: Colors.primary.darkteal,
+		marginBottom: 6,
+	},
+
+	mapMarkerDescription: {
+		fontSize: 14,
+		color: '#333',
+	},
+
+	hoursText: {
+		fontSize: 13,
+		marginTop: 4,
+		color: '#333',
+	},
+
+	urlText: {
+		marginTop: 4,
+		fontSize: 10,
+		color: Colors.primary.darkteal,
 	}
 });
 
