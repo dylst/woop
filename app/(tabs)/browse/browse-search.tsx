@@ -277,7 +277,7 @@ export default function BrowseSearch() {
 
 			// Append new results to existing results
 			setFilteredResults((prev) => [...prev, ...results]);
-			setInitialResults((prev) => [...prev, ...results]);
+			// setInitialResults((prev) => [...prev, ...results]);
 			setHasMoreResults(hasMore);
 			setCurrentPage(nextPage);
 
