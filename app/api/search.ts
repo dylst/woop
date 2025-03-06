@@ -23,7 +23,9 @@ const convertPriceToSymbol = (price: number): string => {
 export const searchFoodItems = async (
   keyword: string,
   filters?: FilterOptions,
-  predictive: boolean = false
+  predictive: boolean = false,
+  page: number = 0,
+  pageSize: number = 20
 ) => {
   try {
     // For predictive search, we want a faster, simplified query
@@ -32,7 +34,7 @@ export const searchFoodItems = async (
 
       // Only search if we have at least 2 characters
       if (keyword.length < 2) {
-        return [];
+        return { results: [], hasMore: false };
       }
 
       const sanitizedKeyword = keyword.replace(/[%_]/g, '');
@@ -45,23 +47,31 @@ export const searchFoodItems = async (
         .or(
           `food_name.ilike.${likePattern},restaurant_name.ilike.${likePattern}`
         )
-        .limit(10); // Smaller limit for faster results
+        .limit(10); // Predictive search always uses limit of 10
 
       const { data, error } = await query;
 
       if (error) {
         console.error('Error in predictive search:', error);
-        return [];
+        return { results: [], hasMore: false };
       }
 
       console.log(`Predictive search returned ${data?.length || 0} results`);
-      return data || [];
+      return { 
+        results: data || [], 
+        hasMore: false // Predictive search doesn't support pagination
+      };
     }
 
-    // Original full search implementation
+    // Original full search implementation with pagination
     console.log('-------- SEARCH DEBUG START --------');
     console.log('Search called with keyword:', keyword);
+    console.log('Pagination:', { page, pageSize });
     console.log('Filters applied:', JSON.stringify(filters, null, 2));
+
+    // Calculate range for pagination
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
 
     // Sanitize the keyword to prevent SQL injection
     const sanitizedKeyword = keyword.replace(/[%_]/g, '');
@@ -94,16 +104,16 @@ export const searchFoodItems = async (
       query = query.in('price_range', priceSymbols);
     }
 
-    // Apply limit to query
-    query = query.limit(100);
+    // Apply pagination instead of limit
+    query = query.range(from, to).order('id', { ascending: true });
 
     // Execute the query
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     // If there was an error or no data, return empty array
     if (error) {
       console.error('Error searching food items:', error);
-      return [];
+      return { results: [], hasMore: false };
     }
 
     console.log(`Initial search returned ${data?.length || 0} results`);
@@ -166,7 +176,9 @@ export const searchFoodItems = async (
     if (!filters || Object.keys(filters).length === 0) {
       console.log('No filters applied, returning all results');
       console.log('-------- SEARCH DEBUG END --------');
-      return allResults;
+      // Determine if there might be more results
+      const hasMore = data && data.length === pageSize;
+      return { results: allResults, hasMore };
     }
 
     // Make a copy of initial results for debugging
@@ -304,7 +316,7 @@ export const searchFoodItems = async (
       if (restaurantNames.length === 0) {
         console.log('No restaurant names found for distance filtering');
         console.log('-------- SEARCH DEBUG END --------');
-        return [];
+        return { results: [], hasMore: false };
       }
 
       // Fetch restaurant locations
@@ -362,11 +374,14 @@ export const searchFoodItems = async (
 
     console.log(`Final search results count: ${allResults.length}`);
     console.log('-------- SEARCH DEBUG END --------');
-    return allResults;
+    
+    // Determine if there might be more results
+    const hasMore = data && data.length === pageSize;
+    return { results: allResults, hasMore };
   } catch (err) {
     console.error('Unexpected error:', err);
     console.log('-------- SEARCH DEBUG END (ERROR) --------');
-    return [];
+    return { results: [], hasMore: false };
   }
 };
 
