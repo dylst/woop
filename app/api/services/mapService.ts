@@ -1,7 +1,11 @@
 import { axiosInstance } from "../config/axios";
 import { supabase } from "@/supabaseClient";
 import { Map } from "@/types/map.types";
+import { useEffect } from "react";
+
+
 export const mapService = {
+
 	fetchMarkerLongLang: async (city: string): Promise<Map[]> => {
 		try {
 			const { data, error } = await supabase

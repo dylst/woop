@@ -12,6 +12,7 @@ import { Map } from "@/types/map.types";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
+import { useLocation } from "@/hooks/useLocation";
 
 const formatHours = (hours?: string): string[] => {
 	if (!hours || typeof hours !== "string") return [];
@@ -37,12 +38,25 @@ const MapScreen = () => {
 		fetchData();
 	}, []);
 
+	const { currentLocation, initialRegion: userInitialRegion } = useLocation();
+
 	const initialRegion = {
 		latitude: 33.7701,
 		longitude: -118.1937,
 		latitudeDelta: 0.0922,
 		longitudeDelta: 0.0421,
 	};
+	
+	// Compute the region for the MapView
+	const computedRegion =
+    currentLocation || userInitialRegion
+      ? {
+          latitude: (currentLocation || userInitialRegion)!.latitude,
+          longitude: (currentLocation || userInitialRegion)!.longitude,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.0121,
+        }
+      : initialRegion;
 
 	// ✅ Function to Zoom In
 	const zoomIn = () => {
@@ -69,6 +83,16 @@ const MapScreen = () => {
 			});
 		}
 	};
+	
+	if (!markers) {
+		return (
+		  <View style={styles.loadingContainer}>
+			<ActivityIndicator size="large" color="#007AFF" />
+			<Text style={styles.loadingText}>Loading Map...</Text>
+		  </View>
+		);
+	  }
+	
 
 	return (
 		<View style={styles.container}>
@@ -100,6 +124,7 @@ const MapScreen = () => {
 						provider={PROVIDER_GOOGLE}
 						style={styles.map}
 						initialRegion={initialRegion}
+						region={computedRegion}
 						zoomEnabled={true}
 						zoomControlEnabled={false} // Hide built-in controls
 						scrollEnabled={true}
@@ -145,6 +170,14 @@ const MapScreen = () => {
 								</Marker>
 							)
 						}
+						)}
+						 {/* Render a marker for the user's current location */}
+						 {currentLocation && (
+							<Marker
+								coordinate={currentLocation}
+								title="You are here"
+								pinColor="blue" // 🔵
+							/>
 						)}
 					</MapView>
 					<View style={styles.zoomButtonsContainer}>

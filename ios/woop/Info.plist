@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
   <dict>
+
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>App needs location access when in use</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>App needs location access always</string>
+    <key>GMSApiKey</key>
+    <string>AIzaSyC9rkam2gpEFI3Owp0Rn7aPA27plfy8bwU</string>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>CFBundleDevelopmentRegion</key>
