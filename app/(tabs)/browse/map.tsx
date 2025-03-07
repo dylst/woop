@@ -6,6 +6,7 @@ import {
 	TouchableOpacity,
 	ActivityIndicator,
 	Text,
+	Platform
 } from "react-native";
 import { mapService } from "@/app/api/services/mapService";
 import { Map } from "@/types/map.types";
@@ -140,34 +141,57 @@ const MapScreen = () => {
 							const websiteUrl = marker.webUrl;
 
 							return (
+								
 								<Marker
 									key={index}
-									// title={marker.name}
-									// description={marker.addressLin}
 									coordinate={{
 										latitude: parseFloat(marker.latitude),
 										longitude: parseFloat(marker.longitude),
 									}}
-								>
-									<Callout>
-										<View style={styles.mapMarkerContainer}>
+									>
+									{Platform.OS !== "web" ? (
+										<Callout tooltip>
+										<View style={{ backgroundColor: "white", borderRadius: 5, padding: 10 }}>
 											<Text style={styles.mapMarkerTitle}>{marker.name}</Text>
 											<Text style={styles.mapMarkerDescription}>
-												{`${marker.addressLin ?? ''}, ${marker.city ?? ''}, ${marker.state ?? ''} ${zipcodeString}`}
+											{`${marker.addressLin ?? ""}, ${marker.city ?? ""}, ${marker.state ?? ""} ${zipcodeString}`}
+											</Text>
+											{formattedHours.length > 0 ? (
+											formattedHours.map((block, i) => (
+												<Text key={i} style={styles.hoursText}>
+												{block}
+												</Text>
+											))
+											) : (
+											<Text style={styles.hoursText}>Hours not available</Text>
+											)}
+											{websiteUrl ? <Text style={styles.urlText}>{websiteUrl}</Text> : null}
+										</View>
+										</Callout>
+									) : (
+										<Callout>
+										<View>
+											<View style={styles.mapMarkerContainer}>
+											<Text style={styles.mapMarkerTitle}>{marker.name}</Text>
+											<Text style={styles.mapMarkerDescription}>
+												{`${marker.addressLin ?? ""}, ${marker.city ?? ""}, ${marker.state ?? ""} ${zipcodeString}`}
 											</Text>
 											{formattedHours.length > 0 ? (
 												formattedHours.map((block, i) => (
-													<Text key={i} style={styles.hoursText}>{block}</Text>
+												<Text key={i} style={styles.hoursText}>
+													{block}
+												</Text>
 												))
 											) : (
 												<Text style={styles.hoursText}>Hours not available</Text>
 											)}
-											{websiteUrl ? (
-												<Text style={styles.urlText}>{websiteUrl}</Text>
-											) : ('')}
+											{websiteUrl ? <Text style={styles.urlText}>{websiteUrl}</Text> : null}
+											</View>
 										</View>
-									</Callout>
+										</Callout>
+									)}
 								</Marker>
+
 							)
 						}
 						)}

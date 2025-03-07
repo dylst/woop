@@ -42,3 +42,8 @@ supabaseClient.js
 .env
 
 ios/woop/Info.plist
+ios/woop/GoogleService-Info.plist
+ios/woop/GoogleService-Info-Dev.plist
+ios/woop/GoogleService-Info-Prod.plist
+
+Info.plist
