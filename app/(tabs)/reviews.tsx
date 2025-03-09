@@ -10,6 +10,9 @@ import {
   Text,
   FlatList,
   RefreshControl,
+  Modal,
+  Button,
+  TextInput,
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
@@ -18,7 +21,7 @@ import { supabase } from '@/supabaseClient';
 import { useUser } from '../context/UserContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
- 
+
 
 interface ReviewItem {
   profile_id: string;
@@ -31,55 +34,113 @@ interface ReviewItem {
   dietary_tags?: string[];
   review_id?: string;
   id: string;
-  review_text: string; 
+  review_text: string;
+  rating: number;
 }
 
+type EditModalProps = {
+  isModalVisible: boolean;
+  handleSave:  (reviewId: string, reviewText: string, rating: number) => void;
+  closeModal: () => void;
+  reviewItem: ReviewItem;
+
+}
+
+const EditModal = ({isModalVisible, handleSave, closeModal, reviewItem}: EditModalProps) => {
+  const [inputText, setInputText] = useState<string>(reviewItem.review_text);
+  const [rating, setRating] = useState(reviewItem.rating)
+  return (
+   <Modal
+        visible={isModalVisible}
+        onRequestClose={closeModal} // Handle back button press on Android
+        transparent={true} // Allows you to see the background
+        animationType="slide" // Modal slide-up animation
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+          <Text style={styles.itemTitle}>{reviewItem.food_name}</Text>
+          <Text style={styles.itemComment}>{reviewItem.restaurant_name}</Text>
+          <View style={styles.ratingRow}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Pressable key={star} onPress={() => setRating(Number(star))}>
+              <Ionicons
+                name={star <= rating ? "star" : "star-outline"}
+                size={32}
+                color="#FFD700"
+                style={styles.starIcon}
+              />
+            </Pressable>
+          ))}
+        </View>
+            {/* TextInput (Textbox) */}
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText} // Update state with the input
+              placeholder="Type here..."
+            />
+
+            {/* Save and Cancel Buttons */}
+            <View style={styles.buttonsContainer}>
+              <Button title="Save" onPress={() => handleSave(reviewItem.id, inputText, rating)} />
+              <Button title="Cancel" onPress={closeModal} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+)};
+
 const ReviewsScreen = () => {
+  const [editItem, setEditItem] = useState<ReviewItem | undefined>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useUser();
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const handlePress = (foodItemId: string) => {
-    router.push(`/food/${foodItemId}`)
+    router.push(`/food/${foodItemId}`) 
   };
 
+
+  const handleEdit = (item: ReviewItem) => {
+    setIsModalVisble(true);
+    setEditItem(item);
+  }
+
+  const [isModalVisible, setIsModalVisble] = useState(false);
+
   const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback( async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchReviews();
     await fetchUserReviews();
     setRefreshing(false);
-  }, []); 
+  }, []);
 
   const renderItem = ({ item }: { item: ReviewItem }) => {
     const cuisineText = item.cuisine_type?.join(' ');
     const dietaryText = item.dietary_tags?.join(' ');
-  
-    // // const ratingInfo = ratingMap[item.food_item_id];
-    // const average = ratingInfo?.average || 0;
-    // const count = ratingInfo?.count || 0;
-  
+
+
     const imageUrl = Array.isArray(item.photos) && item.photos.length > 0 ? item.photos[0] : '';
-  
+
     return (
       <Pressable
         style={styles.card}
         onPress={() => handlePress(item.food_item_id)}
       >
         <Image source={{ uri: imageUrl }} style={styles.itemImage} />
-  
+
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{item.food_name}</Text>
           <Text style={styles.itemComment}>{item.restaurant_name}</Text>
           <Text style={styles.itemComment}>{item.review_text}</Text>
-          {/* <View style={styles.ratingRow}>
-            <Text style={styles.ratingAverage}>{average ? (average.toFixed(1)) : '0.0'}</Text>
-            {renderStars(average)}
-            <Text style={styles.ratingCount}>({count === 1 ? `1 rating` : `${count} ratings`})</Text>
-          </View> */}
+          <View style={styles.ratingRow}>
+            <Text style={styles.ratingAverage}>{item.rating ? (item.rating.toFixed(1)) : '0.0'}</Text>
+            {renderStars(item.rating)}
+          </View>
           <View style={styles.itemTagContainer}>
             <Text style={styles.itemTagPrice}>{item.price_range}</Text>
-  
+
             {cuisineText ? (
               <Text style={styles.itemTag}>{cuisineText}</Text>
             ) : null
@@ -91,11 +152,19 @@ const ReviewsScreen = () => {
           </View>
         </View>
 
-{ userReviews.includes(item.id) ?  <Ionicons
-          name='close-outline'
-          size={28}
-          onPress={() => handleRemoveItem(item.id)}
-        /> : null}
+        {userReviews.includes(item.id) ?
+          <>
+            <Ionicons
+              name='create-outline'
+              size={28}
+              onPress={() => handleEdit(item)}
+            />
+            <Ionicons
+              name='close-outline'
+              size={28}
+              onPress={() => handleRemoveItem(item.id)}
+            />
+          </> : null}
       </Pressable>
     );
   };
@@ -113,16 +182,16 @@ const ReviewsScreen = () => {
           profile_id
         `)
         .eq('profile_id', userId);
-  
+
       if (error) {
         console.error('Error fetching reviews:', error.message || error.code); // Log error.message or error.code
         return;
       }
-  
+
       if (!data) return;
-  
+
       setUserReviews(data.map((review: any) => review.id));
-  
+
     } catch (error) {
       if (error instanceof Error) {
         console.log('Caught error:', error.message); // Log the message if it's a regular JavaScript error
@@ -133,13 +202,13 @@ const ReviewsScreen = () => {
       setLoading(false);
     }
   }
-  
-   const fetchReviews = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('review')
-          .select(`
+
+  const fetchReviews = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('review')
+        .select(`
           id,
           profile_id,
           food_item_id,
@@ -152,49 +221,47 @@ const ReviewsScreen = () => {
             dietary_tags
           ),
           review_date,
-          review_text
+          review_text, 
+          rating
         `)
-          .order('review_date', { ascending: false })
-  
-        if (error) {
-          console.error('Error fetching favorites:', error);
-          return;
-        }
-  
-        if (!data) return;
-  
-        const flattened = data.map((review: any) => ({
-          profile_id: review.profile_id,
-          food_item_id: review.food_item_id,
-          food_name: review.fooditem?.food_name || '',
-          photos: review.fooditem?.photos || [],
-          restaurant_name: review.fooditem?.restaurant_name || '',
-          price_range: review.fooditem?.price_range || '',
-          cuisine_type: review.fooditem?.cuisine_type || [],
-          dietary_tags: review.fooditem?.dietary_tags || [],
-          review_date: review.review_date || '',
-          id: review.id,
-          review_text: review.review_text,
-        }));
-        
-        setReviews(flattened);
-  
-  
-        // fetch ratings
-        // const itemIds = flattened.map((f) => f.food_item_id);
-        // fetchRatings(itemIds);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
+        .order('review_date', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching favorites:', error);
+        return;
       }
-    };
-     useEffect(() => {
-        if (userId) {
-          fetchReviews();
-          fetchUserReviews();
-        }
-      }, [userId]);
+
+      if (!data) return;
+
+      const flattened = data.map((review: any) => ({
+        profile_id: review.profile_id,
+        food_item_id: review.food_item_id,
+        food_name: review.fooditem?.food_name || '',
+        photos: review.fooditem?.photos || [],
+        restaurant_name: review.fooditem?.restaurant_name || '',
+        price_range: review.fooditem?.price_range || '',
+        cuisine_type: review.fooditem?.cuisine_type || [],
+        dietary_tags: review.fooditem?.dietary_tags || [],
+        review_date: review.review_date || '',
+        id: review.id,
+        review_text: review.review_text,
+        rating: review.rating,
+      }));
+
+      setReviews(flattened);
+
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (userId) {
+      fetchReviews();
+      fetchUserReviews();
+    }
+  }, [userId]);
   // Remove item from both state and Supabase
   const handleRemoveItem = async (id: string) => {
     // Remove from Supabase
@@ -211,6 +278,52 @@ const ReviewsScreen = () => {
     setReviews((prevReviews) => prevReviews.filter((item) => item.id !== id));
 
   };
+
+  const handleUpdateReview = async (reviewId: string, reviewText: string, rating: number) => {
+    try {
+      const { data, error } = await supabase
+      .from('review') 
+      .update({ review_text: reviewText, rating }) 
+      .eq('id', reviewId);
+  
+      if (error) {
+        console.error(error);
+        return;
+      }
+      await onRefresh();
+      setIsModalVisble(false);
+    } catch(e){
+      console.error('Error:', e);
+    }
+
+  };
+
+  function renderStars(average: number) {
+    const stars = [];
+    // Integer part
+    const floorVal = Math.floor(average);
+    // Decimal part
+    const decimal = average - floorVal;
+    // Half star
+    const hasHalf = decimal >= 0.5
+  
+    // full star
+    for (let i = 0; i < floorVal && i < 5; i++) {
+      stars.push(<Ionicons key={`full-${i}`} name="star" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
+    }
+  
+    if (hasHalf && floorVal < 5) {
+      stars.push(<Ionicons key="half" name="star-half" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
+    }
+  
+    const noStars = floorVal + (hasHalf ? 1 : 0);
+    for (let i = noStars; i < 5; i++) {
+      stars.push(<Ionicons key={`empty-${i}`} name="star" size={12} color="#ccc" style={{ marginRight: 2 }} />)
+    }
+  
+    return stars;
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
@@ -218,19 +331,21 @@ const ReviewsScreen = () => {
         backgroundColor={Colors.primary.lightteal}
       />
       {/* Top Bar */}
-      <TopBar type='back' title='reviews'/>
+      <TopBar type='back' title='reviews' />
 
-        {/* Recent Reviews Section */}
-        <View style={styles.recentSection}>
-          <ThemedText style={styles.sectionTitle}>Recent Reviews</ThemedText>
-            <FlatList<ReviewItem>
-            data={reviews}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderItem}
-            showsHorizontalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
-          />
-        </View>
+      {/* Recent Reviews Section */}
+      <View style={styles.recentSection}>
+        <ThemedText style={styles.sectionTitle}>Recent Reviews</ThemedText>
+        {editItem? <EditModal isModalVisible={isModalVisible} handleSave={handleUpdateReview} closeModal={() => setIsModalVisble(false)} reviewItem={editItem}/>: null}
+
+        <FlatList<ReviewItem>
+          data={reviews}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+          showsHorizontalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -452,6 +567,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 5,
   },
+
+ modalOverlay: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark background overlay
+},
+modalContent: {
+  width: '80%',
+  padding: 20,
+  backgroundColor: 'white',
+  borderRadius: 10,
+  alignItems: 'center',
+},
+modalTitle: {
+  fontSize: 18,
+  marginBottom: 15,
+  fontWeight: 'bold',
+},
+textInput: {
+  width: '100%',
+  height: 40,
+  borderColor: 'gray',
+  borderWidth: 1,
+  borderRadius: 5,
+  marginBottom: 20,
+  paddingLeft: 10,
+},
+buttonsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-evenly',
+  width: '100%',
+},
 });
 
 
