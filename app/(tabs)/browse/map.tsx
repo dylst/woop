@@ -23,7 +23,7 @@ const formatHours = (hours?: string): string[] => {
 const MapScreen = () => {
 	const router = useRouter();
 	const [markers, setMarkers] = useState<Map[] | null>(null);
-	const mapRef = useRef<MapView | null>(null); // ✅ Use ref to control the map
+	const mapRef = useRef<MapView | null>(null); 
 
 	useEffect(() => {
 		async function fetchData() {
@@ -147,6 +147,7 @@ const MapScreen = () => {
 						}
 						)}
 					</MapView>
+					
 					<View style={styles.zoomButtonsContainer}>
 						<TouchableOpacity
 							style={styles.zoomInButton}

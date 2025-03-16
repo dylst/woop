@@ -1,5 +1,7 @@
 import { Image, ActivityIndicator } from 'react-native';
 import TopBar from '@/components/ui/TopBar';
+// Add this to your imports at the top
+import { userRecommendationService } from '@/app/api/services/userRecommendationService';
 import {
   View,
   Text,
@@ -57,7 +59,7 @@ export default function Browse() {
   const [searchText, setSearchText] = useState('');
   const [predictiveResults, setPredictiveResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
+  
   const {
     selectedCuisines,
     selectedDietary,
@@ -82,7 +84,7 @@ export default function Browse() {
       if (text.length >= 2) {
         setIsSearching(true);
         try {
-          const results = await searchFoodItems(text, undefined, true);
+          const {results} = await searchFoodItems(text, undefined, true);
           setPredictiveResults(results.slice(0, 5)); // Limit to 5 suggestions
         } catch (error) {
           console.error('Error in predictive search:', error);
@@ -105,6 +107,7 @@ export default function Browse() {
 
   // Clear predictive results when search is submitted
   const handleSearchSubmit = () => {
+    userRecommendationService.trackSearch(searchText);
     setPredictiveResults([]);
     handleSearch();
   };
