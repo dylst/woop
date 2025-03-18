@@ -86,7 +86,8 @@ export default function AuthorModerationPage() {
           food_name,
           photos
         ),
-        profile:profile_id (username, first_name, last_name, avatar)
+        profile:profile_id (username, first_name, last_name, avatar),
+        review_likes (sender_profile_id)
       `)
       .eq("food_item_id", String(foodItemId));
 
@@ -95,7 +96,34 @@ export default function AuthorModerationPage() {
       return;
     }
 
-    setReviews(reviewsData || []);
+    // check if current user has liked each review
+    if (userId) {
+      const reviewIds = reviewsData.map(review => review.id);
+      const { data: likedData, error: likedError } = await supabase
+        .from("review_likes")
+        .select("review_id")
+        .in("review_id", reviewIds)
+        .eq("sender_profile_id", userId);
+
+      if (likedError) {
+        console.error("Error fetching liked reviews:", likedError);
+      }
+
+      // map reviews to add Liked status and likeCount
+      const reviewsWithLikes = reviewsData.map((review: any) => ({
+        ...review,
+        liked: userId
+          ? review.review_likes?.some(
+            (like: any) => like.sender_profile_id === userId
+          ) : false,
+        likeCount: review.review_likes ? review.review_likes.length : 0,
+      }));
+
+
+      setReviews(reviewsWithLikes);
+    } else {
+      setReviews(reviewsData || []);
+    }
   };
 
   useEffect(() => {
@@ -162,6 +190,14 @@ export default function AuthorModerationPage() {
       return;
     }
 
+    // update state to mark review as liked
+    setReviews((prevReviews) =>
+      prevReviews.map((r) =>
+        r.id === review.id
+          ? { ...r, liked: true, likeCount: r.likeCount + 1 } : r
+      )
+    );
+
     // Notifications 
     // notifs descriptions
     const titleText = "Food review liked!";
@@ -191,6 +227,30 @@ export default function AuthorModerationPage() {
     // liked notification confirmation
     console.log("Like notification sent:", data);
     Alert.alert("Review Liked!", "You have liked this review.");
+  };
+
+  const handleUnlikeReview = async (review: any) => {
+    if (!userId) return;
+    const { data, error } = await supabase
+      .from("review_likes")
+      .delete()
+      .eq("review_id", review.id)
+      .eq("sender_profile_id", userId);
+
+    if (error) {
+      console.error("Error unliking review:", error);
+    }
+
+    // update state to mark review as unliked
+    setReviews((prevReviews) =>
+      prevReviews.map((r) =>
+        r.id === review.id
+          ? { ...r, liked: false, likeCount: Math.max(r.likeCount - 1, 0) } : r
+      )
+    );
+
+    console.log("Review unliked");
+    Alert.alert("Review Unliked!", "You have unliked this review.")
   };
 
   return (
@@ -232,25 +292,39 @@ export default function AuthorModerationPage() {
                       <Text style={styles.userInfoMeta}>
                         {new Date(review.review_date).toLocaleDateString()}
                       </Text>
-                      <Text>
-                        {renderStars(review.rating)}
+                      <Text style={styles.reviewMeta}>
+                        {renderStars(review.rating)} &bull; {review.likeCount} {review.likeCount === 1 ? "Like" : "Likes"}
                       </Text>
                     </View>
                     {review.profile_id !== userId ? (
-                      <Pressable
-                        style={[styles.actionButton, {backgroundColor: '#f0c051'}]}
-                        onPress={() => handleLikeReview(review)}
-                      >
-                        <Ionicons name="thumbs-up-sharp" size={16} color="white"/>
-                        <Text style={styles.actionText}>LIKE</Text>
-                      </Pressable>
+                      // check if user has liked the review already
+                      review.liked ? (
+                        // user has already liked review, give option to unlike
+                        <Pressable
+                          style={[styles.actionButton, { backgroundColor: '#aaaaaa' }]}
+                          onPress={() => handleUnlikeReview(review)}
+                        >
+                          <Ionicons name="heart-dislike-sharp" size={16} color="white" />
+                          {/* <Text style={styles.actionText}>UNLIKE</Text> */}
+                        </Pressable>
+                      ) : (
+                        // user has not liked review
+                        <Pressable
+                          style={[styles.actionButton, { backgroundColor: '#f0c051' }]}
+                          onPress={() => handleLikeReview(review)}
+                        >
+                          <Ionicons name="heart-sharp" size={16} color="white" />
+                          {/* <Text style={styles.actionText}>LIKE</Text> */}
+                        </Pressable>
+                      )
                     ) : (
+                      // user can delete their own review
                       <Pressable
-                        style={[styles.actionButton, {backgroundColor: '#ed6358'}]}
+                        style={[styles.actionButton, { backgroundColor: '#ed6358' }]}
                         onPress={() => handleDeleteReview(review.id)}
                       >
-                        <Ionicons name="trash-sharp" size={16} color="white"/>
-                        <Text style={styles.actionText}>DELETE</Text>
+                        <Ionicons name="trash-sharp" size={16} color="white" />
+                        {/* <Text style={styles.actionText}>DELETE</Text> */}
                       </Pressable>
                     )}
                   </View>
@@ -313,6 +387,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     paddingBottom: 4,
+  },
+  reviewMeta: {
+    flexDirection: 'row',
+    color: '#333',
   },
   reviewContainer: {
     flexDirection: 'column',
