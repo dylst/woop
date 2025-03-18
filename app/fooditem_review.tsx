@@ -96,33 +96,56 @@ export default function AuthorModerationPage() {
       return;
     }
 
-    // check if current user has liked each review
-    if (userId) {
-      const reviewIds = reviewsData.map(review => review.id);
-      const { data: likedData, error: likedError } = await supabase
-        .from("review_likes")
-        .select("review_id")
-        .in("review_id", reviewIds)
-        .eq("sender_profile_id", userId);
+    // map reviews to add Liked status and likeCount
+    const reviewsWithLikes = reviewsData.map((review: any) => ({
+      ...review,
+      liked: userId
+        ? review.review_likes?.some(
+          (like: any) => like.sender_profile_id === userId
+        ) : false,
+      likeCount: review.review_likes ? review.review_likes.length : 0,
+      isTop: false,
+    }));
 
-      if (likedError) {
-        console.error("Error fetching liked reviews:", likedError);
+    // determine top review if at least one review has one like
+    let topReview: any = null;
+    reviewsWithLikes.forEach((review) => {
+      if (review.likeCount > 0) {
+        if (!topReview) {
+          topReview = review;
+        } else if (review.likeCount > topReview.likeCount) {
+          topReview = review;
+        } else if (review.likeCount === topReview.likeCount) {
+          // tie breaker
+          if (review.rating > topReview.rating) {
+            topReview = review;
+          } else if (review.rating === topReview.rating) {
+            // if both ratings same, tie break by earliest creation date
+            if (new Date(review.review_date) < new Date(topReview.review_date)) {
+              topReview = review;
+            }
+          }
+        }
       }
+    });
 
-      // map reviews to add Liked status and likeCount
-      const reviewsWithLikes = reviewsData.map((review: any) => ({
-        ...review,
-        liked: userId
-          ? review.review_likes?.some(
-            (like: any) => like.sender_profile_id === userId
-          ) : false,
-        likeCount: review.review_likes ? review.review_likes.length : 0,
-      }));
-
-
-      setReviews(reviewsWithLikes);
+    if (topReview) {
+      topReview.isTop = true;
+      // remove top review from rest of list to keep top review fixed as first review
+      const remainingReviews = reviewsWithLikes.filter((review) =>
+        review.id !== topReview.id);
+      // sort remaining reviews in descending order by likeCount then by rating
+      remainingReviews.sort((a, b) => {
+        if (b.likeCount === a.likeCount) {
+          return b.rating - a.rating;
+        }
+        return b.likeCount - a.likeCount;
+      });
+      setReviews([topReview, ...remainingReviews]);
     } else {
-      setReviews(reviewsData || []);
+      // if no likes, sort by rating descending
+      reviewsWithLikes.sort((a, b) => b.rating - a.rating);
+      setReviews(reviewsWithLikes);
     }
   };
 
@@ -137,14 +160,14 @@ export default function AuthorModerationPage() {
   }, []);
 
   // Compute the top review based on views (make sure your "review" table has a "views" column)
-  const topReviewId =
-    reviews.length > 0
-      ? reviews.reduce(
-        (maxReview, review) =>
-          review.views > maxReview.views ? review : maxReview,
-        reviews[0]
-      ).id
-      : null;
+  // const topReviewId =
+  //   reviews.length > 0
+  //     ? reviews.reduce(
+  //       (maxReview, review) =>
+  //         review.views > maxReview.views ? review : maxReview,
+  //       reviews[0]
+  //     ).id
+  //     : null;
 
   // Delete a review
   const handleDeleteReview = async (reviewId: number) => {
@@ -249,7 +272,7 @@ export default function AuthorModerationPage() {
       )
     );
 
-    console.log("Review unliked");
+    console.log("Review unliked:", data);
     Alert.alert("Review Unliked!", "You have unliked this review.")
   };
 
@@ -267,7 +290,7 @@ export default function AuthorModerationPage() {
         <View style={styles.contentContainer}>
           {reviews.length > 0 ? (
             reviews.map((review, index) => {
-              const isTopReview = review.id === topReviewId;
+              const isTopReview = review.isTop;
               return (
                 <View
                   key={index}
@@ -293,7 +316,7 @@ export default function AuthorModerationPage() {
                         {new Date(review.review_date).toLocaleDateString()}
                       </Text>
                       <Text style={styles.reviewMeta}>
-                        {renderStars(review.rating)} &bull; {review.likeCount} {review.likeCount === 1 ? "Like" : "Likes"}
+                        {renderStars(review.rating)} &bull; {review.likeCount > 0 ? (`${review.likeCount} ${review.likeCount === 1 ? "Like" : "Likes"}`) : 'No likes' }
                       </Text>
                     </View>
                     {review.profile_id !== userId ? (
@@ -304,7 +327,7 @@ export default function AuthorModerationPage() {
                           style={[styles.actionButton, { backgroundColor: '#aaaaaa' }]}
                           onPress={() => handleUnlikeReview(review)}
                         >
-                          <Ionicons name="heart-dislike-sharp" size={16} color="white" />
+                          <Ionicons name="heart-dislike-sharp" size={20} color="white" />
                           {/* <Text style={styles.actionText}>UNLIKE</Text> */}
                         </Pressable>
                       ) : (
@@ -313,7 +336,7 @@ export default function AuthorModerationPage() {
                           style={[styles.actionButton, { backgroundColor: '#f0c051' }]}
                           onPress={() => handleLikeReview(review)}
                         >
-                          <Ionicons name="heart-sharp" size={16} color="white" />
+                          <Ionicons name="heart-sharp" size={20} color="white" />
                           {/* <Text style={styles.actionText}>LIKE</Text> */}
                         </Pressable>
                       )
@@ -323,7 +346,7 @@ export default function AuthorModerationPage() {
                         style={[styles.actionButton, { backgroundColor: '#ed6358' }]}
                         onPress={() => handleDeleteReview(review.id)}
                       >
-                        <Ionicons name="trash-sharp" size={16} color="white" />
+                        <Ionicons name="trash-sharp" size={20} color="white" />
                         {/* <Text style={styles.actionText}>DELETE</Text> */}
                       </Pressable>
                     )}
