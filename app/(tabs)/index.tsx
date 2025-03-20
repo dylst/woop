@@ -34,9 +34,10 @@ const filtersItems = [
 const HomePage = () => {
 	const [featuredItems, setFeaturedItems] = useState<any[]>([]);
 	const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
-
+	const [recommendations, setRecommendations] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
+	const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
 	// Randomized featured items with random food items from database
 	// const shuffleFeaturedItems = <T,>(array: T[]): T[] => {
@@ -53,14 +54,14 @@ const HomePage = () => {
 	useEffect(() => {
 		const fetchRecommendations = async () => {
 			const { data, error } =
-				await userRecommendationService.getPersonalizedRecommendations();
+				await userRecommendationService.getEnhancedPersonalizedRecommendations();
 			if (error) {
 				console.error("Error fetching recommendations:", error);
 			} else if (data) {
 				console.log(data);
 			}
 		};
-    fetchRecommendations();
+		fetchRecommendations();
 	});
 
 	// userRecommendationSystem.ts ENDS HERE
@@ -162,7 +163,48 @@ const HomePage = () => {
 
 	const onRefresh = useCallback(() => {
 		setRefreshing(true);
-		fetchFeaturedItems().then(() => setRefreshing(false));
+
+		// Create a function to fetch both featured items and recommendations
+		const fetchAllData = async () => {
+			await Promise.all([fetchFeaturedItems(), fetchRecommendations()]);
+			setRefreshing(false);
+		};
+
+		fetchAllData();
+	}, []);
+
+	// Extract the fetchRecommendations function to be reusable
+	const fetchRecommendations = async () => {
+		setRecommendationsLoading(true);
+		try {
+			// Get personalized recommendations
+			const { data, error } =
+				await userRecommendationService.getEnhancedPersonalizedRecommendations();
+
+			if (error) {
+				console.error("Error fetching recommendations:", error);
+			} else if (data) {
+				// Store the recommendations in state
+				setRecommendations(data);
+
+				// Store the recommendations in Supabase
+				const storeResult =
+					await userRecommendationService.storeUserRecommendations(data);
+				if (storeResult.error) {
+					console.error("Error storing recommendations:", storeResult.error);
+				} else {
+					console.log("Successfully stored recommendations in Supabase");
+				}
+			}
+		} catch (error) {
+			console.error("Error in recommendation flow:", error);
+		} finally {
+			setRecommendationsLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchRecommendations();
 	}, []);
 
 	if (loading) {
@@ -215,6 +257,47 @@ const HomePage = () => {
 					</ScrollView>
 				</View>
 
+				{/* Recommendations Section */}
+				<Text style={styles.sectionTitle}>Recommended For You</Text>
+
+				<View style={styles.newSection}>
+					{recommendationsLoading ? (
+						<View style={styles.loadingContainer}>
+							<ActivityIndicator
+								size='small'
+								color='#0000ff'
+							/>
+							<Text style={styles.loadingText}>
+								Finding recommendations for you...
+							</Text>
+						</View>
+					) : recommendations.length > 0 ? (
+						<ScrollView
+							horizontal
+							showsHorizontalScrollIndicator={false}
+							style={styles.scrollViewPadding}
+						>
+							{recommendations.map((item) => (
+								<FeaturedCard
+									key={item.id}
+									id={item.id}
+									photos={{ uri: item.photos?.[0] ?? "" }}
+									foodName={item.food_name}
+									restaurantName={item.restaurant_name}
+									rating='New'
+									style={styles.shadowProp}
+								/>
+							))}
+						</ScrollView>
+					) : (
+						<View style={styles.emptyStateContainer}>
+							<Text style={styles.emptyStateText}>
+								Browse and rate more items to get personalized recommendations!
+							</Text>
+						</View>
+					)}
+				</View>
+
 				{/* Try Something New Section */}
 				<Text style={styles.sectionTitle}>Try something new!</Text>
 
@@ -263,6 +346,28 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 4, height: 4 },
 		shadowOpacity: 0.05,
 		shadowRadius: 6,
+	},
+	loadingContainer: {
+		padding: 20,
+		alignItems: "center",
+		justifyContent: "center",
+		width: "100%",
+	},
+	loadingText: {
+		marginTop: 8,
+		color: "#666",
+		fontSize: 14,
+	},
+	emptyStateContainer: {
+		padding: 20,
+		alignItems: "center",
+		justifyContent: "center",
+		width: "100%",
+	},
+	emptyStateText: {
+		color: "#666",
+		fontSize: 14,
+		textAlign: "center",
 	},
 });
 
