@@ -134,7 +134,6 @@ const HomePage = () => {
       const itemIds = featuredItems
         .map((item) => item.id)
         .filter((id) => id !== undefined && id !== null);
-
       if (itemIds.length > 0) {
         loadRatings(itemIds);
       }
@@ -171,7 +170,7 @@ const HomePage = () => {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollViewPadding}>
             {featuredItems.map((item, index) => {
               const imageUrl = item.fooditem?.photos?.[0] ?? '';
-              const averageRating = item.average_rating?.toFixed(1) || '0.0';
+              const round = ratingMap?.[item.food_item_id]?.average?.toFixed(1)??""
               return (
                 <FeaturedCard
                   key={item.food_item_id}
@@ -179,7 +178,7 @@ const HomePage = () => {
                   photos={{ uri: imageUrl }}
                   foodName={item.food_name}
                   restaurantName={item.restaurant_name}
-                  rating={averageRating}
+                  rating={round}
                   style={styles.shadowProp}
                 />
               );
