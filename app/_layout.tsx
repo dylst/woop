@@ -55,7 +55,7 @@ function AuthRedirect({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // When not authenticated and not already on the login screen, redirect to /users.
-    if (!user && segments[0] !== 'users') {
+    if (!user) {
       router.replace('/users');
     }
     // When authenticated but on the login screen, redirect to /(tabs).

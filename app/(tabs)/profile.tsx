@@ -94,9 +94,11 @@ const ProfileScreen = () => {
     fetchProfile();
   }, [userId]);
 
-  const firstName = userData?.first_name || userData?.username;
+  const firstName = userData?.first_name || '';
   const lastName = userData?.last_name || '';
-  
+  const city = userData?.city || '';
+  const state = userData?.state || '';
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -106,12 +108,19 @@ const ProfileScreen = () => {
       />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header section */}
+        <Pressable
+          style={styles.profileSettings}
+          onPress={() => router.push('/profileSettings')}>
+          <Ionicons name="settings-outline" size={24} color={Colors.primary.darkteal} />
+        </Pressable>
         <View style={styles.headerContent}>
           <Image
             source={{ uri: userData?.avatar }}
             style={styles.profileImage}
           />
-          <ThemedText style={styles.userName}>{firstName} {lastName}</ThemedText>
+          <ThemedText style={styles.userName}>@{userData?.username}</ThemedText>
+          {(firstName || lastName) && <ThemedText style={styles.realName}>{firstName} {lastName}</ThemedText>}
+          {(city && state) && <ThemedText style={styles.address}>{city}, {state}</ThemedText>}
           {/* Stats section */}
           <View style={styles.statsSection}>
             <View style={styles.statsContainer}>
@@ -297,6 +306,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  profileSettings: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
+  },
   profileImage: {
     width: 100,
     height: 100,
@@ -305,9 +320,21 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginTop: 10,
+    color: Colors.primary.darkteal,
+  },
+  realName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 6,
     color: '#000',
+  },
+  address: {
+    fontSize: 16,
+    marginTop: 2,
+    marginBottom: 4,
+    color: '#555',
   },
   statsSection: {
     backgroundColor: '#fff',
