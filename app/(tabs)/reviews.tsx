@@ -21,6 +21,7 @@ import { supabase } from '@/supabaseClient';
 import { useUser } from '../context/UserContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import StarRating from '@/components/ui/StarRating';
 
 
 interface ReviewItem {
@@ -136,7 +137,7 @@ const ReviewsScreen = () => {
           <Text style={styles.itemComment}>{item.review_text}</Text>
           <View style={styles.ratingRow}>
             <Text style={styles.ratingAverage}>{item.rating ? (item.rating.toFixed(1)) : '0.0'}</Text>
-            {renderStars(item.rating)}
+            <StarRating average={item.rating}/>
           </View>
           <View style={styles.itemTagContainer}>
             <Text style={styles.itemTagPrice}>{item.price_range}</Text>
@@ -297,32 +298,6 @@ const ReviewsScreen = () => {
     }
 
   };
-
-  function renderStars(average: number) {
-    const stars = [];
-    // Integer part
-    const floorVal = Math.floor(average);
-    // Decimal part
-    const decimal = average - floorVal;
-    // Half star
-    const hasHalf = decimal >= 0.5
-  
-    // full star
-    for (let i = 0; i < floorVal && i < 5; i++) {
-      stars.push(<Ionicons key={`full-${i}`} name="star" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
-    }
-  
-    if (hasHalf && floorVal < 5) {
-      stars.push(<Ionicons key="half" name="star-half" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
-    }
-  
-    const noStars = floorVal + (hasHalf ? 1 : 0);
-    for (let i = noStars; i < 5; i++) {
-      stars.push(<Ionicons key={`empty-${i}`} name="star" size={12} color="#ccc" style={{ marginRight: 2 }} />)
-    }
-  
-    return stars;
-  }
 
   return (
     <SafeAreaView style={styles.safeArea}>

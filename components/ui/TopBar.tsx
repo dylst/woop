@@ -13,7 +13,7 @@ import { RelativePathString, useNavigation, useRouter } from 'expo-router';
 import { useUser } from '@/app/context/UserContext';
 import { supabase } from '@/supabaseClient';
 
-const TopBar = ({ type = 'home', title = '' }) => {
+const TopBar = ({ type = 'home', title = '', replaceRoute = '' }) => {
   const router = useRouter();
 
   const { user } = useUser();
@@ -80,7 +80,11 @@ const TopBar = ({ type = 'home', title = '' }) => {
   };
 
   const handleBackPress = () => {
-      router.back();
+      if (type === 'back' && replaceRoute) {
+        router.replace(replaceRoute as any);
+      } else {
+        router.back();
+      }
   };
 
   return (

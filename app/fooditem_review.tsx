@@ -15,32 +15,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from "@/supabaseClient";
 import { useUser } from "./context/UserContext";
 import TopBar from "@/components/ui/TopBar";
-
-function renderStars(average: number) {
-  const stars = [];
-  // Integer part
-  const floorVal = Math.floor(average);
-  // Decimal part
-  const decimal = average - floorVal;
-  // Half star
-  const hasHalf = decimal >= 0.5
-
-  // full star
-  for (let i = 0; i < floorVal && i < 5; i++) {
-    stars.push(<Ionicons key={`full-${i}`} name="star" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
-  }
-
-  if (hasHalf && floorVal < 5) {
-    stars.push(<Ionicons key="half" name="star-half" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
-  }
-
-  const noStars = floorVal + (hasHalf ? 1 : 0);
-  for (let i = noStars; i < 5; i++) {
-    stars.push(<Ionicons key={`empty-${i}`} name="star" size={12} color="#ccc" style={{ marginRight: 2 }} />)
-  }
-
-  return stars;
-}
+import StarRating from "@/components/ui/StarRating";
 
 export default function AuthorModerationPage() {
   // const router = useRouter();
@@ -84,6 +59,7 @@ export default function AuthorModerationPage() {
         profile_id,
         fooditem (
           food_name,
+          restaurant_name,
           photos
         ),
         profile:profile_id (username, first_name, last_name, avatar),
@@ -285,6 +261,7 @@ export default function AuthorModerationPage() {
 
         <View style={styles.foodItemContainer}>
           <Text style={styles.foodItemInfo}>{itemData?.food_name}</Text>
+          <Text style={styles.foodItemData}>{itemData?.restaurant_name}</Text>
         </View>
 
         <View style={styles.contentContainer}>
@@ -316,7 +293,7 @@ export default function AuthorModerationPage() {
                         {new Date(review.review_date).toLocaleDateString()}
                       </Text>
                       <Text style={styles.reviewMeta}>
-                        {renderStars(review.rating)} &bull; {review.likeCount > 0 ? (`${review.likeCount} ${review.likeCount === 1 ? "Like" : "Likes"}`) : 'No likes' }
+                        <StarRating average={review.rating} size={12}/> &bull; {review.likeCount > 0 ? (`${review.likeCount} ${review.likeCount === 1 ? "Like" : "Likes"}`) : 'No likes' }
                       </Text>
                     </View>
                     {review.profile_id !== userId ? (
@@ -373,6 +350,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   foodItemContainer: {
+    flexDirection: 'column',
     paddingHorizontal: 20,
     marginBottom: 20,
   },

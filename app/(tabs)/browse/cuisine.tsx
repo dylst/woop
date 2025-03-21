@@ -118,7 +118,7 @@ export default function Cuisine() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar type='back' title='Cuisines' />
+      <TopBar type='back' title='Cuisines' replaceRoute='/browse' />
 
       <FlatList
         data={filteredCuisines}

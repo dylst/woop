@@ -14,6 +14,7 @@ import TopBar from '@/components/ui/TopBar';
 import { Colors } from '@/constants/Colors';
 import { ActivityIndicator } from 'react-native-paper';
 import { useUser } from '../context/UserContext';
+import StarRating from '@/components/ui/StarRating';
 
 interface FavoriteItem {
   profile_id: string;
@@ -48,32 +49,6 @@ interface RatingInfo {
 interface Review {
   food_item_id: string;
   rating: number,
-}
-
-function renderStars(average: number) {
-  const stars = [];
-  // Integer part
-  const floorVal = Math.floor(average);
-  // Decimal part
-  const decimal = average - floorVal;
-  // Half star
-  const hasHalf = decimal >= 0.5
-
-  // full star
-  for (let i = 0; i < floorVal && i < 5; i++) {
-    stars.push(<Ionicons key={`full-${i}`} name="star" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
-  }
-
-  if (hasHalf && floorVal < 5) {
-    stars.push(<Ionicons key="half" name="star-half" size={12} color="#ffd700" style={{ marginRight: 2 }} />)
-  }
-
-  const noStars = floorVal + (hasHalf ? 1 : 0);
-  for (let i = noStars; i < 5; i++) {
-    stars.push(<Ionicons key={`empty-${i}`} name="star" size={12} color="#ccc" style={{ marginRight: 2 }} />)
-  }
-
-  return stars;
 }
 
 const favorites = () => {
@@ -378,7 +353,7 @@ const favorites = () => {
           <Text style={styles.itemComment}>{item.restaurant_name}</Text>
           <View style={styles.ratingRow}>
             <Text style={styles.ratingAverage}>{average ? (average.toFixed(1)) : '0.0'}</Text>
-            {renderStars(average)}
+            <StarRating average={average}/>
             <Text style={styles.ratingCount}>({count === 1 ? `1 rating` : `${count} ratings`})</Text>
           </View>
           <View style={styles.itemTagContainer}>

@@ -83,7 +83,7 @@ export default function Filters() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar type='back' title='Filters' />
+      <TopBar type='back' title='Filters' replaceRoute='/browse'/>
 
       <ScrollView style={styles.scrollContainer}>
         {/* Category Buttons */}
