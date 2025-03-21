@@ -6,9 +6,10 @@ import {
   Pressable,
   Image,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/supabaseClient';
 import { Colors } from '@/constants/Colors';
@@ -17,32 +18,7 @@ import { fetchRatings, RatingInfo } from '@/hooks/fetchHelper';
 
 // to position back button within safe area view
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-function renderStars(average: number, size: number = 12) {
-  const stars = [];
-  // Integer part
-  const floorVal = Math.floor(average);
-  // Decimal part
-  const decimal = average - floorVal;
-  // Half star
-  const hasHalf = decimal >= 0.5
-
-  // full star
-  for (let i = 0; i < floorVal && i < 5; i++) {
-    stars.push(<Ionicons key={`full-${i}`} name="star" size={size} color="#ffd700" style={{ marginRight: 2 }} />)
-  }
-
-  if (hasHalf && floorVal < 5) {
-    stars.push(<Ionicons key="half" name="star-half" size={size} color="#ffd700" style={{ marginRight: 2 }} />)
-  }
-
-  const noStars = floorVal + (hasHalf ? 1 : 0);
-  for (let i = noStars; i < 5; i++) {
-    stars.push(<Ionicons key={`empty-${i}`} name="star" size={size} color="#ccc" style={{ marginRight: 2 }} />)
-  }
-
-  return stars;
-}
+import StarRating from '@/components/ui/StarRating';
 
 export default function FoodItemDetailPage() {
   const router = useRouter();
@@ -50,6 +26,7 @@ export default function FoodItemDetailPage() {
 
   const { user } = useUser();
   const { foodItemId } = useLocalSearchParams();
+  const featuredId = null;
 
   const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
 
@@ -57,6 +34,7 @@ export default function FoodItemDetailPage() {
   const [ratingsBar, setRatingsBar] = useState<any[]>([]);
   const [isFavorite, setIsFavorites] = useState(false);
   const [itemData, setItemData] = useState<any>(null);
+  const [isFeatured, setIsFeatured] = useState(false);
 
   const [barContainerWidth, setBarContainerWidth] = useState<number>(0);
 
@@ -66,6 +44,8 @@ export default function FoodItemDetailPage() {
   // const TEST_USER_ID = 10;
 
   const userId = user?.id;
+
+  const featuredScale = useRef(new Animated.Value(0)).current;
 
   const computeRatings = (reviews: any[]) => {
     const counts: { [key: string]: number } = { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 };
@@ -120,6 +100,22 @@ export default function FoodItemDetailPage() {
     setRatingsBar(computedRatings);
   };
 
+  const fetchFeatured = async () => {
+    if (!foodItemId) return;
+
+    const { data, error } = await supabase
+      .from('featured_items')
+      .select('food_item_id, food_name')
+      .eq("food_item_id", foodItemId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching featured items:", error)
+    }
+
+    setIsFeatured(!!data);
+  }
+
   // const photoRatings = [
   //   { label: '5', percentage: 80, color: '#E64A19', image: 'photo1.jpg' },
   //   { label: '4', percentage: 30, color: '#F57C00', image: 'photo2.jpg' },
@@ -159,6 +155,7 @@ export default function FoodItemDetailPage() {
   useEffect(() => {
     fetchFoodItem();
     checkIfFavorite();
+
   }, []);
 
   // load ratings
@@ -171,8 +168,25 @@ export default function FoodItemDetailPage() {
   useEffect(() => {
     if (foodItemId) {
       fetchReviews();
+      fetchFeatured();
     }
   }, [foodItemId]);
+
+  useEffect(() => {
+    if (isFeatured) {
+      Animated.spring(featuredScale, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(featuredScale, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isFeatured, featuredScale])
 
   const handleFavoriteToggle = async () => {
     try {
@@ -277,7 +291,7 @@ export default function FoodItemDetailPage() {
     <SafeAreaView style={styles.container}>
       <ScrollView>
         {/* Top Navigation */}
-        <View style={[styles.topNav, { top: insets.top - 40 }]}>
+        <View style={[styles.topNav, { top: insets.top - 50 }]}>
           <Pressable onPress={() => router.back()}>
             <Ionicons
               name='chevron-back'
@@ -286,6 +300,19 @@ export default function FoodItemDetailPage() {
               style={styles.backButton}
             />
           </Pressable>
+          {isFeatured && (
+            <Animated.View style={[styles.featuredContainer,
+            {
+              transform: [{
+                scale: featuredScale.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 1],
+                })
+              }]
+            }]}>
+              <Ionicons name='star-sharp' size={28} color='#ffffff' />
+            </Animated.View>
+          )}
         </View>
 
         {/* Image Container */}
@@ -311,9 +338,9 @@ export default function FoodItemDetailPage() {
             {/* Add Item to Favorites */}
             <Pressable style={styles.heartIcon} onPress={handleFavoriteToggle}>
               <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
+                name={isFavorite ? 'heart-sharp' : 'heart-outline'}
                 size={36}
-                color={'#fff'}
+                color={'#ff1800'}
               />
             </Pressable>
             <View style={styles.ratingContainer}>
@@ -362,7 +389,7 @@ export default function FoodItemDetailPage() {
             <View style={styles.ratingColumn}>
               <Text style={styles.boldText}>Overall Rating</Text>
               <View style={styles.starRow}>
-                {renderStars(average, 24)}
+                <StarRating average={average} size={24} />
               </View>
               <Text style={styles.reviewCount}>{count === 1 ? `1 review` : `${count} reviews`}</Text>
             </View>
@@ -495,11 +522,28 @@ const styles = StyleSheet.create({
   },
   topNav: {
     position: 'absolute',
-    top: 25, // Adjust to ensure it's placed correctly
-    left: 20,
+    top: 10, // Adjust to ensure it's placed correctly
+    left: 10,
+    right: 10,
     zIndex: 2, // Keeps it above the image
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-
+  featuredContainer: {
+    backgroundColor: '#FFD700',
+    borderRadius: 50,
+    width: 40,
+    height: 40,
+    padding: 4,
+    paddingLeft: 6,
+    paddingTop: 5,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
   imageContainer: {
     position: 'relative', // Allows overlay to be absolutely positioned inside
     width: '100%',
@@ -524,7 +568,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black for contrast
+    backgroundColor: 'rgba(0, 0, 0, 0.55)', // Semi-transparent black for contrast
     padding: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',

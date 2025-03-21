@@ -114,7 +114,7 @@ export default function Dietary() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TopBar type='back' title='Dietary' />
+      <TopBar type='back' title='Dietary' replaceRoute='/browse'/>
 
       <FlatList
         data={filteredDietary}
