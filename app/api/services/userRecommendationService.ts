@@ -1,5 +1,7 @@
 import { supabase } from "@/supabaseClient";
 import { getCurrentUserId } from "@/hooks/userUUID";
+import { teardownTraceSubscriber } from "next/dist/build/swc/generated-native";
+import { log } from "console";
 export const userRecommendationService = {
 	async trackSearch(query: string) {
 		const userId = await getCurrentUserId();
@@ -11,7 +13,7 @@ export const userRecommendationService = {
 			.select("search_history")
 			.eq("profile_id", userId)
 			.single();
-
+		
 		if (existingRecord) {
 			const currentHistory = existingRecord.search_history || [];
 
@@ -117,11 +119,8 @@ export const userRecommendationService = {
 
 			// Convert to proper format with user profile ID and food item ID
 			const recommendationsToInsert = recommendations.map((item: any) => ({
-				profile_id: userId,
-				food_item_id: item.id,
-				recommendation_type: "algorithm",
-				recommendation_reason:
-					item.recommendationReason || "Based on user preferences",
+				user_id: userId,
+				fooditem: item.id,
 			}));
 
 			// Insert into user_recommendation table

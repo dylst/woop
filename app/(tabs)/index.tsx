@@ -51,19 +51,6 @@ const HomePage = () => {
 
 	//Here is a section where I test the userRecommendationSystem.ts file
 
-	useEffect(() => {
-		const fetchRecommendations = async () => {
-			const { data, error } =
-				await userRecommendationService.getEnhancedPersonalizedRecommendations();
-			if (error) {
-				console.error("Error fetching recommendations:", error);
-			} else if (data) {
-				console.log(data);
-			}
-		};
-		fetchRecommendations();
-	});
-
 	// userRecommendationSystem.ts ENDS HERE
 
 	const fetchFeaturedItems = async () => {
@@ -145,22 +132,6 @@ const HomePage = () => {
 		}
 	};
 
-	useEffect(() => {
-		fetchFeaturedItems();
-	}, []);
-
-	useEffect(() => {
-		if (featuredItems.length > 0) {
-			const itemIds = featuredItems
-				.map((item) => item.id)
-				.filter((id) => id !== undefined && id !== null);
-
-			if (itemIds.length > 0) {
-				loadRatings(itemIds);
-			}
-		}
-	}, [featuredItems]);
-
 	const onRefresh = useCallback(() => {
 		setRefreshing(true);
 
@@ -184,16 +155,21 @@ const HomePage = () => {
 			if (error) {
 				console.error("Error fetching recommendations:", error);
 			} else if (data) {
+				console.log(`Received ${data.length} recommendations from service`);
+
 				// Store the recommendations in state
 				setRecommendations(data);
 
 				// Store the recommendations in Supabase
+				console.log("Storing recommendations in Supabase...");
 				const storeResult =
 					await userRecommendationService.storeUserRecommendations(data);
 				if (storeResult.error) {
 					console.error("Error storing recommendations:", storeResult.error);
 				} else {
-					console.log("Successfully stored recommendations in Supabase");
+					console.log(
+						`Successfully stored ${data.length} recommendations in Supabase`
+					);
 				}
 			}
 		} catch (error) {
@@ -204,8 +180,21 @@ const HomePage = () => {
 	};
 
 	useEffect(() => {
-		fetchRecommendations();
+		fetchFeaturedItems();
+		fetchRecommendations(); // Load recommendations on initial render
 	}, []);
+
+	useEffect(() => {
+		if (featuredItems.length > 0) {
+			const itemIds = featuredItems
+				.map((item) => item.id)
+				.filter((id) => id !== undefined && id !== null);
+
+			if (itemIds.length > 0) {
+				loadRatings(itemIds);
+			}
+		}
+	}, [featuredItems]);
 
 	if (loading) {
 		return (
