@@ -38,16 +38,6 @@ const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Randomized featured items with random food items from database
-  // const shuffleFeaturedItems = <T,>(array: T[]): T[] => {
-  //   const newArray = array.slice();
-  //   for (let i = newArray.length - 1; i > 0; i--) {
-  //     const j = Math.floor(Math.random() * (i + 1));
-  //     [newArray[i], newArray[j]] = [newArray[j], newArray[i]]
-  //   }
-  //   return newArray;
-  // }
-
   const fetchFeaturedItems = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -70,51 +60,6 @@ const HomePage = () => {
     }
     setLoading(false);
   };
-
-  // const fetchRatings = async (itemIds: string[]) => {
-  //   if (itemIds.length === 0) return;
-  //   setLoading(true);
-
-  //   try {
-  //     const { data, error } = await supabase
-  //       .from('review')
-  //       .select('food_item_id, rating')
-  //       .in('food_item_id', itemIds);
-
-  //     if (error) {
-  //       console.error('Error fetching ratings:', error);
-  //       return;
-  //     }
-  //     if (!data) return;
-
-  //     const map: { [key: string]: { sum: number, count: number } } = {};
-
-  //     data.forEach((row) => {
-  //       if (!map[row.food_item_id]) {
-  //         map[row.food_item_id] = { sum: 0, count: 0 };
-  //       }
-  //       map[row.food_item_id].sum += row.rating;
-  //       map[row.food_item_id].count += 1;
-  //     });
-
-  //     const finalMap: { [key: string]: RatingInfo } = {};
-  //     for (const fid in map) {
-  //       const sum = map[fid].sum;
-  //       const count = map[fid].count;
-  //       finalMap[fid] = {
-  //         average: count === 0 ? 0 : sum / count,
-  //         count,
-  //       };
-  //     }
-
-  //     setRatingMap(finalMap);
-
-  //   } catch (error) {
-  //     console.log(error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
 
   const loadRatings = async (itemIds: string[]) => {
     try {

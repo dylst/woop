@@ -107,13 +107,22 @@ export default function NotificationsScreen() {
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             >
-                {notifications.map((notification) => (
-                    <NotificationCard
-                        key={notification.id}
-                        notification={notification}
-                        onPressFoodItem={handlePressFoodItem}
-                    />
-                ))}
+                {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                        <NotificationCard
+                            key={notification.id}
+                            notification={notification}
+                            onPressFoodItem={handlePressFoodItem}
+                        />
+                    ))
+                ) : (
+                    <View style={styles.noNotificationContainer}>
+                        <Text style={styles.woopNoNotification}>Woops!</Text>
+                        <Text style={styles.noNotifications}>You have no notifications!</Text>
+                    </View>
+
+                )}
+
             </ScrollView>
         </SafeAreaView>
     )
@@ -144,7 +153,23 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end'
     },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: '600',
+        fontSize: 24,
+        fontWeight: '900',
+    },
+    noNotificationContainer: {
+        marginTop: 60,
+        alignSelf: 'center',
+        alignItems: 'center',
+    },
+    woopNoNotification: {
+        fontSize: 48,
+        fontWeight: '800',
+        color: '#aaa',
+    },
+    noNotifications: {
+        marginTop: 10,
+        fontSize: 36,
+        fontWeight: '800',
+        color: '#aaa',
     },
 })
