@@ -87,7 +87,6 @@ export default function BrowseSearch() {
 	const [hasMoreResults, setHasMoreResults] = useState(true);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-	// Initial search if query exists but no results were passed
 	useEffect(() => {
 		const performInitialSearch = async () => {
 			if (query && initialResults.length === 0) {
