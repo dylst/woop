@@ -37,7 +37,7 @@ export const fetchRatings = async (itemIds: string[]): Promise<{ [key: string]: 
             average: count === 0 ? 0 : sum / count,
             count,
         };
-    }
-
+    }    
+    
     return finalMap;
 };

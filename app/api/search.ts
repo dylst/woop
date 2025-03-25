@@ -201,7 +201,7 @@ export const searchFoodItems = async (
           : [],
       }));
       console.log('Sample cuisine data from results:', cuisineSamples);
-
+        
       allResults = allResults.filter((item) => {
         // Ensure cuisine_type is always an array and normalize values for comparison
         const cuisineArray = Array.isArray(item.cuisine_type)
