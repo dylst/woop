@@ -154,23 +154,31 @@ const HomePage = () => {
 
 			if (error) {
 				console.error("Error fetching recommendations:", error);
-			} else if (data) {
-				console.log(`Received ${data.length} recommendations from service`);
+				return;
+			}
 
-				// Store the recommendations in state
-				setRecommendations(data);
+			if (!data || data.length === 0) {
+				console.log("No recommendations available");
+				setRecommendations([]);
+				return;
+			}
 
-				// Store the recommendations in Supabase
-				console.log("Storing recommendations in Supabase...");
-				const storeResult =
-					await userRecommendationService.storeUserRecommendations(data);
-				if (storeResult.error) {
-					console.error("Error storing recommendations:", storeResult.error);
-				} else {
-					console.log(
-						`Successfully stored ${data.length} recommendations in Supabase`
-					);
-				}
+			console.log(`Received ${data.length} recommendations from service`);
+
+			// Store the recommendations in state
+			setRecommendations(data);
+
+			// Store the recommendations in Supabase
+			console.log("Storing recommendations in Supabase...");
+			const storeResult = await userRecommendationService.storeUserRecommendations(
+				data
+			);
+
+			if (storeResult.error) {
+				console.error("Error storing recommendations:", storeResult.error);
+				// Continue execution even if storage fails - we can still display recommendations
+			} else {
+				console.log(`Successfully stored recommendations in Supabase`);
 			}
 		} catch (error) {
 			console.error("Error in recommendation flow:", error);

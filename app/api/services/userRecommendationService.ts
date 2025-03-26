@@ -13,7 +13,7 @@ export const userRecommendationService = {
 			.select("search_history")
 			.eq("profile_id", userId)
 			.single();
-		
+
 		if (existingRecord) {
 			const currentHistory = existingRecord.search_history || [];
 
@@ -117,16 +117,44 @@ export const userRecommendationService = {
 				`Storing ${recommendations.length} food recommendations for user ${userId}`
 			);
 
-			// Convert to proper format with user profile ID and food item ID
+			// Convert to proper format with user ID and food item ID
 			const recommendationsToInsert = recommendations.map((item: any) => ({
-				user_id: userId,
+				user_id: userId, // Include user_id (needed for RLS)
 				fooditem: item.id,
+				created_at: new Date().toISOString(),
 			}));
 
-			// Insert into user_recommendation table
+			// Check if recommendations already exist for this user
+			const { data: existingRecs, error: existingError } = await supabase
+				.from("user_recommendation")
+				.select("fooditem")
+				.eq("user_id", userId);
+
+			if (existingError) {
+				console.warn("Error checking existing recommendations:", existingError);
+			}
+
+			// Filter out recommendations that already exist
+			let newRecommendations = recommendationsToInsert;
+			if (existingRecs && existingRecs.length > 0) {
+				const existingFoodIds = new Set(
+					existingRecs.map((rec: any) => rec.fooditem)
+				);
+				newRecommendations = recommendationsToInsert.filter(
+					(rec: any) => !existingFoodIds.has(rec.fooditem)
+				);
+			}
+
+			// If no new recommendations, just return success
+			if (newRecommendations.length === 0) {
+				console.log("All recommendations already exist for this user");
+				return { data: null, error: null };
+			}
+
+			// Insert only new recommendations
 			const { data, error } = await supabase
 				.from("user_recommendation")
-				.insert(recommendationsToInsert);
+				.insert(newRecommendations);
 
 			if (error) {
 				console.error("Failed to store recommendations:", error);
@@ -134,7 +162,7 @@ export const userRecommendationService = {
 			}
 
 			console.log(
-				`Successfully stored ${recommendationsToInsert.length} recommendations for user ${userId}`
+				`Successfully stored ${newRecommendations.length} new recommendations for user ${userId}`
 			);
 			return { data, error: null };
 		} catch (error) {
