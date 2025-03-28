@@ -131,16 +131,17 @@ export default function SuggestEditFoodItemForm() {
   const onSubmit = async (d: FormData) => {
     const priceRangeToSymbol = (price: number) => '$'.repeat(price);
     const { error } = await supabase
-      .from('fooditem')
-      .update({
+      .from('food_item_suggestions')
+      .insert({
         food_name: d.foodName,
         cuisine_type: [d.cuisineType],
         dietary_tags: d.dietaryTags,
         price_range: priceRangeToSymbol(d.priceRange),
         restaurant_name: d.restaurantName,
         description: d.description,
+        food_item_id: foodItemId,
       })
-      .eq('id', foodItemId);
+
     if (error) {
       Alert.alert('Error updating item', error.message);
     } else {
