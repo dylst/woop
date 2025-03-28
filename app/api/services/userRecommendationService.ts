@@ -243,12 +243,62 @@ export const userRecommendationService = {
 			return { data: null, error };
 		}
 	},
+	async hideRecommendation(foodItemId: string) {
+		const userId = await getCurrentUserId();
+		if (!userId) return { data: null, error: "No user logged in" };
+
+		try {
+			console.log(`Removing recommendation ${foodItemId} for user ${userId}`);
+
+			// Delete from user_recommendation table
+			const { data, error } = await supabase
+				.from("user_recommendation")
+				.delete()
+				.eq("user_id", userId)
+				.eq("fooditem", foodItemId)
+				.select();
+
+			if (error) {
+				console.error("Error removing recommendation:", error);
+				throw error;
+			}
+
+			console.log(`Successfully removed recommendation ${foodItemId}`);
+			return { data, error: null };
+		} catch (error) {
+			console.error("Error removing recommendation:", error);
+			return { data: null, error };
+		}
+	},
+	async getViewedFoodItems() {
+		const userId = await getCurrentUserId();
+		if (!userId) return { data: [], error: "No user logged in" };
+
+		try {
+			// Get food items the user has reviewed
+			const { data: reviewedItems, error: reviewError } = await supabase
+				.from("review")
+				.select("food_item_id")
+				.eq("profile_id", userId);
+
+			if (reviewError) throw reviewError;
+
+			const viewedIds = reviewedItems.map((item) => item.food_item_id);
+			return { data: viewedIds, error: null };
+		} catch (error) {
+			console.error("Error fetching viewed food items:", error);
+			return { data: [], error };
+		}
+	},
 	async getEnhancedPersonalizedRecommendations(limit = 10) {
 		const userId = await getCurrentUserId();
 		if (!userId) return { data: null, error: "No user logged in" };
 
 		try {
 			console.log(`Generating enhanced recommendations for user ${userId}`);
+
+			// --- GET ALREADY VIEWED/RATED ITEMS ---
+			const { data: viewedIds } = await this.getViewedFoodItems();
 
 			// --- STEP 1: GATHER ALL USER DATA ---
 
@@ -433,6 +483,11 @@ export const userRecommendationService = {
 			// Exclude already reviewed items
 			if (reviewedFoodIds.length > 0) {
 				query = query.not("id", "in", `(${reviewedFoodIds.join(",")})`);
+			}
+
+			// Exclude viewed items
+			if (viewedIds.length > 0) {
+				query = query.not("id", "in", `(${viewedIds.join(",")})`);
 			}
 
 			// Create OR conditions for multiple cuisines

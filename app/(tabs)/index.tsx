@@ -6,6 +6,8 @@ import {
 	SafeAreaView,
 	ScrollView,
 	RefreshControl,
+	Modal,
+	Pressable,
 } from "react-native";
 import FeaturedCard from "@/components/ui/FeaturedCard";
 import FiltersHomeNav from "@/components/ui/FiltersHomeNav";
@@ -15,6 +17,7 @@ import { ActivityIndicator } from "react-native-paper";
 import { fetchRatings, RatingInfo } from "@/hooks/fetchHelper";
 import { Route } from "expo-router";
 import { userRecommendationService } from "../api/services/userRecommendationService";
+import { useUser } from "../context/UserContext";
 
 const filtersItems = [
 	{
@@ -32,12 +35,20 @@ const filtersItems = [
 ];
 
 const HomePage = () => {
+	const { user } = useUser();
 	const [featuredItems, setFeaturedItems] = useState<any[]>([]);
 	const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
 	const [recommendations, setRecommendations] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [refreshing, setRefreshing] = useState(false);
 	const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+
+	// Add new state variables for hiding recommendations
+	const [hiddenRecommendations, setHiddenRecommendations] = useState<string[]>(
+		[]
+	);
+	const [hideConfirmVisible, setHideConfirmVisible] = useState(false);
+	const [itemToHide, setItemToHide] = useState<string | null>(null);
 
 	// Randomized featured items with random food items from database
 	// const shuffleFeaturedItems = <T,>(array: T[]): T[] => {
@@ -204,6 +215,48 @@ const HomePage = () => {
 		}
 	}, [featuredItems]);
 
+	// Add functions to handle hiding recommendations
+	const showHideConfirmation = (id: string) => {
+		setItemToHide(id);
+		setHideConfirmVisible(true);
+	};
+
+	const handleHideRecommendation = async () => {
+		if (itemToHide) {
+			try {
+				// Update local state to hide the recommendation immediately for responsive UI
+				setHiddenRecommendations((prev) => [...prev, itemToHide]);
+
+				// Use the userRecommendationService to hide the recommendation
+				const { error } = await userRecommendationService.hideRecommendation(
+					itemToHide
+				);
+
+				if (error) {
+					console.error("Error removing recommendation:", error);
+					// Revert state change if operation failed
+					setHiddenRecommendations((prev) => prev.filter((id) => id !== itemToHide));
+				} else {
+					console.log("Recommendation removed successfully");
+				}
+
+				// Close the modal and reset itemToHide
+				setHideConfirmVisible(false);
+				setItemToHide(null);
+			} catch (error) {
+				console.error("Error in handleHideRecommendation:", error);
+				// Close the modal but show an error
+				setHideConfirmVisible(false);
+				setItemToHide(null);
+			}
+		}
+	};
+
+	// Filter out hidden recommendations
+	const visibleRecommendations = recommendations.filter(
+		(item) => !hiddenRecommendations.includes(item.id)
+	);
+
 	if (loading) {
 		return (
 			<SafeAreaView style={styles.container}>
@@ -268,13 +321,13 @@ const HomePage = () => {
 								Finding recommendations for you...
 							</Text>
 						</View>
-					) : recommendations.length > 0 ? (
+					) : visibleRecommendations.length > 0 ? (
 						<ScrollView
 							horizontal
 							showsHorizontalScrollIndicator={false}
 							style={styles.scrollViewPadding}
 						>
-							{recommendations.map((item) => (
+							{visibleRecommendations.map((item) => (
 								<FeaturedCard
 									key={item.id}
 									id={item.id}
@@ -283,13 +336,16 @@ const HomePage = () => {
 									restaurantName={item.restaurant_name}
 									rating='New'
 									style={styles.shadowProp}
+									onHide={showHideConfirmation}
 								/>
 							))}
 						</ScrollView>
 					) : (
 						<View style={styles.emptyStateContainer}>
 							<Text style={styles.emptyStateText}>
-								Browse and rate more items to get personalized recommendations!
+								{hiddenRecommendations.length > 0 && recommendations.length > 0
+									? "You've hidden all recommendations. Browse and rate more items to get new ones!"
+									: "Browse and rate more items to get personalized recommendations!"}
 							</Text>
 						</View>
 					)}
@@ -309,6 +365,40 @@ const HomePage = () => {
 						/>
 					))}
 				</View>
+
+				{/* Hide Confirmation Modal */}
+				<Modal
+					transparent={true}
+					visible={hideConfirmVisible}
+					animationType='fade'
+				>
+					<View style={styles.modalOverlay}>
+						<View style={styles.modalContent}>
+							<Text style={styles.modalTitle}>Remove Recommendation</Text>
+							<Text style={styles.modalText}>
+								Are you sure you want to remove this recommendation? We'll use this
+								feedback to improve your future suggestions.
+							</Text>
+							<View style={styles.buttonRow}>
+								<Pressable
+									style={[styles.button, styles.cancelButton]}
+									onPress={() => {
+										setHideConfirmVisible(false);
+										setItemToHide(null);
+									}}
+								>
+									<Text style={styles.cancelButtonText}>Cancel</Text>
+								</Pressable>
+								<Pressable
+									style={[styles.button, styles.confirmButton]}
+									onPress={handleHideRecommendation}
+								>
+									<Text style={styles.confirmButtonText}>Remove</Text>
+								</Pressable>
+							</View>
+						</View>
+					</View>
+				</Modal>
 			</ScrollView>
 		</SafeAreaView>
 	);
@@ -365,6 +455,61 @@ const styles = StyleSheet.create({
 		color: "#666",
 		fontSize: 14,
 		textAlign: "center",
+	},
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0,0,0,0.5)",
+		justifyContent: "center",
+		alignItems: "center",
+		padding: 20,
+	},
+	modalContent: {
+		backgroundColor: "white",
+		borderRadius: 10,
+		padding: 20,
+		width: "100%",
+		maxWidth: 400,
+		alignItems: "center",
+	},
+	modalTitle: {
+		fontSize: 18,
+		fontWeight: "bold",
+		marginBottom: 10,
+		textAlign: "center",
+	},
+	modalText: {
+		marginBottom: 20,
+		textAlign: "center",
+		fontSize: 14,
+		lineHeight: 20,
+	},
+	buttonRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		width: "100%",
+	},
+	button: {
+		paddingVertical: 12,
+		paddingHorizontal: 20,
+		borderRadius: 8,
+		minWidth: "45%",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	cancelButton: {
+		backgroundColor: "#f0f0f0",
+		marginRight: 10,
+	},
+	confirmButton: {
+		backgroundColor: "#FF6347",
+	},
+	cancelButtonText: {
+		fontWeight: "600",
+		color: "#333",
+	},
+	confirmButtonText: {
+		fontWeight: "600",
+		color: "#fff",
 	},
 });
 
