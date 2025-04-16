@@ -7,6 +7,7 @@ import {
   Image,
   ScrollView,
   Animated,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
@@ -26,7 +27,6 @@ export default function FoodItemDetailPage() {
 
   const { user } = useUser();
   const { foodItemId } = useLocalSearchParams();
-  const featuredId = null;
 
   const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
 
@@ -36,7 +36,12 @@ export default function FoodItemDetailPage() {
   const [itemData, setItemData] = useState<any>(null);
   const [isFeatured, setIsFeatured] = useState(false);
 
-  const [barContainerWidth, setBarContainerWidth] = useState<number>(0);
+  // add new cuisine or dietary tags
+  const [tags, setTags] = useState<any[]>([]);
+  const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
+  const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
+  // tag modal
+  const [modalVisible, setModalVisible] = useState(false);
 
   // TESTING FETCHING ITEM FROM DATABASE
   // DUMMY DATA FOR RELATED FOOD ITEMS
@@ -56,6 +61,7 @@ export default function FoodItemDetailPage() {
       }
     });
 
+    // Set the rating's bar width
     const total = reviews.length;
     return [
       { label: '5', percentage: total > 0 ? (counts['5'] / total) * 100 : 0, color: '#E64A19', count: counts['5'] },
@@ -116,6 +122,19 @@ export default function FoodItemDetailPage() {
     setIsFeatured(!!data);
   }
 
+  const fetchTags = async () => {
+    const { data, error } = await supabase
+      .from('tags')
+      .select('*')
+
+    if (error) {
+      console.log("Error fetching tags:", error);
+      return;
+    }
+
+    setTags(data);
+  }
+
   // const photoRatings = [
   //   { label: '5', percentage: 80, color: '#E64A19', image: 'photo1.jpg' },
   //   { label: '4', percentage: 30, color: '#F57C00', image: 'photo2.jpg' },
@@ -155,7 +174,7 @@ export default function FoodItemDetailPage() {
   useEffect(() => {
     fetchFoodItem();
     checkIfFavorite();
-
+    fetchTags();
   }, []);
 
   // load ratings
@@ -222,11 +241,102 @@ export default function FoodItemDetailPage() {
     }
   };
 
+  // add cuisine or dietary tags
+  const handleAddTag = async (
+    newCuisines: string[],
+    newDietary: string[],
+  ) => {
+    if (!foodItemId) return;
+
+    const currentCuisines: string[] = itemData?.cuisine_type ?? [];
+    const currentDietary: string[] = itemData?.dietary_tags ?? [];
+
+    const mergedCuisines: string[] = Array.from(new Set([...currentCuisines, ...newCuisines]));
+    const mergedDietary: string[] = Array.from(new Set([...currentDietary, ...newDietary]));
+
+    try {
+      const { data, error } = await supabase
+        .from('fooditem')
+        .update({
+          'cuisine_type': mergedCuisines,
+          'dietary_tags': mergedDietary,
+        })
+        .eq('id', foodItemId);
+
+      if (error) {
+        console.log('Error updating tags:', error);
+        return;
+      }
+
+      setItemData((prev: any) => ({
+        ...prev,
+        cuisine_type: mergedCuisines,
+        dietary_tags: mergedDietary,
+      }));
+
+      console.log("Tags updated successfully");
+    } catch (err) {
+      console.log("Error updating tags in handleAddTag:", err)
+    }
+  };
+
+  const handleSubmitTags = async () => {
+    await handleAddTag(selectedCuisines, selectedDietary);
+    setSelectedCuisines([]);
+    setSelectedDietary([]);
+    setModalVisible(false);
+  }
+
   const cuisineType = itemData?.cuisine_type ?? [];
   const dietaryTags = itemData?.dietary_tags ?? [];
 
   const cuisineText = cuisineType.join(', ');
   const dietaryText = dietaryTags.join(', ');
+
+  const renderTag = (
+    data: string[],
+    selected: string[],
+    toggleFn: (val: string) => void,
+    category?: 'cuisine' | 'dietary'
+  ) => {
+    return (
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20 }}>
+        {data.map((tag) => {
+          const isActive = selected.includes(tag);
+          return (
+            <Pressable
+              key={tag}
+              onPress={() => toggleFn(tag)}
+              style={[
+                styles.tag,
+                isActive && styles.tagActive,
+              ]}
+            >
+              {category === 'cuisine' && (
+                <Ionicons
+                  name={isActive ? "fast-food" : "fast-food-outline"}
+                  size={14}
+                  color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+                  style={isActive ? styles.tagIconActive : styles.tagIcon}
+                />
+              )}
+              {category === 'dietary' && (
+                <Ionicons
+                  name={isActive ? "leaf" : "leaf-outline"}
+                  size={14}
+                  color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+                  style={isActive ? styles.tagIconActive : styles.tagIcon}
+                />
+              )}
+              <Text style={[styles.tagText, isActive && styles.tagTextActive]}>
+                {tag}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    )
+  }
 
   // DUMMY DATA FOR RELATED FOOD ITEMS
   const relatedFood = [
@@ -363,6 +473,14 @@ export default function FoodItemDetailPage() {
             {cuisineText && dietaryText ? ', ' : ''}
             {dietaryText}
           </Text>
+          {/* Add Cuisine/Dietary tags button */}
+          <Pressable
+            onPress={() => setModalVisible(true)}
+            style={styles.addTagContainer}>
+            <View style={styles.addTagButton}>
+              <Ionicons name="add-sharp" size={16} color='#65C5E3' />
+            </View>
+          </Pressable>
         </View>
 
         {/* Action Buttons */}
@@ -485,6 +603,68 @@ export default function FoodItemDetailPage() {
           ))}
         </View>
       </ScrollView>
+
+      {/* Modal for Tag Input */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType='slide'
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <ScrollView style={styles.tagModalContainer}>
+              {/* cuisine tags */}
+              <Text style={styles.modalTitle}>Cuisine Tags</Text>
+              {renderTag(
+                tags.filter((t: any) => t.category === 'cuisine')
+                  .map((t: any) => t.name),
+                selectedCuisines,
+                (val: string) => {
+                  if (selectedCuisines.includes(val)) {
+                    setSelectedCuisines(selectedCuisines.filter((item) => item !== val));
+                  } else {
+                    setSelectedCuisines([...selectedCuisines, val]);
+                  }
+                },
+                'cuisine'
+              )}
+              {/* dietary tags */}
+              <Text style={styles.modalTitle}>Dietary Tags</Text>
+              {renderTag(
+                tags.filter((t: any) => t.category === 'dietary')
+                  .map((t: any) => t.name),
+                selectedDietary,
+                (val: string) => {
+                  if (selectedDietary.includes(val)) {
+                    setSelectedDietary(selectedDietary.filter((item) => item !== val));
+                  } else {
+                    setSelectedDietary([...selectedDietary, val]);
+                  }
+                },
+                'dietary'
+              )}
+            </ScrollView>
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalSubmitButton,
+                  (selectedCuisines.length === 0 && selectedDietary.length === 0)
+                   && styles.modalSubmitButtonDisabled]}
+                onPress={handleSubmitTags}
+                disabled={selectedCuisines.length === 0 && selectedDietary.length === 0}
+                >
+                <Text style={[styles.modalButtonText,
+                  (selectedCuisines.length === 0 && selectedDietary.length === 0)
+                  && styles.modalButtonDisabledText
+                ]}>Submit</Text>
+              </Pressable>
+              <Pressable style={styles.modalCancelButton} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -612,15 +792,34 @@ const styles = StyleSheet.create({
   },
 
   categoryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 15,
+    marginHorizontal: 30,
   },
 
   categoryText: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+
+  addTagContainer: {
+    marginHorizontal: 5,
+  },
+
+  addTagButton: {
+    width: 20,
+    height: 20,
+    backgroundColor: '#E3F7FF',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   actionButtonsContainer: {
@@ -776,5 +975,85 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginLeft: 5,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingVertical: 15,
+    maxHeight: '80%',
+  },
+  tagModalContainer: {
+    paddingVertical: 5,
+    marginVertical: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  modalSubmitButton: {
+    backgroundColor: Colors.primary.lightteal,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  modalSubmitButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  modalCancelButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  modalButtonText: {
+    fontSize: 14,
+    color: Colors.primary.darkteal,
+  },
+  modalButtonDisabledText: {
+    color: '#fff',
+  },
+
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.primary.darkteal,
+    backgroundColor: Colors.primary.lightTealTranslucent20,
+    marginRight: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginVertical: 4,
+  },
+  tagIcon: {
+    marginRight: 4,
+    color: Colors.primary.darkteal,
+  },
+  tagText: {
+    fontSize: 13,
+    color: Colors.primary.darkteal,
+  },
+  tagActive: {
+    backgroundColor: Colors.primary.darkteal,
+    borderColor: Colors.primary.darkteal,
+  },
+  tagTextActive: {
+    color: '#fff',
+  },
+  tagIconActive: {
+    marginRight: 4,
+    color: '#fff',
   },
 });
