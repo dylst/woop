@@ -127,6 +127,23 @@ export default function TabLayout() {
           tabBarLabel: 'Profile',
         }}
       />
+      <Tabs.Screen
+        name='owner'
+        options={{
+          title: 'Owner',
+          tabBarIcon: ({ focused, color }) => (
+            <View style={focused ? styles.activeTab : null}>
+              <Ionicons
+                name='person' // change later 
+                size={28}
+                color={focused ? Colors.primary.darkteal : color}
+                style={styles.tabIcon}
+              />
+            </View>
+          ),
+          tabBarLabel: 'Owner',
+        }}
+      />
     </Tabs>
   );
 }
