@@ -1396,19 +1396,23 @@ const styles = StyleSheet.create({
 	},
 	photoTypeContainer: {
 		marginBottom: 20,
+		padding: 20,
 	},
 	photoTypeLabel: {
 		fontSize: 16,
 		fontWeight: "bold",
-		marginBottom: 10,
+		marginBottom: 15,
 	},
 	radioButtonContainer: {
 		flexDirection: "row",
 		justifyContent: "space-between",
+		marginTop: 10, 
 	},
 	radioOption: {
 		flexDirection: "row",
 		alignItems: "center",
+		padding: 15, 
+		marginVertical: 10,
 	},
 	radioCircle: {
 		width: 20,
