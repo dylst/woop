@@ -12,7 +12,7 @@ install! 'cocoapods',
   :deterministic_uuids => false
 
 prepare_react_native_project!
-pod 'Google-Maps-iOS-Utils', '5.0.0' 
+
 target 'woop' do
   use_expo_modules!
 
@@ -43,9 +43,6 @@ target 'woop' do
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
-
-  pod 'react-native-google-maps', :path => "../node_modules/react-native-maps"
-
 
   post_install do |installer|
     react_native_post_install(
