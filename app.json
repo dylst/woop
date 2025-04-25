@@ -10,14 +10,20 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.woop"
+      "bundleIdentifier": "com.anonymous.woop",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to find food items near you and calculate distances to restaurants.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to find food items near you and calculate distances to restaurants.",
+        "NSLocationAlwaysUsageDescription": "We need your location to find food items near you and calculate distances to restaurants."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.woop"
+      "package": "com.anonymous.woop",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
     },
     "web": {
       "bundler": "metro",

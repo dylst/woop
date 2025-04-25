@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { SortMethod } from '@/app/api/search';
 
 interface SearchFiltersState {
   // Selected filter values
@@ -6,12 +7,14 @@ interface SearchFiltersState {
   selectedDietary: string[];
   priceRange: number[];
   maxDistance: number;
+  sortMethod: SortMethod;
 
   // Actions
   setCuisines: (cuisines: string[]) => void;
   setDietary: (dietary: string[]) => void;
   setPriceRange: (range: number[]) => void;
   setMaxDistance: (distance: number) => void;
+  setSortMethod: (method: SortMethod) => void;
   resetFilters: () => void;
 
   // Helper functions
@@ -34,12 +37,14 @@ export const useSearchFiltersStore = create<SearchFiltersState>(
     selectedDietary: [],
     priceRange: [],
     maxDistance: 50, // Default to 50km/miles
+    sortMethod: SortMethod.BEST_MATCH, // Default to our ranking algorithm
 
     // Set actions
     setCuisines: (cuisines: string[]) => set({ selectedCuisines: cuisines }),
     setDietary: (dietary: string[]) => set({ selectedDietary: dietary }),
     setPriceRange: (range: number[]) => set({ priceRange: range }),
     setMaxDistance: (distance: number) => set({ maxDistance: distance }),
+    setSortMethod: (method: SortMethod) => set({ sortMethod: method }),
 
     // Reset all filters
     resetFilters: () =>
@@ -48,6 +53,7 @@ export const useSearchFiltersStore = create<SearchFiltersState>(
         selectedDietary: [],
         priceRange: [],
         maxDistance: 50,
+        // Don't reset sort method on filter reset
       }),
 
     // Helper functions for adding/removing individual items
