@@ -12,7 +12,7 @@ install! 'cocoapods',
   :deterministic_uuids => false
 
 prepare_react_native_project!
-pod 'Google-Maps-iOS-Utils', '5.0.0' 
+# pod 'Google-Maps-iOS-Utils', '5.0.0' 
 target 'woop' do
   use_expo_modules!
 

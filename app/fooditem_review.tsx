@@ -16,6 +16,7 @@ import { supabase } from "@/supabaseClient";
 import { useUser } from "./context/UserContext";
 import TopBar from "@/components/ui/TopBar";
 import StarRating from "@/components/ui/StarRating";
+import { Colors } from "@/constants/Colors";
 
 export default function AuthorModerationPage() {
   // const router = useRouter();
@@ -224,7 +225,7 @@ export default function AuthorModerationPage() {
     }
 
     // liked notification confirmation
-    console.log("Like notification sent:", data);
+    console.log("Like notification sent");
     Alert.alert("Review Liked!", "You have liked this review.");
   };
 
@@ -286,7 +287,7 @@ export default function AuthorModerationPage() {
                     />
                     <View style={styles.userInfo}>
                       <Text style={styles.userInfoUsername}>
-                        {review.profile?.username ||
+                        @{review.profile?.username ||
                           "Anonymous"}
                       </Text>
                       <Text style={styles.userInfoMeta}>
@@ -381,8 +382,9 @@ const styles = StyleSheet.create({
   },
   userInfoUsername: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     marginBottom: 4,
+    color: Colors.primary.darkteal,
   },
   userInfoMeta: {
     fontSize: 14,

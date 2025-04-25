@@ -54,7 +54,7 @@ export default function AddReviewScreen() {
 
     if (!error) {
       alert("Review posted successfully!");
-      router.push(`/food/${foodItemId}`);
+      router.back(); // route back to food item page after success
     } else {
       alert("Failed to post review.");
     }

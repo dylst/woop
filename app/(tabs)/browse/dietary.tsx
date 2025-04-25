@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import TopBar from '@/components/ui/TopBar';
 import { useSearchFiltersStore } from '@/store/searchFiltersStore';
+import { supabase } from '@/supabaseClient';
 
 // Define the data structure
 interface DietaryType {
@@ -28,21 +29,41 @@ export default function Dietary() {
   const [selected, setSelected] = useState<string[]>(selectedDietary);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Create our dietary types data
-  const dietaryTypes: DietaryType[] = [
-    { id: 'glutenFree', name: 'Gluten Free' },
-    { id: 'halal', name: 'Halal' },
-    { id: 'vegan', name: 'Vegan' },
-    { id: 'vegetarian', name: 'Vegetarian' },
-    { id: 'keto', name: 'Keto' },
-    { id: 'dairyFree', name: 'Dairy Free' },
-    { id: 'nutFree', name: 'Nut Free' },
-    { id: 'organic', name: 'Organic' },
-    { id: 'soyFree', name: 'Soy Free' },
-    { id: 'sugarFree', name: 'Sugar Free' },
-    { id: 'paleo', name: 'Paleo' },
-    { id: 'pescatarian', name: 'Pescatarian' },
-  ];
+  const [dietaryTypes, setDietaryTypes] = useState<DietaryType[]>([]);
+
+  // fetch cuisine tags from fooditem
+    const fetchExistingTags = async () => {
+      const { data, error } = await supabase
+        .from('fooditem')
+        .select('dietary_tags');
+  
+      if (error) {
+        console.log("Error fetching dietary tags from fooditem:", error);
+        return;
+      }
+  
+      // build set of existing tags
+      const usedSet = new Set<string>();
+      data.forEach((foodItem: any) => {
+        if (Array.isArray(foodItem.dietary_tags)) {
+          foodItem.dietary_tags.forEach((tag: string) => {
+            usedSet.add(tag.toLowerCase());
+          });
+        }
+      });
+  
+      // map to the DietaryType structure
+      const mapped: DietaryType[] = Array.from(usedSet).map((tag) => ({
+        id: tag,
+        name: tag.charAt(0).toUpperCase() + tag.slice(1),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));;
+      setDietaryTypes(mapped);
+    }
+  
+    useEffect(() => {
+      fetchExistingTags();
+    }, [])
 
   // Check if we have changes compared to the stored filters
   useEffect(() => {
@@ -82,7 +103,7 @@ export default function Dietary() {
 
   // Render each dietary item
   const renderDietaryItem = ({ item }: { item: DietaryType }) => {
-    const isSelected = selected.includes(item.id);
+    const isSelected = selected.includes(item.name);
 
     return (
       <Pressable
@@ -90,7 +111,7 @@ export default function Dietary() {
           styles.dietaryButton,
           isSelected && styles.selectedDietaryButton,
         ]}
-        onPress={() => toggleDietary(item.id)}
+        onPress={() => toggleDietary(item.name)}
       >
         <Text
           style={[
@@ -117,7 +138,8 @@ export default function Dietary() {
       <TopBar type='back' title='Dietary' replaceRoute='/browse'/>
 
       <FlatList
-        data={filteredDietary}
+        data={dietaryTypes.filter((dietary) =>
+        dietary.name.toLowerCase().includes(searchText.toLowerCase()))}
         renderItem={renderDietaryItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
