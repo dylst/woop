@@ -113,7 +113,6 @@ const ReviewsScreen = () => {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchReviews();
-    await fetchUserReviews();
     setRefreshing(false);
   }, []);
 
@@ -153,7 +152,7 @@ const ReviewsScreen = () => {
           </View>
         </View>
 
-        {userReviews.includes(item.id) ?
+        {item.profile_id == userId ?
           <>
             <Ionicons
               name='create-outline'
@@ -171,38 +170,6 @@ const ReviewsScreen = () => {
   };
 
   const userId = user?.id;
-  const [userReviews, setUserReviews] = useState<String[]>([]);
-
-  const fetchUserReviews = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('review')
-        .select(`
-          id,
-          profile_id
-        `)
-        .eq('profile_id', userId);
-
-      if (error) {
-        console.error('Error fetching reviews:', error.message || error.code); // Log error.message or error.code
-        return;
-      }
-
-      if (!data) return;
-
-      setUserReviews(data.map((review: any) => review.id));
-
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log('Caught error:', error.message); // Log the message if it's a regular JavaScript error
-      } else {
-        console.log('Unknown error:', error); // Log if the error is not an instance of Error
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const fetchReviews = async () => {
     setLoading(true);
@@ -260,7 +227,6 @@ const ReviewsScreen = () => {
   useEffect(() => {
     if (userId) {
       fetchReviews();
-      fetchUserReviews();
     }
   }, [userId]);
   // Remove item from both state and Supabase
