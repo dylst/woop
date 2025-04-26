@@ -537,16 +537,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: 10,
   },
   emptyWoops: {
     fontSize: 48,
-    color: '#999',
+    fontWeight: '800',
+    color: '#aaa',
   },
   emptyText: {
-    fontSize: 28,
-    color: '#999',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
+    marginTop: 10,
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#aaa',
     textAlign: 'center',
   },
 

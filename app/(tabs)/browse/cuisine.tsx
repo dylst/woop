@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import TopBar from '@/components/ui/TopBar';
 import { useSearchFiltersStore } from '@/store/searchFiltersStore';
+import { supabase } from '@/supabaseClient';
 
 // Define the data structure
 interface CuisineType {
@@ -28,25 +29,41 @@ export default function Cuisine() {
   const [selected, setSelected] = useState<string[]>(selectedCuisines);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Create our cuisine types data
-  const cuisineTypes: CuisineType[] = [
-    { id: 'american', name: 'American' },
-    { id: 'chinese', name: 'Chinese' },
-    { id: 'mexican', name: 'Mexican' },
-    { id: 'italian', name: 'Italian' },
-    { id: 'japanese', name: 'Japanese' },
-    { id: 'thai', name: 'Thai' },
-    { id: 'indian', name: 'Indian' },
-    { id: 'korean', name: 'Korean' },
-    { id: 'mediterranean', name: 'Mediterranean' },
-    { id: 'greek', name: 'Greek' },
-    { id: 'french', name: 'French' },
-    { id: 'spanish', name: 'Spanish' },
-    { id: 'vietnamese', name: 'Vietnamese' },
-    { id: 'turkish', name: 'Turkish' },
-    { id: 'lebanese', name: 'Lebanese' },
-    { id: 'caribbean', name: 'Caribbean' },
-  ];
+  const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
+
+  // fetch cuisine tags from fooditem
+  const fetchExistingTags = async () => {
+    const { data, error } = await supabase
+      .from('fooditem')
+      .select('cuisine_type');
+
+    if (error) {
+      console.log("Error fetching cuisine tags from fooditem:", error);
+      return;
+    }
+
+    // build set of existing tags
+    const usedSet = new Set<string>();
+    data.forEach((foodItem: any) => {
+      if (Array.isArray(foodItem.cuisine_type)) {
+        foodItem.cuisine_type.forEach((tag: string) => {
+          usedSet.add(tag.toLowerCase());
+        });
+      }
+    });
+
+    // map to the CuisineType structure
+    const mapped: CuisineType[] = Array.from(usedSet).map((tag) => ({
+      id: tag,
+      name: tag.charAt(0).toUpperCase() + tag.slice(1),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));;
+    setCuisineTypes(mapped);
+  }
+
+  useEffect(() => {
+    fetchExistingTags();
+  }, [])
 
   // Check if we have changes compared to the stored filters
   useEffect(() => {
@@ -68,12 +85,12 @@ export default function Cuisine() {
   );
 
   // Handle selection/deselection of a cuisine
-  const toggleCuisine = (id: string) => {
+  const toggleCuisine = (name: string) => {
     setSelected((prev) => {
-      if (prev.includes(id)) {
-        return prev.filter((item) => item !== id);
+      if (prev.includes(name)) {
+        return prev.filter((item) => item !== name);
       } else {
-        return [...prev, id];
+        return [...prev, name];
       }
     });
   };
@@ -86,7 +103,7 @@ export default function Cuisine() {
 
   // Render each cuisine item
   const renderCuisineItem = ({ item }: { item: CuisineType }) => {
-    const isSelected = selected.includes(item.id);
+    const isSelected = selected.includes(item.name);
 
     return (
       <Pressable
@@ -94,7 +111,7 @@ export default function Cuisine() {
           styles.cuisineButton,
           isSelected && styles.selectedCuisineButton,
         ]}
-        onPress={() => toggleCuisine(item.id)}
+        onPress={() => toggleCuisine(item.name)}
       >
         <Text
           style={[
@@ -121,7 +138,8 @@ export default function Cuisine() {
       <TopBar type='back' title='Cuisines' replaceRoute='/browse' />
 
       <FlatList
-        data={filteredCuisines}
+        data={cuisineTypes.filter((cuisine) => 
+        cuisine.name.toLowerCase().includes(searchText.toLowerCase()))}
         renderItem={renderCuisineItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}

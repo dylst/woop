@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { SafeAreaView, ScrollView, StyleSheet, View, Image, Pressable, Text, TouchableOpacity, TextInput, Platform } from 'react-native'
+import { SafeAreaView, ScrollView, StyleSheet, View, Image, Pressable, Text, TouchableOpacity, TextInput, Platform, Alert } from 'react-native'
 import { useUser } from './context/UserContext'
 import { supabase } from '@/supabaseClient';
 import { Ionicons } from '@expo/vector-icons';
@@ -49,7 +49,7 @@ const profileSettings = () => {
 
       setUserData(data);
     } catch (error) {
-      console.log("Error fetchig profile:", error);
+      console.log("Error fetching profile:", error);
       return;
     } finally {
       setLoading(false);
@@ -178,6 +178,7 @@ const profileSettings = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    Alert.alert("Logged Out", "You have been signed out.")
     router.replace('/users');
   }
 

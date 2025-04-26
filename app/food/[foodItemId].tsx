@@ -31,13 +31,17 @@ export default function FoodItemDetailPage() {
 
 	const { user } = useUser();
 	const { foodItemId } = useLocalSearchParams();
-	const featuredId = null;
 
 	const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
 
 	const [reviews, setReviews] = useState<any[]>([]);
 	const [ratingsBar, setRatingsBar] = useState<any[]>([]);
 	const [isFavorite, setIsFavorites] = useState(false);
+	const [tags, setTags] = useState<any[]>([]);
+	const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
+	const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
+	const [tagModalVisible, setTagModalVisible] = useState(false);
+
 	const [itemData, setItemData] = useState<any>(null);
 	const [isFeatured, setIsFeatured] = useState(false);
 	const [imageUri, setImageUri] = useState<string>("");
@@ -363,7 +367,20 @@ export default function FoodItemDetailPage() {
 		}
 
 		setIsFeatured(!!data);
-	};
+	}
+
+	const fetchTags = async () => {
+		const { data, error } = await supabase
+			.from('tags')
+			.select('*')
+
+		if (error) {
+			console.log("Error fetching tags:", error);
+			return;
+		}
+
+		setTags(data);
+	}
 
 	// const photoRatings = [
 	//   { label: '5', percentage: 80, color: '#E64A19', image: 'photo1.jpg' },
@@ -404,6 +421,7 @@ export default function FoodItemDetailPage() {
 	useEffect(() => {
 		fetchFoodItem();
 		checkIfFavorite();
+		fetchTags();
 	}, []);
 
 	// load ratings
@@ -466,15 +484,106 @@ export default function FoodItemDetailPage() {
 				setIsFavorites(false);
 			}
 		} catch (err) {
-			console.error("Favorite toggle error:", err);
+			console.error('Favorite toggle error:', err);
 		}
 	};
+
+	// add cuisine or dietary tags
+	const handleAddTag = async (
+		newCuisines: string[],
+		newDietary: string[],
+	) => {
+		if (!foodItemId) return;
+
+		const currentCuisines: string[] = itemData?.cuisine_type ?? [];
+		const currentDietary: string[] = itemData?.dietary_tags ?? [];
+
+		const mergedCuisines: string[] = Array.from(new Set([...currentCuisines, ...newCuisines]));
+		const mergedDietary: string[] = Array.from(new Set([...currentDietary, ...newDietary]));
+
+		try {
+			const { data, error } = await supabase
+				.from('fooditem')
+				.update({
+					'cuisine_type': mergedCuisines,
+					'dietary_tags': mergedDietary,
+				})
+				.eq('id', foodItemId);
+
+			if (error) {
+				console.log('Error updating tags:', error);
+				return;
+			}
+
+			setItemData((prev: any) => ({
+				...prev,
+				cuisine_type: mergedCuisines,
+				dietary_tags: mergedDietary,
+			}));
+
+			console.log("Tags updated successfully");
+		} catch (err) {
+			console.log("Error updating tags in handleAddTag:", err)
+		}
+	};
+
+	const handleSubmitTags = async () => {
+		await handleAddTag(selectedCuisines, selectedDietary);
+		setSelectedCuisines([]);
+		setSelectedDietary([]);
+		setTagModalVisible(false);
+	}
 
 	const cuisineType = itemData?.cuisine_type ?? [];
 	const dietaryTags = itemData?.dietary_tags ?? [];
 
-	const cuisineText = cuisineType.join(", ");
-	const dietaryText = dietaryTags.join(", ");
+	const cuisineText = cuisineType.join(', ');
+	const dietaryText = dietaryTags.join(', ');
+
+	const renderTag = (
+		data: string[],
+		selected: string[],
+		toggleFn: (val: string) => void,
+		category?: 'cuisine' | 'dietary'
+	) => {
+		return (
+			<View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20 }}>
+				{data.map((tag) => {
+					const isActive = selected.includes(tag);
+					return (
+						<Pressable
+							key={tag}
+							onPress={() => toggleFn(tag)}
+							style={[
+								styles.tag,
+								isActive && styles.tagActive,
+							]}
+						>
+							{category === 'cuisine' && (
+								<Ionicons
+									name={isActive ? "fast-food" : "fast-food-outline"}
+									size={14}
+									color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+									style={isActive ? styles.tagIconActive : styles.tagIcon}
+								/>
+							)}
+							{category === 'dietary' && (
+								<Ionicons
+									name={isActive ? "leaf" : "leaf-outline"}
+									size={14}
+									color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+									style={isActive ? styles.tagIconActive : styles.tagIcon}
+								/>
+							)}
+							<Text style={[styles.tagText, isActive && styles.tagTextActive]}>
+								{tag}
+							</Text>
+						</Pressable>
+					)
+				})}
+			</View>
+		)
+	}
 
 	// DUMMY DATA FOR RELATED FOOD ITEMS
 	const relatedFood = [
@@ -649,12 +758,20 @@ export default function FoodItemDetailPage() {
 				{/* Food Category */}
 				<View style={styles.categoryContainer}>
 					<Text style={styles.categoryText}>
-						{itemData?.price_range || "$"}
-						{cuisineText || dietaryText ? " • " : ""}
+						{itemData?.price_range || '$'}
+						{cuisineText || dietaryText ? ' • ' : ''}
 						{cuisineText}
-						{cuisineText && dietaryText ? ", " : ""}
+						{cuisineText && dietaryText ? ', ' : ''}
 						{dietaryText}
 					</Text>
+					{/* Add Cuisine/Dietary tags button */}
+					<Pressable
+						onPress={() => setTagModalVisible(true)}
+						style={styles.addTagContainer}>
+						<View style={styles.addTagButton}>
+							<Ionicons name="add-sharp" size={16} color='#65C5E3' />
+						</View>
+					</Pressable>
 				</View>
 
 				{/* Action Buttons */}
@@ -857,6 +974,68 @@ export default function FoodItemDetailPage() {
 					)}
 				</View>
 			</ScrollView>
+
+			{/* Modal for Tag Input */}
+			<Modal
+				visible={tagModalVisible}
+				transparent={true}
+				animationType='slide'
+				onRequestClose={() => setTagModalVisible(false)}
+			>
+				<View style={styles.tagModalOverlay}>
+					<View style={styles.tagModalContainer}>
+						<ScrollView style={styles.tagModalBox}>
+							{/* cuisine tags */}
+							<Text style={styles.tagModalTitle}>Cuisine Tags</Text>
+							{renderTag(
+								tags.filter((t: any) => t.category === 'cuisine')
+									.map((t: any) => t.name),
+								selectedCuisines,
+								(val: string) => {
+									if (selectedCuisines.includes(val)) {
+										setSelectedCuisines(selectedCuisines.filter((item) => item !== val));
+									} else {
+										setSelectedCuisines([...selectedCuisines, val]);
+									}
+								},
+								'cuisine'
+							)}
+							{/* dietary tags */}
+							<Text style={styles.tagModalTitle}>Dietary Tags</Text>
+							{renderTag(
+								tags.filter((t: any) => t.category === 'dietary')
+									.map((t: any) => t.name),
+								selectedDietary,
+								(val: string) => {
+									if (selectedDietary.includes(val)) {
+										setSelectedDietary(selectedDietary.filter((item) => item !== val));
+									} else {
+										setSelectedDietary([...selectedDietary, val]);
+									}
+								},
+								'dietary'
+							)}
+						</ScrollView>
+						<View style={styles.tagModalButtons}>
+							<Pressable
+								style={[styles.tagModalSubmitButton,
+								(selectedCuisines.length === 0 && selectedDietary.length === 0)
+								&& styles.tagModalSubmitButtonDisabled]}
+								onPress={handleSubmitTags}
+								disabled={selectedCuisines.length === 0 && selectedDietary.length === 0}
+							>
+								<Text style={[styles.tagModalButtonText,
+								(selectedCuisines.length === 0 && selectedDietary.length === 0)
+								&& styles.tagModalButtonDisabledText
+								]}>Submit</Text>
+							</Pressable>
+							<Pressable style={styles.tagModalCancelButton} onPress={() => setTagModalVisible(false)}>
+								<Text style={styles.tagModalButtonText}>Cancel</Text>
+							</Pressable>
+						</View>
+					</View>
+				</View>
+			</Modal>
 
 			{/* Image Preview Modal */}
 			<Modal
@@ -1128,15 +1307,34 @@ const styles = StyleSheet.create({
 	},
 
 	categoryContainer: {
-		alignItems: "center",
+		flexDirection: 'row',
+		justifyContent: 'center',
+		alignItems: 'center',
 		marginTop: 10,
 		marginBottom: 15,
+		marginHorizontal: 30,
 	},
 
 	categoryText: {
+		justifyContent: 'center',
+		alignItems: 'center',
+		textAlign: 'center',
 		fontSize: 16,
-		fontWeight: "bold",
-		color: "#333",
+		fontWeight: 'bold',
+		color: '#333',
+	},
+
+	addTagContainer: {
+		marginHorizontal: 5,
+	},
+
+	addTagButton: {
+		width: 20,
+		height: 20,
+		backgroundColor: '#E3F7FF',
+		borderRadius: 10,
+		justifyContent: 'center',
+		alignItems: 'center',
 	},
 
 	actionButtonsContainer: {
@@ -1168,6 +1366,7 @@ const styles = StyleSheet.create({
 	},
 
 	reviewsPhotosContainer: {
+		flexDirection: "row",
 		paddingHorizontal: 20,
 		paddingVertical: 15,
 		borderTopWidth: 1,
@@ -1454,5 +1653,86 @@ const styles = StyleSheet.create({
 
 	confirmButton: {
 		backgroundColor: "#FF6347", // tomato red for the hide button
+	},
+
+	// tag modal
+	tagModalOverlay: {
+		flex: 1,
+		justifyContent: 'center',
+		backgroundColor: 'rgba(0,0,0,0.5)',
+		padding: 20,
+	},
+	tagModalContainer: {
+		backgroundColor: '#fff',
+		borderRadius: 10,
+		paddingVertical: 15,
+		maxHeight: '80%',
+	},
+	tagModalBox: {
+		paddingVertical: 5,
+		marginVertical: 15,
+	},
+	tagModalTitle: {
+		fontSize: 20,
+		fontWeight: '600',
+		marginBottom: 15,
+		textAlign: 'center',
+	},
+	tagModalButtons: {
+		flexDirection: 'row',
+		justifyContent: 'space-around',
+	},
+	tagModalSubmitButton: {
+		backgroundColor: Colors.primary.lightteal,
+		paddingHorizontal: 20,
+		paddingVertical: 10,
+		borderRadius: 20,
+	},
+	tagModalSubmitButtonDisabled: {
+		backgroundColor: '#ccc',
+	},
+	tagModalButtonDisabledText: {
+		color: '#fff',
+	},
+	tagModalCancelButton: {
+		paddingHorizontal: 20,
+		paddingVertical: 10,
+	},
+	tagModalButtonText: {
+		fontSize: 14,
+		color: Colors.primary.darkteal,
+	},
+
+	tag: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		alignSelf: 'flex-start',
+		borderRadius: 20,
+		borderWidth: 1,
+		borderColor: Colors.primary.darkteal,
+		backgroundColor: Colors.primary.lightTealTranslucent20,
+		marginRight: 3,
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		marginVertical: 4,
+	},
+	tagIcon: {
+		marginRight: 4,
+		color: Colors.primary.darkteal,
+	},
+	tagText: {
+		fontSize: 13,
+		color: Colors.primary.darkteal,
+	},
+	tagActive: {
+		backgroundColor: Colors.primary.darkteal,
+		borderColor: Colors.primary.darkteal,
+	},
+	tagTextActive: {
+		color: '#fff',
+	},
+	tagIconActive: {
+		marginRight: 4,
+		color: '#fff',
 	},
 });

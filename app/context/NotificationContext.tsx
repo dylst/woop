@@ -124,7 +124,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             )
             .subscribe();
 
-            console.log("Realtime channel subscription:", channel);
+            // console.log("Realtime channel subscription:", channel);
 
             return () => {
                 supabase.removeChannel(channel);
