@@ -270,7 +270,7 @@ const ReviewsScreen = () => {
 
       {/* Recent Reviews Section */}
       <View style={styles.recentSection}>
-        <ThemedText style={styles.sectionTitle}>Your Reviews</ThemedText>
+        <ThemedText style={styles.sectionTitle}>My Reviews</ThemedText>
         {editItem ? <EditModal isModalVisible={isModalVisible} handleSave={handleUpdateReview} closeModal={() => setIsModalVisble(false)} reviewItem={editItem} /> : null}
       </View>
 
