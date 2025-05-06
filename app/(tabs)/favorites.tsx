@@ -15,6 +15,7 @@ import { Colors } from '@/constants/Colors';
 import { ActivityIndicator } from 'react-native-paper';
 import { useUser } from '../context/UserContext';
 import StarRating from '@/components/ui/StarRating';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface FavoriteItem {
   profile_id: string;
@@ -52,6 +53,7 @@ interface Review {
 }
 
 const favorites = () => {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useUser();
 
@@ -480,6 +482,7 @@ const favorites = () => {
               renderItem={renderItem}
               showsHorizontalScrollIndicator={false}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>}
+              contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
             />
           )
           }
