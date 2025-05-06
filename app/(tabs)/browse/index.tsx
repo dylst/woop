@@ -177,7 +177,7 @@ export default function Browse() {
     <SafeAreaView style={styles.container}>
       {/* Page Title */}
       <View style={styles.topBarContainer}>
-        <TopBar type='home' title='Browse' />
+        <TopBar type='back' title='Browse' />
       </View>
 
       {/* Search Bar and Predictive Results Container */}

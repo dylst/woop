@@ -46,11 +46,13 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
 					style={styles.cardImage}
 				/>
 			) : (
-				<Ionicons
-					name="image-sharp"
-					size={48}
-					color="#777"
-				/>
+				<View style={styles.cardImage}>
+					<Ionicons
+						name="image-sharp"
+						size={48}
+						color="#777"
+					/>
+				</View>
 			)}
 
 			{onHide && (
@@ -111,6 +113,8 @@ const styles = StyleSheet.create({
 		borderTopLeftRadius: 19,
 		borderTopRightRadius: 19,
 		backgroundColor: "#ccc",
+		justifyContent: 'center',
+		alignItems: 'center'
 	},
 	cardTitle: {
 		fontSize: 15,
