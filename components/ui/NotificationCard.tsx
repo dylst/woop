@@ -1,34 +1,15 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { differenceInHours, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears, differenceInMinutes, differenceInSeconds } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns';
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 
 function getRelativeTime(date: Date): string {
-    const now = new Date();
-    const seconds = differenceInSeconds(now, date);
-    if (seconds < 60) return `${seconds}s ago`;
-
-    const minutes = differenceInMinutes(now, date);
-    if (minutes < 60) return `${minutes}m ago`;
-
-    const hours = differenceInHours(now, date);
-    if (hours < 24) return `${hours}h ago`;
-
-    const days = differenceInDays(now, date);
-    if (days < 7) return `${days}d ago`;
-
-    const weeks = differenceInWeeks(now, date);
-    if (weeks < 4) return `${weeks}w ago`;
-
-    const months = differenceInMonths(now, date);
-    if (months < 12) return `${months}m ago`;
-
-    const years = differenceInYears(now, date);
-    return `${years}y ago`
+    return formatDistanceToNowStrict(date, { addSuffix: true })
 }
 
 export interface Notification {
+    id: string;
     title: string;
     description: string;
     created_at: string;
@@ -45,13 +26,16 @@ export interface Notification {
 interface NotificationCardProps {
     notification: Notification,
     onPressFoodItem?: (foodItemId: string) => void;
+    onDelete?: (id: string) => void;
 }
 
 export function NotificationCard({
     notification,
-    onPressFoodItem
+    onPressFoodItem,
+    onDelete,
 }: NotificationCardProps) {
     const {
+        id,
         title,
         description,
         created_at,
@@ -67,15 +51,15 @@ export function NotificationCard({
     const isAnnouncement = notification_type === 'announcement';
     let leftContent;
     if (isLikeNotification) {
-        leftContent = <Ionicons name="heart" size={40} color={Colors.primary.darkteal}/>;
+        leftContent = <Ionicons name="heart" size={40} color={Colors.primary.darkteal} />;
     } else if (isAnnouncement) {
-        leftContent = <Ionicons name="megaphone" size={40} color={Colors.primary.darkteal}/>;
+        leftContent = <Ionicons name="megaphone" size={40} color={Colors.primary.darkteal} />;
     } else {
-        leftContent = <Ionicons name="person" size={40} color={Colors.primary.darkteal}/>
+        leftContent = <Ionicons name="person" size={40} color={Colors.primary.darkteal} />
     }
 
     const displayTitle = isLikeNotification && fooditem
-        ?  'Food review liked!'
+        ? 'Food review liked!'
         : title;
 
     const displayDescription = isLikeNotification && fooditem
@@ -106,13 +90,20 @@ export function NotificationCard({
             </View>
 
             { /* food item image */}
-            {!isAnnouncement && food_item_id ? (
+            {!isAnnouncement && food_item_id && (
                 <Image
                     source={{ uri: foodImageUrl || '' }}
                     style={styles.rightImage}
                 />
-            ) : (
-               ''
+            )}
+
+            {onDelete && (
+                <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => onDelete(id)}
+                >
+                    <Ionicons name="close-circle" size={24} color="#999" />
+                </TouchableOpacity>
             )}
         </TouchableOpacity>
     );
@@ -158,5 +149,9 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 50,
+    },
+    deleteButton: {
+        marginLeft: 8,
+        padding: 4,
     }
 })

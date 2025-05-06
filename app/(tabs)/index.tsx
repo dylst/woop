@@ -18,6 +18,7 @@ import { fetchRatings, RatingInfo } from "@/hooks/fetchHelper";
 import { Route } from "expo-router";
 import { userRecommendationService } from "../api/services/userRecommendationService";
 import { useUser } from "../context/UserContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const filtersItems = [
 	{
@@ -35,7 +36,10 @@ const filtersItems = [
 ];
 
 const HomePage = () => {
+	const insets = useSafeAreaInsets();
 	const { user } = useUser();
+	const userId = user?.id;
+
 	const [featuredItems, setFeaturedItems] = useState<any[]>([]);
 	const [ratingMap, setRatingMap] = useState<{ [key: string]: RatingInfo }>({});
 	const [recommendations, setRecommendations] = useState<any[]>([]);
@@ -157,6 +161,8 @@ const HomePage = () => {
 
 	// Extract the fetchRecommendations function to be reusable
 	const fetchRecommendations = async () => {
+		if (!userId) return;
+
 		setRecommendationsLoading(true);
 		try {
 			// Get personalized recommendations
@@ -276,6 +282,7 @@ const HomePage = () => {
 						onRefresh={onRefresh}
 					/>
 				}
+				contentContainerStyle={{ paddingBottom: insets.bottom + 30 }}
 			>
 				{/* Top Bar */}
 				<TopBar type='home' />

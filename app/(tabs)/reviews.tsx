@@ -22,7 +22,7 @@ import { useUser } from '../context/UserContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import StarRating from '@/components/ui/StarRating';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ReviewItem {
   profile_id: string;
@@ -41,64 +41,66 @@ interface ReviewItem {
 
 type EditModalProps = {
   isModalVisible: boolean;
-  handleSave:  (reviewId: string, reviewText: string, rating: number) => void;
+  handleSave: (reviewId: string, reviewText: string, rating: number) => void;
   closeModal: () => void;
   reviewItem: ReviewItem;
 
 }
 
-const EditModal = ({isModalVisible, handleSave, closeModal, reviewItem}: EditModalProps) => {
+const EditModal = ({ isModalVisible, handleSave, closeModal, reviewItem }: EditModalProps) => {
   const [inputText, setInputText] = useState<string>(reviewItem.review_text);
   const [rating, setRating] = useState(reviewItem.rating)
   return (
-   <Modal
-        visible={isModalVisible}
-        onRequestClose={closeModal} // Handle back button press on Android
-        transparent={true} // Allows you to see the background
-        animationType="slide" // Modal slide-up animation
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+    <Modal
+      visible={isModalVisible}
+      onRequestClose={closeModal} // Handle back button press on Android
+      transparent={true} // Allows you to see the background
+      animationType="slide" // Modal slide-up animation
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
           <Text style={styles.itemTitle}>{reviewItem.food_name}</Text>
           <Text style={styles.itemComment}>{reviewItem.restaurant_name}</Text>
           <View style={styles.ratingRow}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Pressable key={star} onPress={() => setRating(Number(star))}>
-              <Ionicons
-                name={star <= rating ? "star" : "star-outline"}
-                size={32}
-                color="#FFD700"
-                style={styles.starIcon}
-              />
-            </Pressable>
-          ))}
-        </View>
-            {/* TextInput (Textbox) */}
-            <TextInput
-              style={styles.textInput}
-              value={inputText}
-              onChangeText={setInputText} // Update state with the input
-              placeholder="Type here..."
-            />
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Pressable key={star} onPress={() => setRating(Number(star))}>
+                <Ionicons
+                  name={star <= rating ? "star" : "star-outline"}
+                  size={32}
+                  color="#FFD700"
+                  style={styles.starIcon}
+                />
+              </Pressable>
+            ))}
+          </View>
+          {/* TextInput (Textbox) */}
+          <TextInput
+            style={styles.textInput}
+            value={inputText}
+            onChangeText={setInputText} // Update state with the input
+            placeholder="Type here..."
+          />
 
-            {/* Save and Cancel Buttons */}
-            <View style={styles.buttonsContainer}>
-              <Button title="Save" onPress={() => handleSave(reviewItem.id, inputText, rating)} />
-              <Button title="Cancel" onPress={closeModal} />
-            </View>
+          {/* Save and Cancel Buttons */}
+          <View style={styles.buttonsContainer}>
+            <Button title="Save" onPress={() => handleSave(reviewItem.id, inputText, rating)} />
+            <Button title="Cancel" onPress={closeModal} />
           </View>
         </View>
-      </Modal>
-)};
+      </View>
+    </Modal>
+  )
+};
 
 const ReviewsScreen = () => {
+  const insets = useSafeAreaInsets();
   const [editItem, setEditItem] = useState<ReviewItem | undefined>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user } = useUser();
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const handlePress = (foodItemId: string) => {
-    router.push(`/food/${foodItemId}`) 
+    router.push(`/food/${foodItemId}`)
   };
 
 
@@ -120,7 +122,6 @@ const ReviewsScreen = () => {
     const cuisineText = item.cuisine_type?.join(' ');
     const dietaryText = item.dietary_tags?.join(' ');
 
-
     const imageUrl = Array.isArray(item.photos) && item.photos.length > 0 ? item.photos[0] : '';
 
     return (
@@ -133,22 +134,14 @@ const ReviewsScreen = () => {
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{item.food_name}</Text>
           <Text style={styles.itemComment}>{item.restaurant_name}</Text>
-          <Text style={styles.itemComment}>{item.review_text}</Text>
+          <Text style={styles.itemComment}>{item.review_text.slice(0, 50)}{item.review_text.length > 50 && '...'}</Text>
           <View style={styles.ratingRow}>
             <Text style={styles.ratingAverage}>{item.rating ? (item.rating.toFixed(1)) : '0.0'}</Text>
-            <StarRating average={item.rating}/>
+            <StarRating average={item.rating} />
           </View>
           <View style={styles.itemTagContainer}>
             <Text style={styles.itemTagPrice}>{item.price_range}</Text>
-
-            {cuisineText ? (
-              <Text style={styles.itemTag}>{cuisineText}</Text>
-            ) : null
-            }
-            {dietaryText ? (
-              <Text style={styles.itemTag}>{dietaryText}</Text>
-            ) : null
-            }
+            <Text style={styles.itemTag}>{cuisineText?.split(" ", 2).join(" ")} {dietaryText?.split(" ", 2).join(" ")}</Text>
           </View>
         </View>
 
@@ -192,6 +185,7 @@ const ReviewsScreen = () => {
           review_text, 
           rating
         `)
+        .eq('profile_id', userId)
         .order('review_date', { ascending: false })
 
       if (error) {
@@ -249,17 +243,17 @@ const ReviewsScreen = () => {
   const handleUpdateReview = async (reviewId: string, reviewText: string, rating: number) => {
     try {
       const { data, error } = await supabase
-      .from('review') 
-      .update({ review_text: reviewText, rating }) 
-      .eq('id', reviewId);
-  
+        .from('review')
+        .update({ review_text: reviewText, rating })
+        .eq('id', reviewId);
+
       if (error) {
         console.error(error);
         return;
       }
       await onRefresh();
       setIsModalVisble(false);
-    } catch(e){
+    } catch (e) {
       console.error('Error:', e);
     }
 
@@ -276,17 +270,18 @@ const ReviewsScreen = () => {
 
       {/* Recent Reviews Section */}
       <View style={styles.recentSection}>
-        <ThemedText style={styles.sectionTitle}>Recent Reviews</ThemedText>
-        {editItem? <EditModal isModalVisible={isModalVisible} handleSave={handleUpdateReview} closeModal={() => setIsModalVisble(false)} reviewItem={editItem}/>: null}
-
-        <FlatList<ReviewItem>
-          data={reviews}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          showsHorizontalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        />
+        <ThemedText style={styles.sectionTitle}>Your Reviews</ThemedText>
+        {editItem ? <EditModal isModalVisible={isModalVisible} handleSave={handleUpdateReview} closeModal={() => setIsModalVisble(false)} reviewItem={editItem} /> : null}
       </View>
+
+      <FlatList<ReviewItem>
+        data={reviews}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        showsHorizontalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+      />
     </SafeAreaView>
   );
 };
@@ -402,6 +397,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
     marginVertical: 4,
+    marginRight: 2,
   },
   itemTagContainer: {
     flexDirection: 'row',
@@ -509,38 +505,38 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
 
- modalOverlay: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark background overlay
-},
-modalContent: {
-  width: '80%',
-  padding: 20,
-  backgroundColor: 'white',
-  borderRadius: 10,
-  alignItems: 'center',
-},
-modalTitle: {
-  fontSize: 18,
-  marginBottom: 15,
-  fontWeight: 'bold',
-},
-textInput: {
-  width: '100%',
-  height: 40,
-  borderColor: 'gray',
-  borderWidth: 1,
-  borderRadius: 5,
-  marginBottom: 20,
-  paddingLeft: 10,
-},
-buttonsContainer: {
-  flexDirection: 'row',
-  justifyContent: 'space-evenly',
-  width: '100%',
-},
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dark background overlay
+  },
+  modalContent: {
+    width: '80%',
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 15,
+    fontWeight: 'bold',
+  },
+  textInput: {
+    width: '100%',
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 20,
+    paddingLeft: 10,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '100%',
+  },
 });
 
 

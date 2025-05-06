@@ -14,7 +14,7 @@ import { useFoodItemNavigation } from "@/hooks/navigationHelper";
 
 interface FeaturedCardProps {
 	id: string;
-	photos: ImageSourcePropType | { uri: string };
+	photos: { uri: string };
 	foodName: string;
 	restaurantName: string;
 	style?: StyleProp<ViewStyle>;
@@ -32,15 +32,26 @@ const FeaturedCard: React.FC<FeaturedCardProps> = ({
 	onHide,
 }) => {
 	const navigateToFoodItem = useFoodItemNavigation();
+
+	const hasImage = photos?.uri;
+
 	return (
 		<TouchableOpacity
 			style={[styles.card, style]}
 			onPress={() => navigateToFoodItem(id)}
 		>
-			<Image
-				source={photos}
-				style={styles.cardImage}
-			/>
+			{hasImage ? (
+				<Image
+					source={photos}
+					style={styles.cardImage}
+				/>
+			) : (
+				<Ionicons
+					name="image-sharp"
+					size={48}
+					color="#777"
+				/>
+			)}
 
 			{onHide && (
 				<TouchableOpacity
@@ -99,6 +110,7 @@ const styles = StyleSheet.create({
 		height: 140,
 		borderTopLeftRadius: 19,
 		borderTopRightRadius: 19,
+		backgroundColor: "#ccc",
 	},
 	cardTitle: {
 		fontSize: 15,

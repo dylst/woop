@@ -60,6 +60,24 @@ export default function NotificationsScreen() {
         fetchNotifications();
     }, [loggedInProfileId]);
 
+    const deleteNotification = async (id: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('notification')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error("Error deleting notification:", error)
+                return;
+            }
+
+            await fetchNotifications();
+        } catch (err) {
+            console.error("Unable to delete notification:", err);
+        }
+    }
+
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchNotifications().finally(() => setRefreshing(false));
@@ -67,15 +85,6 @@ export default function NotificationsScreen() {
 
     const handlePressFoodItem = (foodItemId: string) => {
         router.push(`/food/${foodItemId}`)
-    };
-
-    // Test function to manually schedule a local notification.
-    const handleTestLocalNotification = async () => {
-        await scheduleLocalNotification({
-            title: "Test Local Notification",
-            body: "This is a test local notification triggered manually.",
-            data: { test: true },
-        });
     };
 
     return (
@@ -96,10 +105,6 @@ export default function NotificationsScreen() {
                 </View>
                 <View style={styles.right}>
                     { /* balance out right side */}
-                    {/* Test button to manually trigger a local notification */}
-                    <Pressable onPress={handleTestLocalNotification}>
-                        <Text style={{ fontSize: 14, alignItems: 'center', textAlign: 'center', color: 'red' }}>Test Notification</Text>
-                    </Pressable>
                 </View>
 
             </View>
@@ -113,6 +118,7 @@ export default function NotificationsScreen() {
                             key={notification.id}
                             notification={notification}
                             onPressFoodItem={handlePressFoodItem}
+                            onDelete={deleteNotification}
                         />
                     ))
                 ) : (
