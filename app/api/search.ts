@@ -1,4 +1,10 @@
 import { supabase } from '@/supabaseClient';
+import {
+  calculateRankingScore,
+  processRatingData,
+  UserPreferences,
+  RatingData,
+} from '@/app/services/rankingService';
 
 // Filter options interface
 interface FilterOptions {
@@ -11,6 +17,30 @@ interface FilterOptions {
   };
   selectedCuisines?: string[];
   selectedDietary?: string[];
+  sortBy?: SortMethod; // Add sorting parameter
+}
+
+// Food item interface to properly type our objects
+interface FoodItem {
+  id: number;
+  food_name: string;
+  restaurant_name: string;
+  photos: string[];
+  price_range: string;
+  cuisine_type: string[];
+  dietary_tags: string[];
+  description: string;
+  rankingScore?: number;
+  _ratingDetails?: RatingData;
+  [key: string]: any; // Allow additional properties
+}
+
+// Sort methods enum
+export enum SortMethod {
+  BEST_MATCH = 'best_match',
+  HIGHEST_RATED = 'highest_rated',
+  MOST_REVIEWED = 'most_reviewed',
+  NEWEST = 'newest',
 }
 
 /**
@@ -57,9 +87,9 @@ export const searchFoodItems = async (
       }
 
       console.log(`Predictive search returned ${data?.length || 0} results`);
-      return { 
-        results: data || [], 
-        hasMore: false // Predictive search doesn't support pagination
+      return {
+        results: data || [],
+        hasMore: false, // Predictive search doesn't support pagination
       };
     }
 
@@ -201,7 +231,7 @@ export const searchFoodItems = async (
           : [],
       }));
       console.log('Sample cuisine data from results:', cuisineSamples);
-        
+
       allResults = allResults.filter((item) => {
         // Ensure cuisine_type is always an array and normalize values for comparison
         const cuisineArray = Array.isArray(item.cuisine_type)
@@ -372,15 +402,115 @@ export const searchFoodItems = async (
       }
     }
 
-    console.log(`Final search results count: ${allResults.length}`);
+    // After all filters are applied, fetch ratings data for ranking
+    let ratingData: Record<string, RatingData> = {};
+    if (allResults.length > 0) {
+      try {
+        // Get all food item IDs from filtered results
+        const foodIds = allResults.map((item) => item.id);
+
+        // Fetch review data for these items
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from('review')
+          .select('food_item_id, rating, review_date')
+          .in('food_item_id', foodIds);
+
+        if (reviewsError) {
+          console.error(
+            'Error fetching review data for ranking:',
+            reviewsError
+          );
+        } else if (reviewsData) {
+          // Process review data using our utility function
+          ratingData = processRatingData(reviewsData);
+
+          console.log(
+            `Fetched rating data for ${
+              Object.keys(ratingData).length
+            } food items`
+          );
+        }
+      } catch (error) {
+        console.error('Exception fetching review data:', error);
+      }
+    }
+
+    // Set up user preferences for ranking based on filters
+    const userPreferences: UserPreferences = {
+      cuisines: filters?.selectedCuisines || [],
+      dietary: filters?.selectedDietary || [],
+      priceRange: filters?.priceRange || [],
+    };
+
+    // Calculate ranking scores and add them to results
+    allResults.forEach((item: FoodItem) => {
+      const itemRatingData = ratingData[item.id.toString()];
+      item.rankingScore = calculateRankingScore(
+        item,
+        itemRatingData,
+        userPreferences
+      );
+
+      // For debugging
+      item._ratingDetails = itemRatingData;
+    });
+
+    // Sort results based on sortBy parameter or default to ranking score
+    const sortMethod = filters?.sortBy || SortMethod.BEST_MATCH;
+
+    switch (sortMethod) {
+      case SortMethod.HIGHEST_RATED:
+        // Sort by average rating, then by number of reviews
+        allResults.sort((a: FoodItem, b: FoodItem) => {
+          const aRating = ratingData[a.id.toString()]?.average || 0;
+          const bRating = ratingData[b.id.toString()]?.average || 0;
+
+          if (aRating !== bRating) return bRating - aRating;
+          return (
+            (ratingData[b.id.toString()]?.count || 0) -
+            (ratingData[a.id.toString()]?.count || 0)
+          );
+        });
+        break;
+
+      case SortMethod.MOST_REVIEWED:
+        // Sort by number of reviews
+        allResults.sort(
+          (a: FoodItem, b: FoodItem) =>
+            (ratingData[b.id.toString()]?.count || 0) -
+            (ratingData[a.id.toString()]?.count || 0)
+        );
+        break;
+
+      case SortMethod.NEWEST:
+        // Sort by newest review
+        allResults.sort((a: FoodItem, b: FoodItem) => {
+          const aDate =
+            ratingData[a.id.toString()]?.newestReview || new Date(0);
+          const bDate =
+            ratingData[b.id.toString()]?.newestReview || new Date(0);
+          return bDate.getTime() - aDate.getTime();
+        });
+        break;
+
+      case SortMethod.BEST_MATCH:
+      default:
+        // Sort by ranking score (our default algorithm)
+        allResults.sort(
+          (a: FoodItem, b: FoodItem) =>
+            (b.rankingScore || 0) - (a.rankingScore || 0)
+        );
+        break;
+    }
+
+    console.log(`Final results after ranking: ${allResults.length}`);
     console.log('-------- SEARCH DEBUG END --------');
-    
-    // Determine if there might be more results
+
+    // Return the results and pagination info
     const hasMore = data && data.length === pageSize;
     return { results: allResults, hasMore };
   } catch (err) {
-    console.error('Unexpected error:', err);
-    console.log('-------- SEARCH DEBUG END (ERROR) --------');
+    console.error('Uncaught error in searchFoodItems:', err);
     return { results: [], hasMore: false };
   }
 };
