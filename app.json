@@ -15,6 +15,9 @@
         "NSLocationWhenInUseUsageDescription": "We need your location to find food items near you and calculate distances to restaurants.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to find food items near you and calculate distances to restaurants.",
         "NSLocationAlwaysUsageDescription": "We need your location to find food items near you and calculate distances to restaurants."
+      },
+      "config": {
+        "googleMapsApiKey": "${process.env.GOOGLE_MAPS_API_KEY}"
       }
     },
     "android": {

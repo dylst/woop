@@ -24,6 +24,7 @@ import { decode } from "base64-arraybuffer";
 // to position back button within safe area view
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StarRating from "@/components/ui/StarRating";
+import { userRecommendationService } from "../api/services/userRecommendationService";
 
 export default function FoodItemDetailPage() {
 	const router = useRouter();
@@ -367,12 +368,10 @@ export default function FoodItemDetailPage() {
 		}
 
 		setIsFeatured(!!data);
-	}
+	};
 
 	const fetchTags = async () => {
-		const { data, error } = await supabase
-			.from('tags')
-			.select('*')
+		const { data, error } = await supabase.from("tags").select("*");
 
 		if (error) {
 			console.log("Error fetching tags:", error);
@@ -380,7 +379,7 @@ export default function FoodItemDetailPage() {
 		}
 
 		setTags(data);
-	}
+	};
 
 	// const photoRatings = [
 	//   { label: '5', percentage: 80, color: '#E64A19', image: 'photo1.jpg' },
@@ -468,6 +467,8 @@ export default function FoodItemDetailPage() {
 					return;
 				}
 
+				await userRecommendationService.hideRecommendation(String(foodId));
+
 				setIsFavorites(true);
 			} else {
 				const { error } = await supabase
@@ -484,34 +485,35 @@ export default function FoodItemDetailPage() {
 				setIsFavorites(false);
 			}
 		} catch (err) {
-			console.error('Favorite toggle error:', err);
+			console.error("Favorite toggle error:", err);
 		}
 	};
 
 	// add cuisine or dietary tags
-	const handleAddTag = async (
-		newCuisines: string[],
-		newDietary: string[],
-	) => {
+	const handleAddTag = async (newCuisines: string[], newDietary: string[]) => {
 		if (!foodItemId) return;
 
 		const currentCuisines: string[] = itemData?.cuisine_type ?? [];
 		const currentDietary: string[] = itemData?.dietary_tags ?? [];
 
-		const mergedCuisines: string[] = Array.from(new Set([...currentCuisines, ...newCuisines]));
-		const mergedDietary: string[] = Array.from(new Set([...currentDietary, ...newDietary]));
+		const mergedCuisines: string[] = Array.from(
+			new Set([...currentCuisines, ...newCuisines])
+		);
+		const mergedDietary: string[] = Array.from(
+			new Set([...currentDietary, ...newDietary])
+		);
 
 		try {
 			const { data, error } = await supabase
-				.from('fooditem')
+				.from("fooditem")
 				.update({
-					'cuisine_type': mergedCuisines,
-					'dietary_tags': mergedDietary,
+					cuisine_type: mergedCuisines,
+					dietary_tags: mergedDietary,
 				})
-				.eq('id', foodItemId);
+				.eq("id", foodItemId);
 
 			if (error) {
-				console.log('Error updating tags:', error);
+				console.log("Error updating tags:", error);
 				return;
 			}
 
@@ -523,7 +525,7 @@ export default function FoodItemDetailPage() {
 
 			console.log("Tags updated successfully");
 		} catch (err) {
-			console.log("Error updating tags in handleAddTag:", err)
+			console.log("Error updating tags in handleAddTag:", err);
 		}
 	};
 
@@ -532,46 +534,45 @@ export default function FoodItemDetailPage() {
 		setSelectedCuisines([]);
 		setSelectedDietary([]);
 		setTagModalVisible(false);
-	}
+	};
 
 	const cuisineType = itemData?.cuisine_type ?? [];
 	const dietaryTags = itemData?.dietary_tags ?? [];
 
-	const cuisineText = cuisineType.join(', ');
-	const dietaryText = dietaryTags.join(', ');
+	const cuisineText = cuisineType.join(", ");
+	const dietaryText = dietaryTags.join(", ");
 
 	const renderTag = (
 		data: string[],
 		selected: string[],
 		toggleFn: (val: string) => void,
-		category?: 'cuisine' | 'dietary'
+		category?: "cuisine" | "dietary"
 	) => {
 		return (
-			<View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20 }}>
+			<View
+				style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20 }}
+			>
 				{data.map((tag) => {
 					const isActive = selected.includes(tag);
 					return (
 						<Pressable
 							key={tag}
 							onPress={() => toggleFn(tag)}
-							style={[
-								styles.tag,
-								isActive && styles.tagActive,
-							]}
+							style={[styles.tag, isActive && styles.tagActive]}
 						>
-							{category === 'cuisine' && (
+							{category === "cuisine" && (
 								<Ionicons
 									name={isActive ? "fast-food" : "fast-food-outline"}
 									size={14}
-									color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+									color={isActive ? "#fcfcfc" : Colors.primary.lightteal}
 									style={isActive ? styles.tagIconActive : styles.tagIcon}
 								/>
 							)}
-							{category === 'dietary' && (
+							{category === "dietary" && (
 								<Ionicons
 									name={isActive ? "leaf" : "leaf-outline"}
 									size={14}
-									color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+									color={isActive ? "#fcfcfc" : Colors.primary.lightteal}
 									style={isActive ? styles.tagIconActive : styles.tagIcon}
 								/>
 							)}
@@ -579,11 +580,11 @@ export default function FoodItemDetailPage() {
 								{tag}
 							</Text>
 						</Pressable>
-					)
+					);
 				})}
 			</View>
-		)
-	}
+		);
+	};
 
 	// DUMMY DATA FOR RELATED FOOD ITEMS
 	const relatedFood = [
@@ -758,18 +759,23 @@ export default function FoodItemDetailPage() {
 				{/* Food Category */}
 				<View style={styles.categoryContainer}>
 					<Text style={styles.categoryText}>
-						{itemData?.price_range || '$'}
-						{cuisineText || dietaryText ? ' • ' : ''}
+						{itemData?.price_range || "$"}
+						{cuisineText || dietaryText ? " • " : ""}
 						{cuisineText}
-						{cuisineText && dietaryText ? ', ' : ''}
+						{cuisineText && dietaryText ? ", " : ""}
 						{dietaryText}
 					</Text>
 					{/* Add Cuisine/Dietary tags button */}
 					<Pressable
 						onPress={() => setTagModalVisible(true)}
-						style={styles.addTagContainer}>
+						style={styles.addTagContainer}
+					>
 						<View style={styles.addTagButton}>
-							<Ionicons name="add-sharp" size={16} color='#65C5E3' />
+							<Ionicons
+								name='add-sharp'
+								size={16}
+								color='#65C5E3'
+							/>
 						</View>
 					</Pressable>
 				</View>
@@ -988,7 +994,8 @@ export default function FoodItemDetailPage() {
 							{/* cuisine tags */}
 							<Text style={styles.tagModalTitle}>Cuisine Tags</Text>
 							{renderTag(
-								tags.filter((t: any) => t.category === 'cuisine')
+								tags
+									.filter((t: any) => t.category === "cuisine")
 									.map((t: any) => t.name),
 								selectedCuisines,
 								(val: string) => {
@@ -998,12 +1005,13 @@ export default function FoodItemDetailPage() {
 										setSelectedCuisines([...selectedCuisines, val]);
 									}
 								},
-								'cuisine'
+								"cuisine"
 							)}
 							{/* dietary tags */}
 							<Text style={styles.tagModalTitle}>Dietary Tags</Text>
 							{renderTag(
-								tags.filter((t: any) => t.category === 'dietary')
+								tags
+									.filter((t: any) => t.category === "dietary")
 									.map((t: any) => t.name),
 								selectedDietary,
 								(val: string) => {
@@ -1013,23 +1021,35 @@ export default function FoodItemDetailPage() {
 										setSelectedDietary([...selectedDietary, val]);
 									}
 								},
-								'dietary'
+								"dietary"
 							)}
 						</ScrollView>
 						<View style={styles.tagModalButtons}>
 							<Pressable
-								style={[styles.tagModalSubmitButton,
-								(selectedCuisines.length === 0 && selectedDietary.length === 0)
-								&& styles.tagModalSubmitButtonDisabled]}
+								style={[
+									styles.tagModalSubmitButton,
+									selectedCuisines.length === 0 &&
+										selectedDietary.length === 0 &&
+										styles.tagModalSubmitButtonDisabled,
+								]}
 								onPress={handleSubmitTags}
 								disabled={selectedCuisines.length === 0 && selectedDietary.length === 0}
 							>
-								<Text style={[styles.tagModalButtonText,
-								(selectedCuisines.length === 0 && selectedDietary.length === 0)
-								&& styles.tagModalButtonDisabledText
-								]}>Submit</Text>
+								<Text
+									style={[
+										styles.tagModalButtonText,
+										selectedCuisines.length === 0 &&
+											selectedDietary.length === 0 &&
+											styles.tagModalButtonDisabledText,
+									]}
+								>
+									Submit
+								</Text>
 							</Pressable>
-							<Pressable style={styles.tagModalCancelButton} onPress={() => setTagModalVisible(false)}>
+							<Pressable
+								style={styles.tagModalCancelButton}
+								onPress={() => setTagModalVisible(false)}
+							>
 								<Text style={styles.tagModalButtonText}>Cancel</Text>
 							</Pressable>
 						</View>
@@ -1307,21 +1327,21 @@ const styles = StyleSheet.create({
 	},
 
 	categoryContainer: {
-		flexDirection: 'row',
-		justifyContent: 'center',
-		alignItems: 'center',
+		flexDirection: "row",
+		justifyContent: "center",
+		alignItems: "center",
 		marginTop: 10,
 		marginBottom: 15,
 		marginHorizontal: 30,
 	},
 
 	categoryText: {
-		justifyContent: 'center',
-		alignItems: 'center',
-		textAlign: 'center',
+		justifyContent: "center",
+		alignItems: "center",
+		textAlign: "center",
 		fontSize: 16,
-		fontWeight: 'bold',
-		color: '#333',
+		fontWeight: "bold",
+		color: "#333",
 	},
 
 	addTagContainer: {
@@ -1331,10 +1351,10 @@ const styles = StyleSheet.create({
 	addTagButton: {
 		width: 20,
 		height: 20,
-		backgroundColor: '#E3F7FF',
+		backgroundColor: "#E3F7FF",
 		borderRadius: 10,
-		justifyContent: 'center',
-		alignItems: 'center',
+		justifyContent: "center",
+		alignItems: "center",
 	},
 
 	actionButtonsContainer: {
@@ -1605,12 +1625,12 @@ const styles = StyleSheet.create({
 	radioButtonContainer: {
 		flexDirection: "row",
 		justifyContent: "space-between",
-		marginTop: 10, 
+		marginTop: 10,
 	},
 	radioOption: {
 		flexDirection: "row",
 		alignItems: "center",
-		padding: 15, 
+		padding: 15,
 		marginVertical: 10,
 	},
 	radioCircle: {
@@ -1658,15 +1678,15 @@ const styles = StyleSheet.create({
 	// tag modal
 	tagModalOverlay: {
 		flex: 1,
-		justifyContent: 'center',
-		backgroundColor: 'rgba(0,0,0,0.5)',
+		justifyContent: "center",
+		backgroundColor: "rgba(0,0,0,0.5)",
 		padding: 20,
 	},
 	tagModalContainer: {
-		backgroundColor: '#fff',
+		backgroundColor: "#fff",
 		borderRadius: 10,
 		paddingVertical: 15,
-		maxHeight: '80%',
+		maxHeight: "80%",
 	},
 	tagModalBox: {
 		paddingVertical: 5,
@@ -1674,13 +1694,13 @@ const styles = StyleSheet.create({
 	},
 	tagModalTitle: {
 		fontSize: 20,
-		fontWeight: '600',
+		fontWeight: "600",
 		marginBottom: 15,
-		textAlign: 'center',
+		textAlign: "center",
 	},
 	tagModalButtons: {
-		flexDirection: 'row',
-		justifyContent: 'space-around',
+		flexDirection: "row",
+		justifyContent: "space-around",
 	},
 	tagModalSubmitButton: {
 		backgroundColor: Colors.primary.lightteal,
@@ -1689,10 +1709,10 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 	},
 	tagModalSubmitButtonDisabled: {
-		backgroundColor: '#ccc',
+		backgroundColor: "#ccc",
 	},
 	tagModalButtonDisabledText: {
-		color: '#fff',
+		color: "#fff",
 	},
 	tagModalCancelButton: {
 		paddingHorizontal: 20,
@@ -1704,9 +1724,9 @@ const styles = StyleSheet.create({
 	},
 
 	tag: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		alignSelf: 'flex-start',
+		flexDirection: "row",
+		alignItems: "center",
+		alignSelf: "flex-start",
 		borderRadius: 20,
 		borderWidth: 1,
 		borderColor: Colors.primary.darkteal,
@@ -1729,10 +1749,10 @@ const styles = StyleSheet.create({
 		borderColor: Colors.primary.darkteal,
 	},
 	tagTextActive: {
-		color: '#fff',
+		color: "#fff",
 	},
 	tagIconActive: {
 		marginRight: 4,
-		color: '#fff',
+		color: "#fff",
 	},
 });

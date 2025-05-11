@@ -185,6 +185,8 @@ const styles = StyleSheet.create({
 	},
 	map: {
 		flex: 1,
+		width: "100%",
+		height: "100%",
 	},
 
 	backButton: {
@@ -257,27 +259,27 @@ const styles = StyleSheet.create({
 
 	mapMarkerTitle: {
 		fontSize: 18,
-		fontWeight: '700',
+		fontWeight: "700",
 		color: Colors.primary.darkteal,
 		marginBottom: 6,
 	},
 
 	mapMarkerDescription: {
 		fontSize: 14,
-		color: '#333',
+		color: "#333",
 	},
 
 	hoursText: {
 		fontSize: 13,
 		marginTop: 4,
-		color: '#333',
+		color: "#333",
 	},
 
 	urlText: {
 		marginTop: 4,
 		fontSize: 10,
 		color: Colors.primary.darkteal,
-	}
+	},
 });
 
 export default MapScreen;
