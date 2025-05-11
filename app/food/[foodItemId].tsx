@@ -348,7 +348,6 @@ export default function FoodItemDetailPage() {
 			return;
 		}
 
-		setRatingsBar(data);
 		const computedRatings = computeRatings(data);
 		setRatingsBar(computedRatings);
 	};
@@ -441,7 +440,7 @@ export default function FoodItemDetailPage() {
 	useEffect(() => {
 		if (isFeatured) {
 			Animated.spring(featuredScale, {
-				toValue: 1,
+				toValue: isFeatured ? 1 : 0,
 				friction: 5,
 				useNativeDriver: true,
 			}).start();
@@ -669,28 +668,21 @@ export default function FoodItemDetailPage() {
 			<ScrollView>
 				{/* Top Navigation */}
 				<View style={[styles.topNav, { top: insets.top - 50 }]}>
-					<Pressable onPress={() => router.back()}>
+					<Pressable
+						onPress={() => router.back()}
+						style={styles.backButton}
+						hitSlop={8}>
 						<Ionicons
 							name='chevron-back'
 							size={28}
-							color='#333'
-							style={styles.backButton}
+							color={Colors.primary.darkteal}
 						/>
 					</Pressable>
 					{isFeatured && (
 						<Animated.View
 							style={[
 								styles.featuredContainer,
-								{
-									transform: [
-										{
-											scale: featuredScale.interpolate({
-												inputRange: [0, 1],
-												outputRange: [0, 1],
-											}),
-										},
-									],
-								},
+								{ transform: [{ scale: featuredScale }] },
 							]}
 						>
 							<Ionicons
@@ -1605,12 +1597,12 @@ const styles = StyleSheet.create({
 	radioButtonContainer: {
 		flexDirection: "row",
 		justifyContent: "space-between",
-		marginTop: 10, 
+		marginTop: 10,
 	},
 	radioOption: {
 		flexDirection: "row",
 		alignItems: "center",
-		padding: 15, 
+		padding: 15,
 		marginVertical: 10,
 	},
 	radioCircle: {

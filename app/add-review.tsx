@@ -360,7 +360,7 @@ export default function BusinessReviewScreen() {
         style={styles.card}
         onPress={() => handlePressSuggested(item.food_item_id)}
       >
-        <Image source={{ uri: item.photos }} style={styles.itemImage} />
+        <Image source={{ uri: item.photos?.[0] }} style={styles.itemImage} />
         <View style={styles.itemContainer}>
           <Text style={styles.itemTitle}>{item.food_name}</Text>
           <Text style={styles.itemComment}>{item.restaurant_name}</Text>
@@ -679,6 +679,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    zIndex: 20,
+    elevation: 8,
   },
   sortMenu: {
     position: 'absolute',
