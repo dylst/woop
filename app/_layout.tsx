@@ -1,3 +1,7 @@
+import { LogBox } from 'react-native';
+// silence all yellow-box warnings
+LogBox.ignoreAllLogs(true);
+
 import {
   DarkTheme,
   DefaultTheme,

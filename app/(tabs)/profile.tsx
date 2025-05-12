@@ -311,6 +311,8 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
     padding: 4,
+    zIndex: 999,
+    elevation: 8,
   },
   profileImage: {
     width: 100,

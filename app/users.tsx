@@ -70,7 +70,7 @@ function Users() {
       })
       if (error) {
         setLoginError("There was an error logging")
-        console.error(error.message)
+        console.error("Error logging in:", error.message)
       } else if (data && data.user) {
         if (!data.user.email_confirmed_at) {
           setLoginError("Please confirm your email address");
@@ -237,13 +237,13 @@ function Users() {
       {activeTab === 'login' && (
         <View style={styles.formContainer}>
           <Text style={styles.inputLabel}>
-            <Ionicons name="person-outline" size={16} color="#2897ba" /> Enter username or email
+            <Ionicons name="person-outline" size={16} color="#2897ba" /> Enter email
           </Text>
           <View style={styles.inputWrapper}>
             <Ionicons name="mail-outline" size={25} color="#2897ba" style={styles.inputIcon} />
             <TextInput
               style={styles.textInput}
-              placeholder="Username or email"
+              placeholder="Email"
               value={loginEmail}
               onChangeText={setLoginEmail}
               keyboardType="email-address"
@@ -416,9 +416,9 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 120,
-    marginBottom: -60,
-    zIndex: 1, // Ensure logo appears above ellipse
+    marginTop: 160,
+    marginBottom: 10,
+    zIndex: 2, // Ensure logo appears above ellipse
   },
   logoImage: {
     width: 150,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 10,
-    zIndex: 1,
+    zIndex: 2,
   },
   tabButton: {
     marginHorizontal: 10,

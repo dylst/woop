@@ -37,8 +37,9 @@ yarn-error.*
 
 app-example
 
-# Supabase
-supabaseClient.js
 .env
 
+# contains API keys
 ios/woop/Info.plist
+/android/app/src/main/AndroidManifest.xml
+/ios/woop/AppDelegate.mm

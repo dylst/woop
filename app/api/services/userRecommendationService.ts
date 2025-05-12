@@ -312,8 +312,8 @@ export const userRecommendationService = {
 
 			// Get user favorites/likes
 			const { data: userFavorites, error: favError } = await supabase
-				.from("user_favorite") // Assuming you have this table
-				.select("restaurant_id")
+				.from("favorite") // Assuming you have this table
+				.select("food_item_id")
 				.eq("profile_id", userId);
 
 			if (favError) console.warn("Error fetching favorites:", favError);
@@ -322,7 +322,7 @@ export const userRecommendationService = {
 			const { data: userHistory, error: historyError } = await supabase
 				.from("user_history")
 				.select("restaurant_id, search_history, event_type")
-				.eq("profile_id", userId);
+				.eq("user_id", userId);
 
 			if (historyError) console.warn("Error fetching user history:", historyError);
 
@@ -386,7 +386,7 @@ export const userRecommendationService = {
 			);
 
 			const favoritedRestaurants = new Set(
-				userFavorites?.map((f) => f.restaurant_id) || []
+				userFavorites?.map((f) => f.food_item_id) || []
 			);
 
 			// Get restaurant data for viewed/favorited places
