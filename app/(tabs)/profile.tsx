@@ -8,6 +8,10 @@ import {
   Pressable,
   SafeAreaView,
   StatusBar,
+  Modal,
+  Share,
+  Platform,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -15,6 +19,7 @@ import { Colors } from '@/constants/Colors';
 import { router } from 'expo-router';
 import { useUser } from '../context/UserContext';
 import { supabase } from '@/supabaseClient';
+import * as Clipboard from 'expo-clipboard';
 
 interface ReviewItemProps {
   image: any;
@@ -73,6 +78,7 @@ const ProfileScreen = () => {
 
   const [userData, setUserData] = useState<any>(null);
   const [activeTab, setActiveTab] = React.useState('reviews');
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const fetchProfile = async () => {
     if (!userId) return;
@@ -83,12 +89,12 @@ const ProfileScreen = () => {
       .maybeSingle();
 
     if (error) {
-      console.log("Error fetching profile:", error)
+      console.log('Error fetching profile:', error);
       return;
     }
 
     setUserData(data);
-  }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -99,6 +105,57 @@ const ProfileScreen = () => {
   const city = userData?.city || '';
   const state = userData?.state || '';
 
+  const handleShare = async (platform?: string) => {
+    const profileUrl = `https://woop.com/profile/${userData?.username}`; // Replace with your actual domain
+
+    if (platform) {
+      let url = '';
+      switch (platform) {
+        case 'instagram':
+          url = `instagram://share?text=Check out my food profile on Woop!&url=${encodeURIComponent(
+            profileUrl
+          )}`;
+          break;
+        case 'facebook':
+          url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+            profileUrl
+          )}`;
+          break;
+        case 'sms':
+          url = `sms:&body=Check out my food profile on Woop! ${profileUrl}`;
+          break;
+      }
+
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          // Fallback to default share if app not installed
+          await Share.share({
+            message: `Check out my food profile on Woop! ${profileUrl}`,
+          });
+        }
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    } else {
+      try {
+        await Share.share({
+          message: `Check out my food profile on Woop! ${profileUrl}`,
+        });
+      } catch (error) {
+        console.error('Error sharing:', error);
+      }
+    }
+    setShowShareModal(false);
+  };
+
+  const copyProfileLink = async () => {
+    const profileUrl = `https://woop.com/profile/${userData?.username}`; // we would replace this with the actual domain
+    await Clipboard.setStringAsync(profileUrl);
+    setShowShareModal(false);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -107,20 +164,120 @@ const ProfileScreen = () => {
         backgroundColor={Colors.primary.lightteal}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header section */}
-        <Pressable
-          style={styles.profileSettings}
-          onPress={() => router.push('/profileSettings')}>
-          <Ionicons name="settings-outline" size={24} color={Colors.primary.darkteal} />
-        </Pressable>
+        {/* Header section with Share and Settings buttons */}
+        <View style={styles.headerButtons}>
+          <Pressable
+            style={styles.iconButton}
+            onPress={() => setShowShareModal(true)}
+          >
+            <Ionicons
+              name='share-outline'
+              size={24}
+              color={Colors.primary.darkteal}
+            />
+          </Pressable>
+          <Pressable
+            style={styles.iconButton}
+            onPress={() => router.push('/profileSettings')}
+          >
+            <Ionicons
+              name='settings-outline'
+              size={24}
+              color={Colors.primary.darkteal}
+            />
+          </Pressable>
+        </View>
+
+        {/* Share Modal */}
+        <Modal
+          animationType='fade'
+          transparent={true}
+          visible={showShareModal}
+          onRequestClose={() => setShowShareModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <ThemedText style={styles.modalTitle}>Share Profile</ThemedText>
+                <Pressable onPress={() => setShowShareModal(false)}>
+                  <Ionicons name='close' size={24} color='#000' />
+                </Pressable>
+              </View>
+
+              <TouchableOpacity
+                style={styles.shareOption}
+                onPress={() => handleShare('instagram')}
+              >
+                <Ionicons name='logo-instagram' size={24} color='#E4405F' />
+                <ThemedText style={styles.shareOptionText}>
+                  Share to Instagram
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.shareOption}
+                onPress={() => handleShare('facebook')}
+              >
+                <Ionicons name='logo-facebook' size={24} color='#3b5998' />
+                <ThemedText style={styles.shareOptionText}>
+                  Share to Facebook
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.shareOption}
+                onPress={() => handleShare('sms')}
+              >
+                <Ionicons name='chatbubble-outline' size={24} color='#34B7F1' />
+                <ThemedText style={styles.shareOptionText}>
+                  Share via SMS
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.shareOption}
+                onPress={copyProfileLink}
+              >
+                <Ionicons name='copy-outline' size={24} color='#666' />
+                <ThemedText style={styles.shareOptionText}>
+                  Copy Profile Link
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.shareOption}
+                onPress={() => handleShare()}
+              >
+                <Ionicons
+                  name='ellipsis-horizontal-outline'
+                  size={24}
+                  color='#000'
+                />
+                <ThemedText style={styles.shareOptionText}>
+                  More Options
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Header content */}
         <View style={styles.headerContent}>
           <Image
             source={{ uri: userData?.avatar }}
             style={styles.profileImage}
           />
           <ThemedText style={styles.userName}>@{userData?.username}</ThemedText>
-          {(firstName || lastName) && <ThemedText style={styles.realName}>{firstName} {lastName}</ThemedText>}
-          {(city && state) && <ThemedText style={styles.address}>{city}, {state}</ThemedText>}
+          {(firstName || lastName) && (
+            <ThemedText style={styles.realName}>
+              {firstName} {lastName}
+            </ThemedText>
+          )}
+          {city && state && (
+            <ThemedText style={styles.address}>
+              {city}, {state}
+            </ThemedText>
+          )}
           {/* Stats section */}
           <View style={styles.statsSection}>
             <View style={styles.statsContainer}>
@@ -178,7 +335,7 @@ const ProfileScreen = () => {
               <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => router.push('/owner')}
-                >
+              >
                 <View style={styles.actionIconContainer}>
                   <Ionicons
                     name='list'
@@ -524,6 +681,52 @@ const styles = StyleSheet.create({
   separator: {
     height: 10,
     backgroundColor: Colors.primary.lightteal,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 10,
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    zIndex: 999,
+  },
+  iconButton: {
+    padding: 4,
+    marginLeft: 15,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    minHeight: 300,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  shareOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  shareOptionText: {
+    marginLeft: 15,
+    fontSize: 16,
   },
 });
 
