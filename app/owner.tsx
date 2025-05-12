@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import TopBar from '@/components/ui/TopBar';
 import { Colors } from '@/constants/Colors';
 import { ActivityIndicator } from 'react-native-paper';
-import { useUser } from '../context/UserContext';
+import { useUser } from './context/UserContext';
 import { Item } from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
 import { difference } from 'next/dist/build/utils';
 // import { DeepDiff } from 'deep-diff';

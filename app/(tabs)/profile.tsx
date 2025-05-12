@@ -177,6 +177,21 @@ const ProfileScreen = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.actionButton}
+                onPress={() => router.push('/owner')}
+                >
+                <View style={styles.actionIconContainer}>
+                  <Ionicons
+                    name='list'
+                    size={24}
+                    color={Colors.primary.darkteal}
+                  />
+                </View>
+                <ThemedText style={styles.actionButtonText}>
+                  Change List
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
                 onPress={() => router.push('/preferences')}
               >
                 <View style={styles.actionIconContainer}>
