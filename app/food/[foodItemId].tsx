@@ -20,11 +20,12 @@ import { useUser } from "../context/UserContext";
 import { fetchRatings, RatingInfo } from "@/hooks/fetchHelper";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import * as ImageManipulator from "expo-image-manipulator";
 import { decode } from "base64-arraybuffer";
 // to position back button within safe area view
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import StarRating from "@/components/ui/StarRating";
-
+import { PhotoUploadScreen } from "../components/PhotoUploadScreen";
 export default function FoodItemDetailPage() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
@@ -44,13 +45,10 @@ export default function FoodItemDetailPage() {
 
 	const [itemData, setItemData] = useState<any>(null);
 	const [isFeatured, setIsFeatured] = useState(false);
-	const [imageUri, setImageUri] = useState<string>("");
-	const [reviewImageUri, setReviewImageUri] = useState<string>("");
 	const [uploading, setUploading] = useState(false);
 	const [showingUploadStatus, setShowingUploadStatus] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState("Uploading...");
 	const [barContainerWidth, setBarContainerWidth] = useState<number>(0);
-	const [imagePreviewVisible, setImagePreviewVisible] = useState(false);
 	const [uploadType, setUploadType] = useState<"main" | "review">("review");
 	// Add new state variables for hiding recommendations
 	const [hiddenRecommendations, setHiddenRecommendations] = useState<number[]>(
@@ -59,107 +57,111 @@ export default function FoodItemDetailPage() {
 	const [hideConfirmVisible, setHideConfirmVisible] = useState(false);
 	const [itemToHide, setItemToHide] = useState<number | null>(null);
 
-	// Select image from library
-	const selectImage = async (photoType: "main" | "review" = "review") => {
-		try {
-			// Set the upload type based on the button pressed
-			setUploadType(photoType);
+	// Add new state for PhotoUploadScreen
+	const [photoUploadVisible, setPhotoUploadVisible] = useState(false);
+	const [currentPhotos, setCurrentPhotos] = useState<string[]>([]);
 
-			// Request media library permissions
-			const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+	// Select image from library - replaced with PhotoUploadScreen
+	const openPhotoUploader = (photoType: "main" | "review" = "review") => {
+		setUploadType(photoType);
 
-			if (status !== "granted") {
-				Alert.alert(
-					"Permission needed",
-					"Sorry, we need camera roll permissions to make this work!"
-				);
-				return;
-			}
-
-			const result = await ImagePicker.launchImageLibraryAsync({
-				mediaTypes: ImagePicker.MediaTypeOptions.Images,
-				quality: 0.8,
-				allowsEditing: true,
-				aspect: [4, 3],
-			});
-
-			if (!result.canceled && result.assets.length > 0) {
-				const selectedUri = result.assets[0].uri;
-				// Set the appropriate state variable based on photo type
-				if (photoType === "main") {
-					setImageUri(selectedUri);
-				} else {
-					setReviewImageUri(selectedUri);
-				}
-				// Show preview modal instead of auto uploading
-				setImagePreviewVisible(true);
-			}
-		} catch (error) {
-			console.error("Error selecting image:", error);
-			Alert.alert("Error", "Failed to open photo library. Please try again.");
-			return;
+		// Set initial photos based on current data
+		if (photoType === "main" && itemData?.photos) {
+			setCurrentPhotos(Array.isArray(itemData.photos) ? itemData.photos : []);
+		} else if (photoType === "review" && itemData?.review_photos) {
+			setCurrentPhotos(
+				Array.isArray(itemData.review_photos) ? itemData.review_photos : []
+			);
+		} else {
+			setCurrentPhotos([]);
 		}
+
+		setPhotoUploadVisible(true);
 	};
 
-	{
-		/* Upload image to Supabase */
-	}
-	const uploadImage = async (uri: string, type: "main" | "review") => {
-		if (!uri) return;
+	// Handle photos selected from PhotoUploadScreen
+	const handlePhotosSelected = async (photos: string[]) => {
+		if (!photos || photos.length === 0) {
+			setPhotoUploadVisible(false);
+			return;
+		}
 
 		try {
 			setUploading(true);
 			setShowingUploadStatus(true);
-			setUploadProgress("Preparing upload...");
+			setUploadProgress("Processing photos...");
 
-			// Get filename from URI
-			const fileName = uri.split("/").pop() || `food_${Date.now()}.jpg`;
+			// Get new photos (ones that haven't been uploaded yet - they'll be local URIs)
+			const existingPhotos = currentPhotos.filter((p) => p.startsWith("http"));
+			const newPhotos = photos.filter((p) => !p.startsWith("http"));
 
-			setUploadProgress("Reading file...");
-			const base64 = await FileSystem.readAsStringAsync(uri, {
-				encoding: FileSystem.EncodingType.Base64,
-			});
-			const fileData = decode(base64);
+			setUploadProgress(`Uploading ${newPhotos.length} new photos...`);
 
-			// Upload to Supabase
-			setUploadProgress("Uploading to server...");
-			const { data, error } = await supabase.storage
-				.from("image-reviews") // Using the image-reviews bucket
-				.upload(`fooditems/${fileName}`, fileData, {
-					contentType: "image/jpeg",
-				});
+			// Process and upload each new photo
+			const newPhotoUrls = await Promise.all(
+				newPhotos.map(async (uri, index) => {
+					setUploadProgress(`Processing photo ${index + 1}/${newPhotos.length}...`);
 
-			if (error) {
-				console.error("Error uploading image:", error);
-				setUploading(false);
-				setShowingUploadStatus(false);
-				Alert.alert(
-					"Upload Failed",
-					"There was an error uploading your image. Please try again."
-				);
-				return;
-			}
+					// Resize image before uploading to improve performance
+					const resizedImage = await ImageManipulator.manipulateAsync(
+						uri,
+						[{ resize: { width: 1200 } }],
+						{ compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+					);
 
-			const { data: publicData } = supabase.storage
-				.from("image-reviews") // Using the same bucket here
-				.getPublicUrl(`fooditems/${fileName}`);
+					// Get filename from URI
+					const fileName = `fooditem_${foodItemId}_${Date.now()}_${index}.jpg`;
 
-			const imageUrl = publicData.publicUrl;
+					// Read file in smaller chunks if possible
+					setUploadProgress(`Reading file ${index + 1}/${newPhotos.length}...`);
+					const base64 = await FileSystem.readAsStringAsync(resizedImage.uri, {
+						encoding: FileSystem.EncodingType.Base64,
+					});
 
-			// Update food item with new image based on upload type
-			setUploadProgress("Updating record...");
-			if (type === "main") {
-				await updateMainFoodImage(foodItemId, imageUrl);
+					setUploadProgress(`Uploading file ${index + 1}/${newPhotos.length}...`);
+					const fileData = decode(base64);
+
+					// Upload to Supabase
+					const { data, error } = await supabase.storage
+						.from("image-reviews")
+						.upload(`fooditems/${fileName}`, fileData, {
+							contentType: "image/jpeg",
+						});
+
+					if (error) {
+						console.error("Error uploading image:", error);
+						return null;
+					}
+
+					const { data: publicData } = supabase.storage
+						.from("image-reviews")
+						.getPublicUrl(`fooditems/${fileName}`);
+
+					return publicData.publicUrl;
+				})
+			);
+
+			// Filter out any failed uploads
+			const validUrls = newPhotoUrls.filter((url) => url !== null) as string[];
+
+			// Update the food item with the new photos
+			setUploadProgress("Updating food item...");
+
+			// Combine existing and new photos
+			const updatedPhotos = [...existingPhotos, ...validUrls];
+
+			// Update the database based on upload type
+			if (uploadType === "main") {
+				await updateMainFoodImage(foodItemId, updatedPhotos);
 			} else {
-				await updateReviewPhotos(foodItemId, imageUrl);
+				await updateReviewPhotos(foodItemId, updatedPhotos);
 			}
 
-			// Refresh food item data to show the new image
 			setUploadProgress("Success!");
 			setTimeout(() => {
 				setUploading(false);
 				setShowingUploadStatus(false);
-				fetchFoodItem(); // Refresh the food item to show new image
+				fetchFoodItem(); // Refresh the food item to show new images
 			}, 1000);
 		} catch (error) {
 			console.error("Error in upload process:", error);
@@ -167,39 +169,20 @@ export default function FoodItemDetailPage() {
 			setShowingUploadStatus(false);
 			Alert.alert(
 				"Upload Failed",
-				"There was an error processing your image. Please try again."
+				"There was an error processing your images. Please try again."
 			);
+		} finally {
+			setPhotoUploadVisible(false);
 		}
 	};
 
-	const updateMainFoodImage = async (foodItemId: any, imageUrl: string) => {
+	// Modified to accept an array of image URLs instead of a single URL
+	const updateMainFoodImage = async (foodItemId: any, imageUrls: string[]) => {
 		try {
-			// First, get the current photos array
-			const { data: currentItem, error: fetchError } = await supabase
-				.from("fooditem")
-				.select("photos")
-				.eq("id", foodItemId)
-				.single();
-
-			if (fetchError) {
-				console.error("Error fetching current food item:", fetchError);
-				throw fetchError;
-			}
-
-			// Prepare the new photos array
-			let updatedPhotos = [];
-			if (currentItem && currentItem.photos && Array.isArray(currentItem.photos)) {
-				// Add the new photo to the beginning of the array so it shows first
-				updatedPhotos = [imageUrl, ...currentItem.photos];
-			} else {
-				// If no photos exist yet, create a new array with just this photo
-				updatedPhotos = [imageUrl];
-			}
-
 			// Update the food item with the new photos array
 			const { data, error } = await supabase
 				.from("fooditem")
-				.update({ photos: updatedPhotos })
+				.update({ photos: imageUrls })
 				.eq("id", foodItemId);
 
 			if (error) {
@@ -215,38 +198,13 @@ export default function FoodItemDetailPage() {
 		}
 	};
 
-	const updateReviewPhotos = async (foodItemId: any, imageUrl: string) => {
+	// Modified to accept an array of image URLs instead of a single URL
+	const updateReviewPhotos = async (foodItemId: any, imageUrls: string[]) => {
 		try {
-			// First, get the current review_photos array
-			const { data: currentItem, error: fetchError } = await supabase
-				.from("fooditem")
-				.select("review_photos")
-				.eq("id", foodItemId)
-				.single();
-
-			if (fetchError) {
-				console.error("Error fetching current food item:", fetchError);
-				throw fetchError;
-			}
-
-			// Prepare the new review_photos array
-			let updatedReviewPhotos = [];
-			if (
-				currentItem &&
-				currentItem.review_photos &&
-				Array.isArray(currentItem.review_photos)
-			) {
-				// Add the new photo to the beginning of the array so it shows first
-				updatedReviewPhotos = [imageUrl, ...currentItem.review_photos];
-			} else {
-				// If no review photos exist yet, create a new array with just this photo
-				updatedReviewPhotos = [imageUrl];
-			}
-
 			// Update the food item with the new review_photos array
 			const { data, error } = await supabase
 				.from("fooditem")
-				.update({ review_photos: updatedReviewPhotos })
+				.update({ review_photos: imageUrls })
 				.eq("id", foodItemId);
 
 			if (error) {
@@ -366,12 +324,10 @@ export default function FoodItemDetailPage() {
 		}
 
 		setIsFeatured(!!data);
-	}
+	};
 
 	const fetchTags = async () => {
-		const { data, error } = await supabase
-			.from('tags')
-			.select('*')
+		const { data, error } = await supabase.from("tags").select("*");
 
 		if (error) {
 			console.log("Error fetching tags:", error);
@@ -379,15 +335,7 @@ export default function FoodItemDetailPage() {
 		}
 
 		setTags(data);
-	}
-
-	// const photoRatings = [
-	//   { label: '5', percentage: 80, color: '#E64A19', image: 'photo1.jpg' },
-	//   { label: '4', percentage: 30, color: '#F57C00', image: 'photo2.jpg' },
-	//   { label: '3', percentage: 15, color: '#FFB300', image: 'photo3.jpg' },
-	//   { label: '2', percentage: 10, color: '#FFCA28', image: 'photo4.jpg' },
-	//   { label: '1', percentage: 5, color: '#FFD54F', image: 'photo5.jpg' },
-	// ];
+	};
 
 	const handlePhotoClick = (image: string) => {
 		console.log("Opening photo:", image); // Replace with a full-screen image viewer later
@@ -483,34 +431,35 @@ export default function FoodItemDetailPage() {
 				setIsFavorites(false);
 			}
 		} catch (err) {
-			console.error('Favorite toggle error:', err);
+			console.error("Favorite toggle error:", err);
 		}
 	};
 
 	// add cuisine or dietary tags
-	const handleAddTag = async (
-		newCuisines: string[],
-		newDietary: string[],
-	) => {
+	const handleAddTag = async (newCuisines: string[], newDietary: string[]) => {
 		if (!foodItemId) return;
 
 		const currentCuisines: string[] = itemData?.cuisine_type ?? [];
 		const currentDietary: string[] = itemData?.dietary_tags ?? [];
 
-		const mergedCuisines: string[] = Array.from(new Set([...currentCuisines, ...newCuisines]));
-		const mergedDietary: string[] = Array.from(new Set([...currentDietary, ...newDietary]));
+		const mergedCuisines: string[] = Array.from(
+			new Set([...currentCuisines, ...newCuisines])
+		);
+		const mergedDietary: string[] = Array.from(
+			new Set([...currentDietary, ...newDietary])
+		);
 
 		try {
 			const { data, error } = await supabase
-				.from('fooditem')
+				.from("fooditem")
 				.update({
-					'cuisine_type': mergedCuisines,
-					'dietary_tags': mergedDietary,
+					cuisine_type: mergedCuisines,
+					dietary_tags: mergedDietary,
 				})
-				.eq('id', foodItemId);
+				.eq("id", foodItemId);
 
 			if (error) {
-				console.log('Error updating tags:', error);
+				console.log("Error updating tags:", error);
 				return;
 			}
 
@@ -522,7 +471,7 @@ export default function FoodItemDetailPage() {
 
 			console.log("Tags updated successfully");
 		} catch (err) {
-			console.log("Error updating tags in handleAddTag:", err)
+			console.log("Error updating tags in handleAddTag:", err);
 		}
 	};
 
@@ -531,46 +480,45 @@ export default function FoodItemDetailPage() {
 		setSelectedCuisines([]);
 		setSelectedDietary([]);
 		setTagModalVisible(false);
-	}
+	};
 
 	const cuisineType = itemData?.cuisine_type ?? [];
 	const dietaryTags = itemData?.dietary_tags ?? [];
 
-	const cuisineText = cuisineType.join(', ');
-	const dietaryText = dietaryTags.join(', ');
+	const cuisineText = cuisineType.join(", ");
+	const dietaryText = dietaryTags.join(", ");
 
 	const renderTag = (
 		data: string[],
 		selected: string[],
 		toggleFn: (val: string) => void,
-		category?: 'cuisine' | 'dietary'
+		category?: "cuisine" | "dietary"
 	) => {
 		return (
-			<View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20 }}>
+			<View
+				style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20 }}
+			>
 				{data.map((tag) => {
 					const isActive = selected.includes(tag);
 					return (
 						<Pressable
 							key={tag}
 							onPress={() => toggleFn(tag)}
-							style={[
-								styles.tag,
-								isActive && styles.tagActive,
-							]}
+							style={[styles.tag, isActive && styles.tagActive]}
 						>
-							{category === 'cuisine' && (
+							{category === "cuisine" && (
 								<Ionicons
 									name={isActive ? "fast-food" : "fast-food-outline"}
 									size={14}
-									color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+									color={isActive ? "#fcfcfc" : Colors.primary.lightteal}
 									style={isActive ? styles.tagIconActive : styles.tagIcon}
 								/>
 							)}
-							{category === 'dietary' && (
+							{category === "dietary" && (
 								<Ionicons
 									name={isActive ? "leaf" : "leaf-outline"}
 									size={14}
-									color={isActive ? '#fcfcfc' : Colors.primary.lightteal}
+									color={isActive ? "#fcfcfc" : Colors.primary.lightteal}
 									style={isActive ? styles.tagIconActive : styles.tagIcon}
 								/>
 							)}
@@ -578,11 +526,11 @@ export default function FoodItemDetailPage() {
 								{tag}
 							</Text>
 						</Pressable>
-					)
+					);
 				})}
 			</View>
-		)
-	}
+		);
+	};
 
 	// DUMMY DATA FOR RELATED FOOD ITEMS
 	const relatedFood = [
@@ -620,7 +568,7 @@ export default function FoodItemDetailPage() {
 		{
 			icon: "camera-outline" as const,
 			text: "Add Photo",
-			onPress: () => selectImage("review"),
+			onPress: () => openPhotoUploader("review"),
 		},
 		{
 			icon: "map-outline" as const,
@@ -671,7 +619,8 @@ export default function FoodItemDetailPage() {
 					<Pressable
 						onPress={() => router.back()}
 						style={styles.backButton}
-						hitSlop={8}>
+						hitSlop={8}
+					>
 						<Ionicons
 							name='chevron-back'
 							size={28}
@@ -697,18 +646,24 @@ export default function FoodItemDetailPage() {
 				{/* Image Container */}
 				<View style={styles.imageContainer}>
 					{imageUrl ? (
-						<Image
-							source={{ uri: imageUrl }}
-							style={styles.foodImage}
-						/>
+						<Pressable onPress={() => openPhotoUploader("main")}>
+							<Image
+								source={{ uri: imageUrl }}
+								style={styles.foodImage}
+							/>
+						</Pressable>
 					) : (
-						<View style={[styles.foodImage, styles.noImage]}>
+						<Pressable
+							style={[styles.foodImage, styles.noImage]}
+							onPress={() => openPhotoUploader("main")}
+						>
 							<Ionicons
 								name='images'
 								size={108}
-								color='fff'
+								color='#fff'
 							/>
-						</View>
+							<Text style={{ color: "#fff", marginTop: 8 }}>Tap to add photo</Text>
+						</Pressable>
 					)}
 
 					{/* Overlay */}
@@ -750,18 +705,23 @@ export default function FoodItemDetailPage() {
 				{/* Food Category */}
 				<View style={styles.categoryContainer}>
 					<Text style={styles.categoryText}>
-						{itemData?.price_range || '$'}
-						{cuisineText || dietaryText ? ' • ' : ''}
+						{itemData?.price_range || "$"}
+						{cuisineText || dietaryText ? " • " : ""}
 						{cuisineText}
-						{cuisineText && dietaryText ? ', ' : ''}
+						{cuisineText && dietaryText ? ", " : ""}
 						{dietaryText}
 					</Text>
 					{/* Add Cuisine/Dietary tags button */}
 					<Pressable
 						onPress={() => setTagModalVisible(true)}
-						style={styles.addTagContainer}>
+						style={styles.addTagContainer}
+					>
 						<View style={styles.addTagButton}>
-							<Ionicons name="add-sharp" size={16} color='#65C5E3' />
+							<Ionicons
+								name='add-sharp'
+								size={16}
+								color='#65C5E3'
+							/>
 						</View>
 					</Pressable>
 				</View>
@@ -817,19 +777,6 @@ export default function FoodItemDetailPage() {
 							<Text style={styles.viewReviewsText}>View Reviews →</Text>
 						</Pressable>
 					</View>
-
-					{/* Photos Section */}
-					{/* <View style={styles.photosContainer}>
-            <Text style={styles.sectionTitle}>Photos</Text>
-            {ratingsBar.map((item, index) => (
-              <View key={index} style={styles.photoRow}>
-                <Text style={styles.photoLabel}>{item.label}</Text>
-                <Pressable onPress={() => handlePhotoClick(item.image)}>
-                  <View style={[styles.photoBar, { width: `${item.percentage}%`, backgroundColor: item.color }]} />
-                </Pressable>
-              </View>
-            ))}
-          </View> */}
 
 					{/* Ratings Distribution */}
 					<View style={styles.ratingsDistribution}>
@@ -939,7 +886,20 @@ export default function FoodItemDetailPage() {
 
 				{/* Review Photos Section */}
 				<View style={styles.reviewPhotosContainer}>
-					<Text style={styles.sectionTitle}>Review Photos</Text>
+					<View style={styles.reviewPhotosHeader}>
+						<Text style={styles.sectionTitle}>Review Photos</Text>
+						<Pressable
+							onPress={() => openPhotoUploader("review")}
+							style={styles.addReviewPhotoButton}
+						>
+							<Ionicons
+								name='add-circle-outline'
+								size={24}
+								color={Colors.primary.darkteal}
+							/>
+							<Text style={styles.addPhotoText}>Add Photo</Text>
+						</Pressable>
+					</View>
 
 					{/* Check if review_photos exists and has items */}
 					{itemData?.review_photos && itemData.review_photos.length > 0 ? (
@@ -980,7 +940,8 @@ export default function FoodItemDetailPage() {
 							{/* cuisine tags */}
 							<Text style={styles.tagModalTitle}>Cuisine Tags</Text>
 							{renderTag(
-								tags.filter((t: any) => t.category === 'cuisine')
+								tags
+									.filter((t: any) => t.category === "cuisine")
 									.map((t: any) => t.name),
 								selectedCuisines,
 								(val: string) => {
@@ -990,12 +951,13 @@ export default function FoodItemDetailPage() {
 										setSelectedCuisines([...selectedCuisines, val]);
 									}
 								},
-								'cuisine'
+								"cuisine"
 							)}
 							{/* dietary tags */}
 							<Text style={styles.tagModalTitle}>Dietary Tags</Text>
 							{renderTag(
-								tags.filter((t: any) => t.category === 'dietary')
+								tags
+									.filter((t: any) => t.category === "dietary")
 									.map((t: any) => t.name),
 								selectedDietary,
 								(val: string) => {
@@ -1005,23 +967,35 @@ export default function FoodItemDetailPage() {
 										setSelectedDietary([...selectedDietary, val]);
 									}
 								},
-								'dietary'
+								"dietary"
 							)}
 						</ScrollView>
 						<View style={styles.tagModalButtons}>
 							<Pressable
-								style={[styles.tagModalSubmitButton,
-								(selectedCuisines.length === 0 && selectedDietary.length === 0)
-								&& styles.tagModalSubmitButtonDisabled]}
+								style={[
+									styles.tagModalSubmitButton,
+									selectedCuisines.length === 0 &&
+										selectedDietary.length === 0 &&
+										styles.tagModalSubmitButtonDisabled,
+								]}
 								onPress={handleSubmitTags}
 								disabled={selectedCuisines.length === 0 && selectedDietary.length === 0}
 							>
-								<Text style={[styles.tagModalButtonText,
-								(selectedCuisines.length === 0 && selectedDietary.length === 0)
-								&& styles.tagModalButtonDisabledText
-								]}>Submit</Text>
+								<Text
+									style={[
+										styles.tagModalButtonText,
+										selectedCuisines.length === 0 &&
+											selectedDietary.length === 0 &&
+											styles.tagModalButtonDisabledText,
+									]}
+								>
+									Submit
+								</Text>
 							</Pressable>
-							<Pressable style={styles.tagModalCancelButton} onPress={() => setTagModalVisible(false)}>
+							<Pressable
+								style={styles.tagModalCancelButton}
+								onPress={() => setTagModalVisible(false)}
+							>
 								<Text style={styles.tagModalButtonText}>Cancel</Text>
 							</Pressable>
 						</View>
@@ -1029,85 +1003,19 @@ export default function FoodItemDetailPage() {
 				</View>
 			</Modal>
 
-			{/* Image Preview Modal */}
+			{/* Photo Upload Modal - Replaced the old image preview modal */}
 			<Modal
-				transparent={true}
-				visible={imagePreviewVisible}
+				visible={photoUploadVisible}
 				animationType='slide'
+				presentationStyle='fullScreen'
+				onRequestClose={() => setPhotoUploadVisible(false)}
 			>
-				<View style={styles.modalOverlay}>
-					<View style={styles.previewModalContent}>
-						<Text style={styles.modalTitle}>Add Photo</Text>
-
-						{uploadType === "main" && imageUri ? (
-							<Image
-								source={{ uri: imageUri }}
-								style={styles.previewImage}
-							/>
-						) : uploadType === "review" && reviewImageUri ? (
-							<Image
-								source={{ uri: reviewImageUri }}
-								style={styles.previewImage}
-							/>
-						) : null}
-
-						{/* Photo Type Selection */}
-						<View style={styles.photoTypeContainer}>
-							<Text style={styles.photoTypeLabel}>Select Photo Type:</Text>
-							<View style={styles.radioButtonContainer}>
-								<Pressable
-									style={styles.radioOption}
-									onPress={() => setUploadType("main")}
-								>
-									<View style={styles.radioCircle}>
-										{uploadType === "main" && <View style={styles.selectedRadio} />}
-									</View>
-									<Text style={styles.radioText}>Main Food Photo</Text>
-								</Pressable>
-
-								<Pressable
-									style={styles.radioOption}
-									onPress={() => setUploadType("review")}
-								>
-									<View style={styles.radioCircle}>
-										{uploadType === "review" && <View style={styles.selectedRadio} />}
-									</View>
-									<Text style={styles.radioText}>Review Photo</Text>
-								</Pressable>
-							</View>
-						</View>
-
-						<View style={styles.buttonRow}>
-							<Pressable
-								style={[styles.button, styles.cancelButton]}
-								onPress={() => {
-									setImagePreviewVisible(false);
-									if (uploadType === "main") {
-										setImageUri("");
-									} else {
-										setReviewImageUri("");
-									}
-								}}
-							>
-								<Text style={styles.cancelButtonText}>Cancel</Text>
-							</Pressable>
-
-							<Pressable
-								style={[styles.button, styles.uploadButton]}
-								onPress={() => {
-									setImagePreviewVisible(false);
-									if (uploadType === "main" && imageUri) {
-										uploadImage(imageUri, "main");
-									} else if (uploadType === "review" && reviewImageUri) {
-										uploadImage(reviewImageUri, "review");
-									}
-								}}
-							>
-								<Text style={styles.modalButtonText}>Upload</Text>
-							</Pressable>
-						</View>
-					</View>
-				</View>
+				<PhotoUploadScreen
+					onClose={() => setPhotoUploadVisible(false)}
+					onSelectImages={handlePhotosSelected}
+					maxImages={10}
+					initialPhotos={currentPhotos}
+				/>
 			</Modal>
 
 			{/* Upload Progress Modal */}
@@ -1121,7 +1029,7 @@ export default function FoodItemDetailPage() {
 						<Text style={styles.modalText}>{uploadProgress}</Text>
 						{uploading && (
 							<ActivityIndicator
-								size='small'
+								size='large'
 								color={Colors.primary.darkteal}
 							/>
 						)}
@@ -1299,21 +1207,21 @@ const styles = StyleSheet.create({
 	},
 
 	categoryContainer: {
-		flexDirection: 'row',
-		justifyContent: 'center',
-		alignItems: 'center',
+		flexDirection: "row",
+		justifyContent: "center",
+		alignItems: "center",
 		marginTop: 10,
 		marginBottom: 15,
 		marginHorizontal: 30,
 	},
 
 	categoryText: {
-		justifyContent: 'center',
-		alignItems: 'center',
-		textAlign: 'center',
+		justifyContent: "center",
+		alignItems: "center",
+		textAlign: "center",
 		fontSize: 16,
-		fontWeight: 'bold',
-		color: '#333',
+		fontWeight: "bold",
+		color: "#333",
 	},
 
 	addTagContainer: {
@@ -1323,10 +1231,10 @@ const styles = StyleSheet.create({
 	addTagButton: {
 		width: 20,
 		height: 20,
-		backgroundColor: '#E3F7FF',
+		backgroundColor: "#E3F7FF",
 		borderRadius: 10,
-		justifyContent: 'center',
-		alignItems: 'center',
+		justifyContent: "center",
+		alignItems: "center",
 	},
 
 	actionButtonsContainer: {
@@ -1650,15 +1558,15 @@ const styles = StyleSheet.create({
 	// tag modal
 	tagModalOverlay: {
 		flex: 1,
-		justifyContent: 'center',
-		backgroundColor: 'rgba(0,0,0,0.5)',
+		justifyContent: "center",
+		backgroundColor: "rgba(0,0,0,0.5)",
 		padding: 20,
 	},
 	tagModalContainer: {
-		backgroundColor: '#fff',
+		backgroundColor: "#fff",
 		borderRadius: 10,
 		paddingVertical: 15,
-		maxHeight: '80%',
+		maxHeight: "80%",
 	},
 	tagModalBox: {
 		paddingVertical: 5,
@@ -1666,13 +1574,13 @@ const styles = StyleSheet.create({
 	},
 	tagModalTitle: {
 		fontSize: 20,
-		fontWeight: '600',
+		fontWeight: "600",
 		marginBottom: 15,
-		textAlign: 'center',
+		textAlign: "center",
 	},
 	tagModalButtons: {
-		flexDirection: 'row',
-		justifyContent: 'space-around',
+		flexDirection: "row",
+		justifyContent: "space-around",
 	},
 	tagModalSubmitButton: {
 		backgroundColor: Colors.primary.lightteal,
@@ -1681,10 +1589,10 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 	},
 	tagModalSubmitButtonDisabled: {
-		backgroundColor: '#ccc',
+		backgroundColor: "#ccc",
 	},
 	tagModalButtonDisabledText: {
-		color: '#fff',
+		color: "#fff",
 	},
 	tagModalCancelButton: {
 		paddingHorizontal: 20,
@@ -1696,9 +1604,9 @@ const styles = StyleSheet.create({
 	},
 
 	tag: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		alignSelf: 'flex-start',
+		flexDirection: "row",
+		alignItems: "center",
+		alignSelf: "flex-start",
 		borderRadius: 20,
 		borderWidth: 1,
 		borderColor: Colors.primary.darkteal,
@@ -1721,10 +1629,33 @@ const styles = StyleSheet.create({
 		borderColor: Colors.primary.darkteal,
 	},
 	tagTextActive: {
-		color: '#fff',
+		color: "#fff",
 	},
 	tagIconActive: {
 		marginRight: 4,
-		color: '#fff',
+		color: "#fff",
+	},
+
+	// Add new styles for the review photos header
+	reviewPhotosHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: 12,
+	},
+
+	addReviewPhotoButton: {
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#E3F7FF",
+		paddingVertical: 6,
+		paddingHorizontal: 12,
+		borderRadius: 16,
+	},
+
+	addPhotoText: {
+		fontSize: 14,
+		color: Colors.primary.darkteal,
+		marginLeft: 4,
 	},
 });
