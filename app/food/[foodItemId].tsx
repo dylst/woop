@@ -91,18 +91,24 @@ export default function FoodItemDetailPage() {
 			setShowingUploadStatus(true);
 			setUploadProgress("Processing photos...");
 
-			// Get new photos (ones that haven't been uploaded yet - they'll be local URIs)
 			const existingPhotos = currentPhotos.filter((p) => p.startsWith("http"));
+
+			const deletedPhotos = existingPhotos.filter((url) => !photos.includes(url));
+			if (deletedPhotos.length > 0) {
+				setUploadProgress(`Removing ${deletedPhotos.length} photos...`);
+				await Promise.all(deletedPhotos.map((url) => deletePhotoFromStorage(url)));
+			}
+
+			const remainingPhotos = photos.filter((p) => p.startsWith("http"));
+
 			const newPhotos = photos.filter((p) => !p.startsWith("http"));
 
 			setUploadProgress(`Uploading ${newPhotos.length} new photos...`);
 
-			// Process and upload each new photo
 			const newPhotoUrls = await Promise.all(
 				newPhotos.map(async (uri, index) => {
 					setUploadProgress(`Processing photo ${index + 1}/${newPhotos.length}...`);
 
-					// Resize image before uploading to improve performance
 					const resizedImage = await ImageManipulator.manipulateAsync(
 						uri,
 						[{ resize: { width: 1200 } }],
@@ -147,8 +153,8 @@ export default function FoodItemDetailPage() {
 			// Update the food item with the new photos
 			setUploadProgress("Updating food item...");
 
-			// Combine existing and new photos
-			const updatedPhotos = [...existingPhotos, ...validUrls];
+			// Combine remaining and new photos
+			const updatedPhotos = [...remainingPhotos, ...validUrls];
 
 			// Update the database based on upload type
 			if (uploadType === "main") {
@@ -173,6 +179,31 @@ export default function FoodItemDetailPage() {
 			);
 		} finally {
 			setPhotoUploadVisible(false);
+		}
+	};
+
+	const deletePhotoFromStorage = async (photoUrl: string) => {
+		try {
+			const urlParts = photoUrl.split("/");
+			const fileName = urlParts[urlParts.length - 1];
+			const filePath = `fooditems/${fileName}`;
+
+			console.log(`Attempting to delete: ${filePath}`);
+
+			const { error } = await supabase.storage
+				.from("image-reviews")
+				.remove([filePath]);
+
+			if (error) {
+				console.error("Error deleting photo from storage:", error);
+				return false;
+			}
+
+			console.log(`Successfully deleted: ${filePath}`);
+			return true;
+		} catch (error) {
+			console.error("Error in deletePhotoFromStorage:", error);
+			return false;
 		}
 	};
 
@@ -201,7 +232,6 @@ export default function FoodItemDetailPage() {
 	// Modified to accept an array of image URLs instead of a single URL
 	const updateReviewPhotos = async (foodItemId: any, imageUrls: string[]) => {
 		try {
-			// Update the food item with the new review_photos array
 			const { data, error } = await supabase
 				.from("fooditem")
 				.update({ review_photos: imageUrls })
