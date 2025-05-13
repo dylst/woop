@@ -11,7 +11,7 @@ export const userRecommendationService = {
 		const { data: existingRecord } = await supabase
 			.from("user_history")
 			.select("search_history")
-			.eq("profile_id", userId)
+			.eq("user_id", userId)
 			.single();
 
 		if (existingRecord) {
@@ -24,7 +24,7 @@ export const userRecommendationService = {
 				.update({
 					search_history: [...currentHistory, query],
 				})
-				.eq("profile_id", userId)
+				.eq("user_id", userId)
 				.then((response) => {
 					if (response.error) {
 						console.error("Failed to update search history:", response.error);
@@ -187,11 +187,43 @@ export const userRecommendationService = {
 
 			if (reviewError) throw reviewError;
 			if (!userReviews || userReviews.length === 0) {
-				return { data: [], error: "No review history found" };
+				return {
+					data: [],
+					error:
+						"You need to review some foods before we can generate recommendations",
+				};
 			}
-			console.log(`Found ${userReviews} reviews for user ${userId}`);
+			console.log(`Found ${userReviews.length} reviews for user ${userId}`);
 
+			// Get the user's favorited items to exclude them from recommendations
+			const { data: favoritedItems, error: favoriteError } = await supabase
+				.from("favorite")
+				.select("food_item_id")
+				.eq("profile_id", userId);
+
+			if (favoriteError) {
+				console.warn(
+					"Error fetching favorites with user_id, trying profile_id:",
+					favoriteError
+				);
+				// Try with profile_id if user_id fails
+				const { data: favoritesByProfileId } = await supabase
+					.from("favorite")
+					.select("food_item_id")
+					.eq("profile_id", userId);
+
+				if (favoritesByProfileId && favoritesByProfileId.length > 0) {
+					console.log(
+						`Found ${favoritesByProfileId.length} favorites with profile_id`
+					);
+				}
+			}
+
+			// Combine reviewed items and favorited items to exclude from recommendations
 			const foodItemIds = userReviews.map((review) => review.food_item_id);
+			const favoritedIds = favoritedItems?.map((item) => item.food_item_id) || [];
+			const excludeIds = [...new Set([...foodItemIds, ...favoritedIds])];
+
 			const { data: reviewedFoods, error: foodError } = await supabase
 				.from("fooditem")
 				.select("id, cuisine_type, dietary_tags")
@@ -224,7 +256,7 @@ export const userRecommendationService = {
 			const { data: recommendations, error: recError } = await supabase
 				.from("fooditem")
 				.select("id, food_name, restaurant_name, price_range, cuisine_type")
-				.not("id", "in", `(${foodItemIds.join(",")})`)
+				.not("id", "in", `(${excludeIds.join(",")})`)
 				.filter("cuisine_type", "cs", `{${topCuisines[0]}}`) // Contains any top cuisine
 				.limit(limit);
 
@@ -311,39 +343,111 @@ export const userRecommendationService = {
 				.select("food_item_id, rating, review_date")
 				.eq("profile_id", userId);
 
-			if (reviewError) throw reviewError;
+			if (reviewError) {
+				console.warn("Error fetching reviews:", reviewError);
+				// Continue execution even if reviews fail
+			}
 
-			// Get user favorites/likes
-			const { data: userFavorites, error: favError } = await supabase
-				.from("user_favorite") // Assuming you have this table
-				.select("restaurant_id")
-				.eq("profile_id", userId);
+			// Get user favorites/likes - try both column names to be safe
+			let userFavorites = null;
+			const { data: favorites, error: favError } = await supabase
+				.from("favorite")
+				.select("food_item_id")
+				.eq("user_id", userId); // Try user_id first
 
-			if (favError) console.warn("Error fetching favorites:", favError);
+			if (favError) {
+				console.warn(
+					"Error fetching favorites with user_id, trying profile_id:",
+					favError
+				);
+				// Try with profile_id if user_id fails
+				const { data: favoritesByProfileId, error: profileFavError } =
+					await supabase
+						.from("favorite")
+						.select("food_item_id")
+						.eq("profile_id", userId);
 
-			// Get user view history
-			const { data: userHistory, error: historyError } = await supabase
+				if (profileFavError) {
+					console.warn("Error fetching favorites with profile_id:", profileFavError);
+				} else if (favoritesByProfileId?.length > 0) {
+					console.log(
+						`Found ${favoritesByProfileId.length} favorites with profile_id`
+					);
+				}
+
+				// Use whatever we found with profile_id
+				if (favoritesByProfileId) {
+					userFavorites = favoritesByProfileId;
+				}
+			} else {
+				userFavorites = favorites;
+			}
+
+			// Get user view history - try both column names to be safe
+			let userHistory = null;
+			const { data: history, error: historyError } = await supabase
 				.from("user_history")
 				.select("restaurant_id, search_history, event_type")
-				.eq("profile_id", userId);
+				.eq("user_id", userId);
 
-			if (historyError) console.warn("Error fetching user history:", historyError);
+			if (historyError) {
+				console.warn("Error fetching user history with user_id:", historyError);
+				// Try with profile_id if user_id fails
+				const { data: historyByProfileId, error: profileHistoryError } =
+					await supabase
+						.from("user_history")
+						.select("restaurant_id, search_history, event_type")
+						.eq("profile_id", userId);
+
+				if (profileHistoryError) {
+					console.warn(
+						"Error fetching history with profile_id:",
+						profileHistoryError
+					);
+				} else if (historyByProfileId?.length > 0) {
+					console.log(
+						`Found ${historyByProfileId.length} history records with profile_id`
+					);
+				}
+
+				// Use whatever we found with profile_id
+				if (historyByProfileId) {
+					userHistory = historyByProfileId;
+				}
+			} else {
+				userHistory = history;
+			}
 
 			// --- STEP 2: EXTRACT PREFERENCES ---
 
-			// If no data at all, return empty
-			if (
-				(!userReviews || userReviews.length === 0) &&
-				(!userFavorites || userFavorites.length === 0) &&
-				(!userHistory || userHistory.length === 0)
-			) {
-				console.log("No user data found for generating recommendations");
-				return { data: [], error: "No user data available for recommendations" };
+			// Check if we have ANY data to work with
+			const hasReviews = userReviews && userReviews.length > 0;
+			const hasFavorites = userFavorites && userFavorites.length > 0;
+			const hasHistory = userHistory && userHistory.length > 0;
+
+			// If no reviews or favorites, return early with a message
+			if (!hasReviews && !hasFavorites) {
+				console.log(
+					"No reviews or favorites found - cannot generate recommendations"
+				);
+				return {
+					data: [],
+					error:
+						"Please review or favorite some foods before we can make recommendations for you",
+				};
 			}
 
 			// Process reviews - extract food items and ratings
 			const reviewedFoodIds =
 				userReviews?.map((review) => review.food_item_id) || [];
+
+			// Get favorited food IDs to exclude from recommendations
+			const favoritedFoodIds = userFavorites?.map((fav) => fav.food_item_id) || [];
+
+			// Combine all IDs that should be excluded from recommendations
+			const excludeFromRecommendationIds = [
+				...new Set([...(viewedIds || []), ...reviewedFoodIds, ...favoritedFoodIds]),
+			];
 
 			// Get cuisine data from reviewed foods
 			const { data: reviewedFoods, error: foodError } =
@@ -354,7 +458,8 @@ export const userRecommendationService = {
 							.in("id", reviewedFoodIds)
 					: { data: [], error: null };
 
-			if (foodError) throw foodError;
+			if (foodError)
+				console.warn("Error fetching reviewed food details:", foodError);
 
 			// --- STEP 3: ANALYZE PATTERNS ---
 
@@ -362,24 +467,59 @@ export const userRecommendationService = {
 			const cuisinePreferences: Record<string, number> = {};
 
 			// Process reviewed foods (with rating weight)
-			reviewedFoods.forEach((food) => {
-				if (!food.cuisine_type) return;
+			if (reviewedFoods && reviewedFoods.length > 0) {
+				reviewedFoods.forEach((food) => {
+					if (!food.cuisine_type) return;
 
-				// Find the rating for this food item
-				const review = userReviews.find((r) => r.food_item_id === food.id);
-				const ratingWeight = review ? review.rating / 5 : 0.5; // Scale 0-1
+					// Find the rating for this food item
+					const review = userReviews?.find((r) => r.food_item_id === food.id);
+					const ratingWeight = review ? review.rating / 5 : 0.5; // Scale 0-1
 
-				// Apply cuisine preference with rating weight
-				if (Array.isArray(food.cuisine_type)) {
-					food.cuisine_type.forEach((cuisine) => {
-						cuisinePreferences[cuisine] =
-							(cuisinePreferences[cuisine] || 0) + ratingWeight;
+					// Apply cuisine preference with rating weight
+					if (Array.isArray(food.cuisine_type)) {
+						food.cuisine_type.forEach((cuisine) => {
+							cuisinePreferences[cuisine] =
+								(cuisinePreferences[cuisine] || 0) + ratingWeight;
+						});
+					} else if (typeof food.cuisine_type === "string") {
+						cuisinePreferences[food.cuisine_type] =
+							(cuisinePreferences[food.cuisine_type] || 0) + ratingWeight;
+					}
+				});
+			}
+
+			// Process favorites directly - stronger weight
+			if (hasFavorites) {
+				const favoriteFoodIds = userFavorites?.map((f) => f.food_item_id) || [];
+
+				if (favoriteFoodIds.length > 0) {
+					const { data: favoriteFoods, error: favFoodError } = await supabase
+						.from("fooditem")
+						.select("id, cuisine_type")
+						.in("id", favoriteFoodIds);
+
+					if (favFoodError)
+						console.warn("Error fetching favorite food details:", favFoodError);
+
+					// Add stronger weight for favorites
+					favoriteFoods?.forEach((food) => {
+						if (!food.cuisine_type) return;
+
+						// Higher weight for favorites (2.0)
+						const favoriteWeight = 2.0;
+
+						if (Array.isArray(food.cuisine_type)) {
+							food.cuisine_type.forEach((cuisine) => {
+								cuisinePreferences[cuisine] =
+									(cuisinePreferences[cuisine] || 0) + favoriteWeight;
+							});
+						} else if (typeof food.cuisine_type === "string") {
+							cuisinePreferences[food.cuisine_type] =
+								(cuisinePreferences[food.cuisine_type] || 0) + favoriteWeight;
+						}
 					});
-				} else if (typeof food.cuisine_type === "string") {
-					cuisinePreferences[food.cuisine_type] =
-						(cuisinePreferences[food.cuisine_type] || 0) + ratingWeight;
 				}
-			});
+			}
 
 			// Process restaurant views and favorites
 			const viewedRestaurants = new Set(
@@ -389,7 +529,7 @@ export const userRecommendationService = {
 			);
 
 			const favoritedRestaurants = new Set(
-				userFavorites?.map((f) => f.restaurant_id) || []
+				userFavorites?.map((f) => f.food_item_id) || []
 			);
 
 			// Get restaurant data for viewed/favorited places
@@ -429,9 +569,7 @@ export const userRecommendationService = {
 					.flat()
 					.filter(Boolean) || [];
 
-			// Simple search analysis (basic but could be improved with NLP)
 			if (searchTerms.length > 0) {
-				// Get all cuisines to match against search terms
 				const { data: allCuisines } = await supabase
 					.from("fooditem")
 					.select("cuisine_type")
@@ -464,6 +602,16 @@ export const userRecommendationService = {
 
 			// --- STEP 4: GENERATE RECOMMENDATIONS ---
 
+			// If we still couldn't determine cuisine preferences, use fallback
+			if (Object.keys(cuisinePreferences).length === 0) {
+				console.log("Could not determine cuisine preferences");
+				return {
+					data: [],
+					error:
+						"We need more information about your preferences to make recommendations",
+				};
+			}
+
 			// Get top cuisines based on combined preferences
 			const topCuisines = Object.entries(cuisinePreferences)
 				.sort(([, scoreA], [, scoreB]) => scoreB - scoreA)
@@ -472,10 +620,6 @@ export const userRecommendationService = {
 
 			console.log("User's top cuisine preferences (combined data):", topCuisines);
 
-			if (topCuisines.length === 0) {
-				return { data: [], error: "Could not determine cuisine preferences" };
-			}
-
 			// Find foods matching these cuisines that user hasn't reviewed
 			let query = supabase
 				.from("fooditem")
@@ -483,14 +627,13 @@ export const userRecommendationService = {
 					"id, food_name, restaurant_name, photos, price_range, cuisine_type"
 				);
 
-			// Exclude already reviewed items
-			if (reviewedFoodIds.length > 0) {
-				query = query.not("id", "in", `(${reviewedFoodIds.join(",")})`);
-			}
-
-			// Exclude viewed items
-			if (viewedIds.length > 0) {
-				query = query.not("id", "in", `(${viewedIds.join(",")})`);
+			// Exclude already reviewed items, viewed items, and favorited items
+			if (excludeFromRecommendationIds.length > 0) {
+				query = query.not(
+					"id",
+					"in",
+					`(${excludeFromRecommendationIds.join(",")})`
+				);
 			}
 
 			// Create OR conditions for multiple cuisines
@@ -509,7 +652,10 @@ export const userRecommendationService = {
 				.order("id")
 				.limit(limit);
 
-			if (recError) throw recError;
+			if (recError) {
+				console.error("Error fetching cuisine-based recommendations:", recError);
+				return { data: [], error: "Could not fetch recommendations" };
+			}
 
 			console.log(
 				`Found ${recommendations?.length || 0} enhanced recommendations`
@@ -518,18 +664,18 @@ export const userRecommendationService = {
 			// Add recommendation reason
 			const enhancedRecommendations = recommendations?.map((item) => ({
 				...item,
-				recommendationReason: `Based on your food preferences and activity`,
-				// Store cuisine preferences in the recommendation for UI display
+				recommendationReason: `Based on your ${
+					topCuisines.length > 0
+						? topCuisines.join(", ") + " preferences"
+						: "activity"
+				}`,
 				cuisinePreferences: topCuisines.join(", "),
 			}));
-
-			// Removed direct database insertion to prevent duplicate errors
-			// The storeUserRecommendations method will be used by index.tsx instead
 
 			return { data: enhancedRecommendations || [], error: null };
 		} catch (error) {
 			console.error("Error generating enhanced recommendations:", error);
-			return { data: null, error };
+			return { data: [], error: "Could not generate recommendations" };
 		}
 	},
 };
