@@ -164,28 +164,42 @@ const ProfileScreen = () => {
         backgroundColor={Colors.primary.lightteal}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header section with Share and Settings buttons */}
+        {/* Header section with History, Share and Settings buttons */}
         <View style={styles.headerButtons}>
-          <Pressable
-            style={styles.iconButton}
-            onPress={() => setShowShareModal(true)}
-          >
-            <Ionicons
-              name='share-outline'
-              size={24}
-              color={Colors.primary.darkteal}
-            />
-          </Pressable>
-          <Pressable
-            style={styles.iconButton}
-            onPress={() => router.push('/profileSettings')}
-          >
-            <Ionicons
-              name='settings-outline'
-              size={24}
-              color={Colors.primary.darkteal}
-            />
-          </Pressable>
+          <View style={styles.leftHeaderButton}>
+            <Pressable
+              style={styles.iconButton}
+              onPress={() => router.push('/owner')}
+            >
+              <Ionicons
+                name='sync-outline'
+                size={24}
+                color={Colors.primary.darkteal}
+              />
+            </Pressable>
+          </View>
+          <View style={styles.rightHeaderButtons}>
+            <Pressable
+              style={styles.rightIconButton}
+              onPress={() => setShowShareModal(true)}
+            >
+              <Ionicons
+                name='share-outline'
+                size={24}
+                color={Colors.primary.darkteal}
+              />
+            </Pressable>
+            <Pressable
+              style={styles.rightIconButton}
+              onPress={() => router.push('/profileSettings')}
+            >
+              <Ionicons
+                name='settings-outline'
+                size={24}
+                color={Colors.primary.darkteal}
+              />
+            </Pressable>
+          </View>
         </View>
 
         {/* Share Modal */}
@@ -330,21 +344,6 @@ const ProfileScreen = () => {
                 </View>
                 <ThemedText style={styles.actionButtonText}>
                   Add Photo
-                </ThemedText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => router.push('/owner')}
-              >
-                <View style={styles.actionIconContainer}>
-                  <Ionicons
-                    name='list'
-                    size={24}
-                    color={Colors.primary.darkteal}
-                  />
-                </View>
-                <ThemedText style={styles.actionButtonText}>
-                  Change List
                 </ThemedText>
               </TouchableOpacity>
               <TouchableOpacity
@@ -684,14 +683,24 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     padding: 10,
     position: 'absolute',
+    left: 10,
     right: 10,
     top: 10,
     zIndex: 999,
   },
+  leftHeaderButton: {
+    flexDirection: 'row',
+  },
+  rightHeaderButtons: {
+    flexDirection: 'row',
+  },
   iconButton: {
+    padding: 4,
+  },
+  rightIconButton: {
     padding: 4,
     marginLeft: 15,
   },
