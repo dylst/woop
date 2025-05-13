@@ -68,6 +68,24 @@ const HomePage = () => {
 
 	// userRecommendationSystem.ts ENDS HERE
 
+	async function ensureUserProfile(userId: string) {
+		const { data, error } = await supabase
+			.from("profile")
+			.select("id")
+			.eq("id", userId)
+			.single();
+
+		if (error || !data) {
+			const { error: insertError } = await supabase.from("profile").insert({
+				id: userId,
+				created_at: new Date().toISOString(),
+			});
+
+			if (insertError) console.error("Error creating profile:", insertError);
+			else console.log(`Created profile for user ${userId}`);
+		}
+	}
+
 	const fetchFeaturedItems = async () => {
 		setLoading(true);
 		const { data, error } = await supabase
@@ -203,6 +221,17 @@ const HomePage = () => {
 			setRecommendationsLoading(false);
 		}
 	};
+
+	useEffect(() => {
+		console.log("Ensuring user profile");
+		const setup = async () => {
+			if (userId) {
+				await ensureUserProfile(userId);
+			}
+		};
+
+		setup();
+	}, [userId]);
 
 	useEffect(() => {
 		fetchFeaturedItems();
